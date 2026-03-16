@@ -368,9 +368,48 @@ def cargar_datos():
         fi = ex.submit(_fetch_ideam)
         return fc.result(), fa.result(), fi.result()
 
+# Diccionario de lugares conocidos de Montería (respaldo si Nominatim falla)
+LUGARES_MONTERIA = {
+    # Universidades
+    "unisinu":            (8.7606, -75.8602, "Universidad del Sinú, Montería"),
+    "unicordoba":         (8.7850, -75.8560, "Universidad de Córdoba, Montería"),
+    "uniremington":       (8.7550, -75.8750, "Uniremington Montería"),
+    # Hospitales
+    "hospital san jeronimo": (8.7512, -75.8738, "Hospital San Jerónimo, Montería"),
+    "san jeronimo":       (8.7512, -75.8738, "Hospital San Jerónimo, Montería"),
+    "ese camu":           (8.7480, -75.8700, "ESE CAMU, Montería"),
+    # Barrios / zonas
+    "ronda del sinu":     (8.7560, -75.8912, "Ronda del Sinú, Montería"),
+    "av primera":         (8.7560, -75.8912, "Avenida Primera, Montería"),
+    "centro":             (8.7550, -75.8814, "Centro, Montería"),
+    "bario colon":        (8.7480, -75.8780, "Barrio Colón, Montería"),
+    "barrio colon":       (8.7480, -75.8780, "Barrio Colón, Montería"),
+    "villa cielo":        (8.7350, -75.8650, "Villa Cielo, Montería"),
+    "edmundo lopez":      (8.7700, -75.8750, "Barrio Edmundo López, Montería"),
+    "el recreo":          (8.7735, -75.8695, "El Recreo, Montería"),
+    "la granja":          (8.7285, -75.9035, "La Granja, Montería"),
+    "pie del cerro":      (8.7600, -75.8700, "Pie del Cerro, Montería"),
+    # Lugares turísticos
+    "mercado central":    (8.7520, -75.8800, "Mercado Central, Montería"),
+    "parque simon bolivar":(8.7540, -75.8814, "Parque Simón Bolívar, Montería"),
+    "muelle turistico":   (8.7800, -75.8873, "Muelle Turístico del Sinú, Montería"),
+    "estadio jaraguay":   (8.7650, -75.8600, "Estadio Jaraguay, Montería"),
+    # Aeropuerto
+    "aeropuerto":         (8.8233, -75.8258, "Aeropuerto Los Garzones, Montería"),
+    "los garzones":       (8.8233, -75.8258, "Aeropuerto Los Garzones, Montería"),
+}
+
 @st.cache_data(ttl=604800)
 def buscar_lugar(texto):
-    """Geocodifica un lugar en Montería vía Nominatim — intenta múltiples variantes"""
+    """Geocodifica un lugar en Montería — dict local + Nominatim con variantes"""
+    texto_lower = texto.lower().strip()
+
+    # 1. Buscar en diccionario local primero (instantáneo)
+    for clave, (lat, lon, nombre) in LUGARES_MONTERIA.items():
+        if clave in texto_lower or texto_lower in clave:
+            return lat, lon, nombre
+
+    # 2. Nominatim con múltiples variantes
     variantes = [
         f"{texto}, Montería, Córdoba, Colombia",
         f"{texto}, Montería, Colombia",
