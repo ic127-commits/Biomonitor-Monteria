@@ -978,6 +978,8 @@ with st.expander("🔍 Consultar condiciones en cualquier lugar de Montería"):
                 nuevo = {"lat": lat_l, "lon": lon_l, "nombre": nombre[:65], "clima": cl}
                 st.session_state.lugar_buscado = nuevo
                 # Agregar al historial (máx 3)
+                if not hasattr(st.session_state, "historial_busq"):
+                    st.session_state.historial_busq = []
                 hist = st.session_state.historial_busq
                 if not any(h["nombre"] == nuevo["nombre"] for h in hist):
                     hist.insert(0, nuevo)
@@ -990,6 +992,8 @@ with st.expander("🔍 Consultar condiciones en cualquier lugar de Montería"):
                     cl = clima_lugar(lat_l, lon_l)
                     nuevo = {"lat": lat_l, "lon": lon_l, "nombre": nombre[:65], "clima": cl}
                     st.session_state.lugar_buscado = nuevo
+                    if not hasattr(st.session_state, "historial_busq"):
+                        st.session_state.historial_busq = []
                     hist = st.session_state.historial_busq
                     if not any(h["nombre"] == nuevo["nombre"] for h in hist):
                         hist.insert(0, nuevo)
@@ -1004,7 +1008,13 @@ with st.expander("🔍 Consultar condiciones en cualquier lugar de Montería"):
         st.session_state.historial_busq = []
         st.rerun()
 
-    # Historial de búsquedas (acceso rápido)
+    # Garantizar que historial_busq existe siempre
+    if not hasattr(st.session_state, "historial_busq"):
+        st.session_state.historial_busq = []
+
+    # Historial de búsquedas (acceso rápido) — con get() seguro
+    if not hasattr(st.session_state, "historial_busq"):
+        st.session_state.historial_busq = []
     if st.session_state.historial_busq:
         hist_labels = [h["nombre"].split(",")[0] for h in st.session_state.historial_busq]
         st.markdown("<small style='color:#3a5a7a'>🕐 Búsquedas recientes:</small>", unsafe_allow_html=True)
