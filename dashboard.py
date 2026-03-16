@@ -461,53 +461,66 @@ LUGARES_MONTERIA = {
 @st.cache_data(ttl=604800)
 def buscar_lugar(texto):
     """Geocodifica un lugar en Montería.
-    Orden: 1) dict local  2) Photon API  3) Nominatim"""
+    Orden: 1) dict local  2) Geoapify  3) Photon  4) Nominatim"""
     texto_lower = texto.lower().strip()
 
-    # 1. Diccionario local — instantáneo, sin internet
+    # 1. Diccionario local — instantáneo
     for clave, (lat, lon, nombre) in LUGARES_MONTERIA.items():
         if clave in texto_lower or texto_lower in clave:
             return lat, lon, nombre
 
-    # 2. Photon (Komoot) — mejor cobertura Colombia, sin registro
+    # 2. Geoapify — mejor cobertura Colombia, 3000 búsquedas/día gratis
+    GEOAPIFY_KEY = st.secrets.get("GEOAPIFY_KEY", "c2e2caf4d58643f7a8113aa355ed2356")
     try:
         r = requests.get(
-            "https://photon.komoot.io/api/",
+            "https://api.geoapify.com/v1/geocode/search",
             params={
-                "q":     f"{texto} Montería Colombia",
-                "limit": 5,
-                "lat":   8.7479,   # bias hacia Montería
-                "lon":  -75.8814,
-                "zoom":  12,
+                "text":    f"{texto}, Montería, Córdoba, Colombia",
+                "apiKey":  GEOAPIFY_KEY,
+                "limit":   5,
+                "bias":    "proximity:8.7479,-75.8814",
+                "filter":  "countrycode:co",
+                "lang":    "es",
             },
             timeout=8
         ).json()
         features = r.get("features", [])
-        # Filtrar resultados dentro de Colombia
         for feat in features:
-            props = feat.get("properties", {})
-            country = props.get("country", "")
-            if "Colombia" in country or "colombia" in country.lower():
-                coords = feat["geometry"]["coordinates"]  # [lon, lat]
-                nombre = props.get("name", texto)
-                ciudad = props.get("city", props.get("state", ""))
-                display = f"{nombre}, {ciudad}" if ciudad else nombre
-                return float(coords[1]), float(coords[0]), display
-        # Si no hay resultados de Colombia, tomar el primero igual
+            props  = feat.get("properties", {})
+            coords = feat["geometry"]["coordinates"]  # [lon, lat]
+            nombre = props.get("formatted", texto)
+            # Preferir resultados cerca de Montería
+            lat_r, lon_r = float(coords[1]), float(coords[0])
+            if 8.60 <= lat_r <= 8.95 and -76.10 <= lon_r <= -75.70:
+                return lat_r, lon_r, nombre[:65]
+        # Si ninguno está en el bbox, tomar el primero
         if features:
             coords = features[0]["geometry"]["coordinates"]
-            nombre = features[0].get("properties", {}).get("name", texto)
-            return float(coords[1]), float(coords[0]), nombre
+            nombre = features[0].get("properties", {}).get("formatted", texto)
+            return float(coords[1]), float(coords[0]), nombre[:65]
     except Exception:
         pass
 
-    # 3. Nominatim como último respaldo
-    variantes = [
-        f"{texto}, Montería, Córdoba, Colombia",
-        f"{texto}, Montería, Colombia",
-        f"{texto}, Colombia",
-    ]
-    for query in variantes:
+    # 3. Photon como respaldo
+    try:
+        r = requests.get(
+            "https://photon.komoot.io/api/",
+            params={"q": f"{texto} Montería Colombia",
+                    "limit": 3, "lat": 8.7479, "lon": -75.8814},
+            timeout=8
+        ).json()
+        features = r.get("features", [])
+        for feat in features:
+            props  = feat.get("properties", {})
+            coords = feat["geometry"]["coordinates"]
+            if "Colombia" in props.get("country", ""):
+                nombre = props.get("name", texto)
+                return float(coords[1]), float(coords[0]), nombre
+    except Exception:
+        pass
+
+    # 4. Nominatim como último recurso
+    for query in [f"{texto}, Montería, Colombia", f"{texto}, Colombia"]:
         try:
             r = requests.get(
                 "https://nominatim.openstreetmap.org/search",
