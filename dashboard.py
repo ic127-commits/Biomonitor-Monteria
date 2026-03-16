@@ -997,7 +997,7 @@ with st.expander("🔍 Consultar condiciones en cualquier lugar de Montería"):
     # Input ancho completo — mejor en móvil
     texto = st.text_input(
         "",
-        placeholder="Ej: Universidad del Sinú, Barrio Colón, Hospital...",
+        placeholder="Ej: Universidad del Sinú, Calle 29 #5-42, Barrio Colón, Estadio Jaraguay...",
         label_visibility="collapsed"
     )
     # Botones en 2 columnas (touch-friendly)
@@ -1038,7 +1038,12 @@ with st.expander("🔍 Consultar condiciones en cualquier lugar de Montería"):
                     st.session_state.historial_busq = hist[:3]
                 st.rerun()
             else:
-                st.error("No encontrado. Prueba: 'unisinu', 'jaraguay', 'barrio colon'...")
+                st.error(
+                    "❌ No encontrado. Escribe el nombre más completo, por ejemplo:\n"
+                    "**'Universidad del Sinú'** en vez de 'unisinu' · "
+                    "**'Estadio Jaraguay'** · **'Barrio Colón'** · "
+                    "**'Calle 29 #5-42 Montería'**"
+                )
         else:
             st.warning("Ingresa un nombre de lugar.")
 
@@ -1094,7 +1099,7 @@ col_mapa, col_pred = st.columns([1.35, 1], gap="small")
 with col_mapa:
     tipo = st.radio(
         "Capa del mapa",
-        ["🛰️ Satelital", "🌑 Oscuro", "🗺️ Estándar"],
+        ["🗺️ Estándar", "🛰️ Satelital", "🌑 Oscuro"],
         horizontal=True,
         label_visibility="collapsed"
     )
