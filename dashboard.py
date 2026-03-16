@@ -277,7 +277,9 @@ def _fetch_clima():
         c, d = r.get("current", {}), r.get("daily", {})
         # lluvia_hoy: suma del día actual (más representativa que la instantánea)
         lluvia_sum_hoy = d.get("precipitation_sum", [0])[0] if d.get("precipitation_sum") else 0
-        prob_lluvia = d.get("precipitation_probability_max", [0]*7)
+        # prob lluvia: limpiar None → 0
+        prob_raw = d.get("precipitation_probability_max", [])
+        prob_lluvia = [int(p) if p is not None else 0 for p in prob_raw] if prob_raw else [0]*7
         return {
             "temp":       round(c.get("temperature_2m", 28.4), 1),
             "humedad":    c.get("relative_humidity_2m", 75),
@@ -457,28 +459,59 @@ LUGARES_MONTERIA = {
 
 @st.cache_data(ttl=604800)
 def buscar_lugar(texto):
-    """Geocodifica un lugar en Montería — dict local + Nominatim con variantes"""
+    """Geocodifica un lugar en Montería.
+    Orden: 1) dict local  2) Photon API  3) Nominatim"""
     texto_lower = texto.lower().strip()
 
-    # 1. Buscar en diccionario local primero (instantáneo)
+    # 1. Diccionario local — instantáneo, sin internet
     for clave, (lat, lon, nombre) in LUGARES_MONTERIA.items():
         if clave in texto_lower or texto_lower in clave:
             return lat, lon, nombre
 
-    # 2. Nominatim con múltiples variantes
+    # 2. Photon (Komoot) — mejor cobertura Colombia, sin registro
+    try:
+        r = requests.get(
+            "https://photon.komoot.io/api/",
+            params={
+                "q":     f"{texto} Montería Colombia",
+                "limit": 5,
+                "lat":   8.7479,   # bias hacia Montería
+                "lon":  -75.8814,
+                "zoom":  12,
+            },
+            timeout=8
+        ).json()
+        features = r.get("features", [])
+        # Filtrar resultados dentro de Colombia
+        for feat in features:
+            props = feat.get("properties", {})
+            country = props.get("country", "")
+            if "Colombia" in country or "colombia" in country.lower():
+                coords = feat["geometry"]["coordinates"]  # [lon, lat]
+                nombre = props.get("name", texto)
+                ciudad = props.get("city", props.get("state", ""))
+                display = f"{nombre}, {ciudad}" if ciudad else nombre
+                return float(coords[1]), float(coords[0]), display
+        # Si no hay resultados de Colombia, tomar el primero igual
+        if features:
+            coords = features[0]["geometry"]["coordinates"]
+            nombre = features[0].get("properties", {}).get("name", texto)
+            return float(coords[1]), float(coords[0]), nombre
+    except Exception:
+        pass
+
+    # 3. Nominatim como último respaldo
     variantes = [
         f"{texto}, Montería, Córdoba, Colombia",
         f"{texto}, Montería, Colombia",
-        f"{texto}, Córdoba, Colombia",
         f"{texto}, Colombia",
     ]
-    headers = {"User-Agent": "BioMonitorMonteria/2.0"}
     for query in variantes:
         try:
             r = requests.get(
                 "https://nominatim.openstreetmap.org/search",
                 params={"q": query, "format": "json", "limit": 1},
-                headers=headers,
+                headers={"User-Agent": "BioMonitorMonteria/2.0"},
                 timeout=8
             ).json()
             if r:
