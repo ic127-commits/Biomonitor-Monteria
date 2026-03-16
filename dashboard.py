@@ -15,9 +15,10 @@ warnings.filterwarnings("ignore")
 
 # ── Session state ─────────────────────────────────────────
 if "initialized" not in st.session_state:
-    st.session_state.initialized   = True
-    st.session_state.show_info     = False
-    st.session_state.lugar_buscado = None
+    st.session_state.initialized    = True
+    st.session_state.show_info      = False
+    st.session_state.lugar_buscado  = None
+    st.session_state.historial_busq = []  # últimos 3 lugares buscados
 
 st.set_page_config(
     page_title="BioMonitor Montería",
@@ -963,28 +964,60 @@ with st.expander("🔍 Consultar condiciones en cualquier lugar de Montería"):
 
     if buscar_click:
         if texto.strip():
-            with st.spinner("Buscando..."):
-                res = buscar_lugar(texto.strip())
-            if res:
-                lat_l, lon_l, nombre = res
+            # Primero buscar en diccionario local (sin spinner)
+            txt = texto.strip()
+            txt_lower = txt.lower()
+            resultado_local = None
+            for clave, (lat_d, lon_d, nom_d) in LUGARES_MONTERIA.items():
+                if clave in txt_lower or txt_lower in clave:
+                    resultado_local = (lat_d, lon_d, nom_d)
+                    break
+            if resultado_local:
+                lat_l, lon_l, nombre = resultado_local
                 cl = clima_lugar(lat_l, lon_l)
-                st.session_state.lugar_buscado = {
-                    "lat": lat_l, "lon": lon_l,
-                    "nombre": nombre[:65], "clima": cl
-                }
+                nuevo = {"lat": lat_l, "lon": lon_l, "nombre": nombre[:65], "clima": cl}
+                st.session_state.lugar_buscado = nuevo
+                # Agregar al historial (máx 3)
+                hist = st.session_state.historial_busq
+                if not any(h["nombre"] == nuevo["nombre"] for h in hist):
+                    hist.insert(0, nuevo)
+                    st.session_state.historial_busq = hist[:3]
             else:
-                st.error("No encontrado. Intenta con otro nombre.")
+                with st.spinner("Buscando..."):
+                    res = buscar_lugar(txt)
+                if res:
+                    lat_l, lon_l, nombre = res
+                    cl = clima_lugar(lat_l, lon_l)
+                    nuevo = {"lat": lat_l, "lon": lon_l, "nombre": nombre[:65], "clima": cl}
+                    st.session_state.lugar_buscado = nuevo
+                    hist = st.session_state.historial_busq
+                    if not any(h["nombre"] == nuevo["nombre"] for h in hist):
+                        hist.insert(0, nuevo)
+                        st.session_state.historial_busq = hist[:3]
+                else:
+                    st.error("No encontrado. Intenta con otro nombre.")
         else:
             st.warning("Ingresa un nombre de lugar.")
 
     if limpiar_click:
-        st.session_state.lugar_buscado = None
+        st.session_state.lugar_buscado  = None
+        st.session_state.historial_busq = []
         st.rerun()
+
+    # Historial de búsquedas (acceso rápido)
+    if st.session_state.historial_busq:
+        hist_labels = [h["nombre"].split(",")[0] for h in st.session_state.historial_busq]
+        st.markdown("<small style='color:#3a5a7a'>🕐 Búsquedas recientes:</small>", unsafe_allow_html=True)
+        hcols = st.columns(len(hist_labels), gap="small")
+        for i, (hcol, hlabel) in enumerate(zip(hcols, hist_labels)):
+            with hcol:
+                if st.button(f"📍 {hlabel}", use_container_width=True, key=f"hist_{i}"):
+                    st.session_state.lugar_buscado = st.session_state.historial_busq[i]
+                    st.rerun()
 
     if st.session_state.lugar_buscado:
         d = st.session_state.lugar_buscado
         st.success(f"📍 {d['nombre']}")
-        # 2×2 en vez de 1×4 — legible en cualquier pantalla
         b1, b2 = st.columns(2, gap="small")
         b3, b4 = st.columns(2, gap="small")
         for col, lbl, val in [
@@ -1119,7 +1152,48 @@ with col_mapa:
             color="#FF5252", fill=True, fill_opacity=0.18
         ).add_to(m)
 
-    # Leyenda del mapa
+    # ── Capa de probabilidad de lluvia por zonas ──────────
+    prob_hoy = clima.get("prob_lluvia", [0])[0] if clima.get("prob_lluvia") else 0
+    lluvia_mm = clima.get("lluvia_hoy", 0)
+
+    # Zonas de lluvia/calor según probabilidad actual
+    zonas_lluvia = [
+        # [lat, lon, peso] — zonas representativas de Montería
+        [8.7550, -75.8914, 1.0],  # Ronda del Sinú (zona húmeda)
+        [8.7480, -75.9000, 0.9],  # Zona occidental
+        [8.7750, -75.8870, 0.8],  # Norte río
+        [8.7280, -75.9050, 0.7],  # Sur río
+        [8.7600, -75.8700, 0.6],  # Centro-este
+        [8.7400, -75.8750, 0.5],  # Sur ciudad
+        [8.7800, -75.8600, 0.4],  # Norte ciudad
+    ]
+
+    if prob_hoy >= 20 or lluvia_mm > 0:
+        # Color según intensidad: azul claro (baja) → azul oscuro (alta)
+        if prob_hoy >= 60 or lluvia_mm > 5:
+            color_lluvia, opacidad = "#0066FF", 0.35
+            titulo_lluvia = f"🌧️ Lluvia probable ({prob_hoy}%)"
+        elif prob_hoy >= 30 or lluvia_mm > 0:
+            color_lluvia, opacidad = "#00AAFF", 0.22
+            titulo_lluvia = f"🌦️ Posible lluvia ({prob_hoy}%)"
+        else:
+            color_lluvia, opacidad = "#00CCFF", 0.12
+            titulo_lluvia = f"💧 Baja probabilidad ({prob_hoy}%)"
+
+        for lat_z, lon_z, peso in zonas_lluvia:
+            radio = int(1800 * peso)
+            folium.Circle(
+                [lat_z, lon_z],
+                radius=radio,
+                color=color_lluvia,
+                fill=True,
+                fill_color=color_lluvia,
+                fill_opacity=opacidad * peso,
+                weight=0,
+                tooltip=titulo_lluvia,
+            ).add_to(m)
+
+    # ── Leyenda del mapa
     m.get_root().html.add_child(folium.Element("""
     <div style="position:fixed;bottom:20px;left:20px;z-index:1000;
                 background:rgba(6,13,26,0.93);padding:10px 16px;
@@ -1130,7 +1204,8 @@ with col_mapa:
         &nbsp;<span style="color:#00E5C3">🟢</span> Calidad aire<br>
         <span style="color:#7B61FF">🟣</span> Fauna registrada
         &nbsp;<span style="color:#FF5252">🔴</span> Búsqueda<br>
-        <span style="color:#4FC3F7">━━</span> Cauce Río Sinú
+        <span style="color:#4FC3F7">━━</span> Cauce Río Sinú<br>
+        <span style="color:#00AAFF">🔵</span> Zona con lluvia
     </div>"""))
 
     st_folium(m, width=None, height=380, returned_objects=[])
