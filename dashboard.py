@@ -265,19 +265,27 @@ def _fetch_clima():
             "https://api.open-meteo.com/v1/forecast",
             params={
                 "latitude": 8.7479, "longitude": -75.8814,
-                "current": ["temperature_2m","relative_humidity_2m","precipitation","wind_speed_10m"],
-                "daily":   ["precipitation_sum","temperature_2m_max","temperature_2m_min"],
+                "current": ["temperature_2m","relative_humidity_2m",
+                            "precipitation","wind_speed_10m","rain"],
+                "daily":   ["precipitation_sum","temperature_2m_max",
+                            "temperature_2m_min","precipitation_probability_max",
+                            "rain_sum"],
                 "timezone": "America/Bogota",
                 "forecast_days": 7
             }, timeout=8
         ).json()
         c, d = r.get("current", {}), r.get("daily", {})
+        # lluvia_hoy: suma del día actual (más representativa que la instantánea)
+        lluvia_sum_hoy = d.get("precipitation_sum", [0])[0] if d.get("precipitation_sum") else 0
+        prob_lluvia = d.get("precipitation_probability_max", [0]*7)
         return {
             "temp":       round(c.get("temperature_2m", 28.4), 1),
             "humedad":    c.get("relative_humidity_2m", 75),
-            "lluvia_hoy": round(c.get("precipitation", 0), 1),
+            "lluvia_hoy": round(lluvia_sum_hoy, 1),
+            "lluvia_inst":round(c.get("precipitation", 0), 1),
             "viento":     round(c.get("wind_speed_10m", 12), 1),
             "lluvia_7d":  d.get("precipitation_sum", [0]*7),
+            "prob_lluvia":prob_lluvia,
             "temp_max":   d.get("temperature_2m_max", [32]*7),
             "temp_min":   d.get("temperature_2m_min", [23]*7),
             "fechas":     d.get("time", []),
@@ -285,8 +293,9 @@ def _fetch_clima():
         }
     except Exception:
         return {
-            "temp":28.4,"humedad":75,"lluvia_hoy":0,"viento":12,
-            "lluvia_7d":[2]*7,"temp_max":[32]*7,"temp_min":[23]*7,
+            "temp":28.4,"humedad":75,"lluvia_hoy":0,"lluvia_inst":0,"viento":12,
+            "lluvia_7d":[2]*7,"prob_lluvia":[10]*7,
+            "temp_max":[32]*7,"temp_min":[23]*7,
             "fechas":[],"ok":False
         }
 
@@ -359,7 +368,7 @@ def _fetch_ideam():
         "fuente": "Histórico"
     }
 
-@st.cache_data(ttl=1800)
+@st.cache_data(ttl=900)  # 15 min — datos más frescos
 def cargar_datos():
     """Carga paralela de clima, aire e IDEAM"""
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as ex:
@@ -371,7 +380,7 @@ def cargar_datos():
 # Diccionario de lugares conocidos de Montería (respaldo si Nominatim falla)
 LUGARES_MONTERIA = {
     # Universidades
-    "unisinu":            (8.7606, -75.8602, "Universidad del Sinú, Montería"),
+    "unisinu":            (8.7542, -75.8812, "Universidad del Sinú, Montería"),
     "unicordoba":         (8.7850, -75.8560, "Universidad de Córdoba, Montería"),
     "uniremington":       (8.7550, -75.8750, "Uniremington Montería"),
     # Hospitales
@@ -666,10 +675,16 @@ CAUCE_SINU_FALLBACK = [
 
 # ── Helpers de modelo ─────────────────────────────────────
 def nivel_rio(lluvia_7d, base=4.2):
-    """Simula predicción LSTM del nivel del río dado lluvia acumulada"""
+    """Simula predicción LSTM del nivel del río dado lluvia acumulada.
+    Incluye variación diaria natural del río y efecto de lluvia aguas arriba."""
     niveles, ant = [], base
-    for ll in lluvia_7d:
-        n = round(np.clip(ant * 0.88 + base * 0.12 + ll * 0.06, 0.5, 9.5), 2)
+    # Factor de variación natural diaria (mareas/escorrentía base)
+    variacion_base = [0.0, 0.05, -0.03, 0.08, -0.02, 0.06, -0.04]
+    for i, ll in enumerate(lluvia_7d):
+        var = variacion_base[i % len(variacion_base)]
+        # La lluvia tiene efecto rezagado (llega al río 1-2 días después)
+        lluvia_efecto = ll * 0.08 + (lluvia_7d[i-1] * 0.04 if i > 0 else 0)
+        n = round(np.clip(ant * 0.85 + base * 0.15 + lluvia_efecto + var, 0.5, 9.5), 2)
         niveles.append(n)
         ant = n
     return niveles
@@ -1090,9 +1105,11 @@ with col_pred:
     else:
         st.error(f"🔴 {rio_txt} — ¡Alerta máxima de inundación!")
 
+    prob_hoy = clima.get("prob_lluvia", [0])[0] if clima.get("prob_lluvia") else 0
     st.markdown(f"""
     <div class="stat-row">
         🌧️ Lluvia hoy: <b style="color:#e8f4ff">{clima['lluvia_hoy']} mm</b> &nbsp;·&nbsp;
+        🌂 Prob. lluvia: <b style="color:#4FC3F7">{prob_hoy}%</b> &nbsp;·&nbsp;
         💨 Viento: <b style="color:#e8f4ff">{clima['viento']} km/h</b> &nbsp;·&nbsp;
         🌡️ Máx: <b style="color:#e8f4ff">{clima['temp_max'][0]}°C</b><br>
         <small style="color:#3a5a7a">{fuente_rio}</small>
