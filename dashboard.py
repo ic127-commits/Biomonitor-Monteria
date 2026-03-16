@@ -377,35 +377,82 @@ def cargar_datos():
         fi = ex.submit(_fetch_ideam)
         return fc.result(), fa.result(), fi.result()
 
-# Diccionario de lugares conocidos de Montería (respaldo si Nominatim falla)
+# Diccionario de lugares conocidos de Montería
+# Coordenadas verificadas — respaldo instantáneo si Nominatim falla
 LUGARES_MONTERIA = {
     # Universidades
-    "unisinu":            (8.7542, -75.8812, "Universidad del Sinú, Montería"),
-    "unicordoba":         (8.7850, -75.8560, "Universidad de Córdoba, Montería"),
-    "uniremington":       (8.7550, -75.8750, "Uniremington Montería"),
-    # Hospitales
-    "hospital san jeronimo": (8.7512, -75.8738, "Hospital San Jerónimo, Montería"),
-    "san jeronimo":       (8.7512, -75.8738, "Hospital San Jerónimo, Montería"),
-    "ese camu":           (8.7480, -75.8700, "ESE CAMU, Montería"),
-    # Barrios / zonas
-    "ronda del sinu":     (8.7560, -75.8912, "Ronda del Sinú, Montería"),
-    "av primera":         (8.7560, -75.8912, "Avenida Primera, Montería"),
-    "centro":             (8.7550, -75.8814, "Centro, Montería"),
-    "bario colon":        (8.7480, -75.8780, "Barrio Colón, Montería"),
-    "barrio colon":       (8.7480, -75.8780, "Barrio Colón, Montería"),
-    "villa cielo":        (8.7350, -75.8650, "Villa Cielo, Montería"),
-    "edmundo lopez":      (8.7700, -75.8750, "Barrio Edmundo López, Montería"),
-    "el recreo":          (8.7735, -75.8695, "El Recreo, Montería"),
-    "la granja":          (8.7285, -75.9035, "La Granja, Montería"),
-    "pie del cerro":      (8.7600, -75.8700, "Pie del Cerro, Montería"),
-    # Lugares turísticos
-    "mercado central":    (8.7520, -75.8800, "Mercado Central, Montería"),
-    "parque simon bolivar":(8.7540, -75.8814, "Parque Simón Bolívar, Montería"),
-    "muelle turistico":   (8.7800, -75.8873, "Muelle Turístico del Sinú, Montería"),
-    "estadio jaraguay":   (8.7650, -75.8600, "Estadio Jaraguay, Montería"),
+    "unisinu":                  (8.7542, -75.8812, "Universidad del Sinú, Montería"),
+    "universidad del sinu":     (8.7542, -75.8812, "Universidad del Sinú, Montería"),
+    "unicordoba":               (8.7892, -75.8541, "Universidad de Córdoba, Montería"),
+    "universidad de cordoba":   (8.7892, -75.8541, "Universidad de Córdoba, Montería"),
+    "uniremington":             (8.7558, -75.8750, "Uniremington, Montería"),
+    "cecar":                    (8.7530, -75.8720, "CECAR, Montería"),
+    "sena":                     (8.7620, -75.8680, "SENA, Montería"),
+    "cun":                      (8.7545, -75.8790, "CUN Montería"),
+    # Hospitales y clínicas
+    "hospital san jeronimo":    (8.7495, -75.8742, "Hospital San Jerónimo, Montería"),
+    "san jeronimo":             (8.7495, -75.8742, "Hospital San Jerónimo, Montería"),
+    "clinica la esperanza":     (8.7550, -75.8770, "Clínica La Esperanza, Montería"),
+    "clinica monteria":         (8.7538, -75.8758, "Clínica Montería"),
+    "ese camu":                 (8.7480, -75.8700, "ESE CAMU, Montería"),
+    "hospital del sinu":        (8.7520, -75.8760, "Hospital del Sinú, Montería"),
+    "clinica del caribe":       (8.7562, -75.8715, "Clínica del Caribe, Montería"),
+    # Colegios
+    "liceo de monteria":        (8.7540, -75.8810, "Liceo de Montería"),
+    "inem":                     (8.7610, -75.8650, "INEM Lorenzo María Lleras, Montería"),
+    "colegio la salle":         (8.7530, -75.8800, "Colegio La Salle, Montería"),
+    # Barrios
+    "centro":                   (8.7550, -75.8814, "Centro de Montería"),
+    "barrio colon":             (8.7480, -75.8780, "Barrio Colón, Montería"),
+    "colon":                    (8.7480, -75.8780, "Barrio Colón, Montería"),
+    "ronda del sinu":           (8.7560, -75.8912, "Ronda del Sinú, Montería"),
+    "av primera":               (8.7560, -75.8912, "Avenida Primera, Montería"),
+    "avenida primera":          (8.7560, -75.8912, "Avenida Primera, Montería"),
+    "pie del cerro":            (8.7598, -75.8702, "Pie del Cerro, Montería"),
+    "edmundo lopez":            (8.7700, -75.8680, "Barrio Edmundo López, Montería"),
+    "el recreo":                (8.7735, -75.8695, "El Recreo, Montería"),
+    "la granja":                (8.7285, -75.9035, "La Granja, Montería"),
+    "villa cielo":              (8.7320, -75.8720, "Villa Cielo, Montería"),
+    "mocari":                   (8.7180, -75.8900, "Mocarí, Montería"),
+    "mocarí":                   (8.7180, -75.8900, "Mocarí, Montería"),
+    "camilo torres":            (8.7620, -75.8750, "Barrio Camilo Torres, Montería"),
+    "alto prado":               (8.7680, -75.8620, "Alto Prado, Montería"),
+    "la castellana":            (8.7720, -75.8580, "La Castellana, Montería"),
+    "boston":                   (8.7580, -75.8650, "Barrio Boston, Montería"),
+    "paris":                    (8.7640, -75.8580, "Barrio París, Montería"),
+    "santa fe":                 (8.7460, -75.8750, "Santa Fe, Montería"),
+    "simon bolivar":            (8.7500, -75.8820, "Simón Bolívar, Montería"),
+    "nueva granada":            (8.7430, -75.8760, "Nueva Granada, Montería"),
+    "los alpes":                (8.7750, -75.8540, "Los Alpes, Montería"),
+    "la victoria":              (8.7380, -75.8680, "La Victoria, Montería"),
+    "panzenu":                  (8.7420, -75.8700, "Panzenú, Montería"),
+    "panzenú":                  (8.7420, -75.8700, "Panzenú, Montería"),
+    "av circunvalar":           (8.7600, -75.8600, "Avenida Circunvalar, Montería"),
+    # Comercio y servicios
+    "mercado central":          (8.7512, -75.8795, "Mercado Central, Montería"),
+    "parque simon bolivar":     (8.7540, -75.8814, "Parque Simón Bolívar, Montería"),
+    "parque central":           (8.7540, -75.8814, "Parque Central, Montería"),
+    "muelle turistico":         (8.7800, -75.8873, "Muelle Turístico del Sinú, Montería"),
+    "estadio jaraguay":         (8.7648, -75.8588, "Estadio Jaraguay, Montería"),
+    "jaraguay":                 (8.7648, -75.8588, "Estadio Jaraguay, Montería"),
+    "buenavista":               (8.7558, -75.8548, "C.C. Buenavista, Montería"),
+    "centro comercial":         (8.7558, -75.8548, "C.C. Buenavista, Montería"),
+    "exito":                    (8.7540, -75.8700, "Éxito Montería"),
+    "homecenter":               (8.7620, -75.8520, "Homecenter Montería"),
+    "makro":                    (8.7580, -75.8480, "Makro Montería"),
+    "catedral":                 (8.7542, -75.8812, "Catedral San Jerónimo, Montería"),
+    "alcaldia":                 (8.7540, -75.8810, "Alcaldía de Montería"),
+    "gobernacion":              (8.7538, -75.8808, "Gobernación de Córdoba"),
+    "palacio de justicia":      (8.7535, -75.8815, "Palacio de Justicia, Montería"),
+    "terminal":                 (8.7420, -75.8650, "Terminal de Transportes, Montería"),
+    "terminal de transporte":   (8.7420, -75.8650, "Terminal de Transportes, Montería"),
     # Aeropuerto
-    "aeropuerto":         (8.8233, -75.8258, "Aeropuerto Los Garzones, Montería"),
-    "los garzones":       (8.8233, -75.8258, "Aeropuerto Los Garzones, Montería"),
+    "aeropuerto":               (8.8233, -75.8258, "Aeropuerto Los Garzones, Montería"),
+    "los garzones":             (8.8233, -75.8258, "Aeropuerto Los Garzones, Montería"),
+    # Puntos del río
+    "rio sinu":                 (8.7560, -75.8912, "Río Sinú, Montería"),
+    "puente segundo centenario":(8.7650, -75.8845, "Puente Segundo Centenario, Montería"),
+    "cienaga betanci":          (8.4000, -75.8667, "Ciénaga de Betancí, Córdoba"),
 }
 
 @st.cache_data(ttl=604800)
@@ -847,12 +894,19 @@ def _kpi_card(cls, label, val, badge_txt, badge_cls, fuente):
 k1, k2, k3 = st.columns(3, gap="small")
 with k1: _kpi_card("kpi-card",                "🌊 Nivel Río Sinú",  f"{niveles[0]} m",       rio_txt,                        rio_badge,     fuente_rio)
 with k2: _kpi_card("kpi-card kpi-card-blue",  "🌡️ Temperatura",     f"{clima['temp']} °C",   f"Humedad {clima['humedad']}%", "badge-blue",  "Open-Meteo · ahora")
-with k3: _kpi_card("kpi-card kpi-card-green", "💨 PM2.5",           f"{aire['pm25']} µg/m³", "✅ OMS < 15",                  "badge-green", "Open-Meteo · ahora")
+with k3:
+    prob = clima.get("prob_lluvia", [0])[0] if clima.get("prob_lluvia") else 0
+    _kpi_card("kpi-card kpi-card-blue", "🌧️ Lluvia hoy",
+              f"{clima['lluvia_hoy']} mm",
+              f"☔ Prob. {prob}%",
+              "badge-blue" if prob < 30 else "badge-yellow" if prob < 60 else "badge-red",
+              "Open-Meteo · ahora")
 
-# Fila 2 — 2 KPIs
-k4, k5 = st.columns(2, gap="small")
-with k4: _kpi_card("kpi-card",                "🌬️ AQI Europeo",    f"{aire['aqi']}",          aqi_txt,        aqi_badge,     "Índice europeo")
-with k5: _kpi_card("kpi-card kpi-card-purple","🦜 Especies GBIF",  "≥12",                    "Córdoba 2026", "badge-purple", "GBIF · Córdoba, CO")
+# Fila 2 — 3 KPIs
+k4, k5, k6 = st.columns(3, gap="small")
+with k4: _kpi_card("kpi-card kpi-card-green", "💨 PM2.5",           f"{aire['pm25']} µg/m³", "✅ OMS < 15",   "badge-green",  "Open-Meteo · ahora")
+with k5: _kpi_card("kpi-card",                "🌬️ AQI Europeo",    f"{aire['aqi']}",          aqi_txt,        aqi_badge,     "Índice europeo")
+with k6: _kpi_card("kpi-card kpi-card-purple","🦜 Especies GBIF",  "≥12",                    "Córdoba 2026", "badge-purple", "GBIF · Córdoba, CO")
 
 st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
