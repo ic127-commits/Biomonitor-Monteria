@@ -964,42 +964,36 @@ with st.expander("🔍 Consultar condiciones en cualquier lugar de Montería"):
 
     if buscar_click:
         if texto.strip():
-            # Primero buscar en diccionario local (sin spinner)
-            txt = texto.strip()
-            txt_lower = txt.lower()
-            resultado_local = None
+            txt     = texto.strip()
+            txt_low = txt.lower().strip()
+            if not hasattr(st.session_state, "historial_busq"):
+                st.session_state.historial_busq = []
+
+            # Paso 1: diccionario local instantáneo
+            lat_l, lon_l, nombre = None, None, None
             for clave, (lat_d, lon_d, nom_d) in LUGARES_MONTERIA.items():
-                if clave in txt_lower or txt_lower in clave:
-                    resultado_local = (lat_d, lon_d, nom_d)
+                if txt_low == clave or txt_low in clave or clave in txt_low:
+                    lat_l, lon_l, nombre = lat_d, lon_d, nom_d
                     break
-            if resultado_local:
-                lat_l, lon_l, nombre = resultado_local
-                cl = clima_lugar(lat_l, lon_l)
-                nuevo = {"lat": lat_l, "lon": lon_l, "nombre": nombre[:65], "clima": cl}
+
+            # Paso 2: API externa si no está en dict
+            if lat_l is None:
+                res = buscar_lugar(txt)
+                if res:
+                    lat_l, lon_l, nombre = res
+
+            if lat_l is not None:
+                cl    = clima_lugar(lat_l, lon_l)
+                nuevo = {"lat": lat_l, "lon": lon_l,
+                         "nombre": nombre[:65], "clima": cl}
                 st.session_state.lugar_buscado = nuevo
-                # Agregar al historial (máx 3)
-                if not hasattr(st.session_state, "historial_busq"):
-                    st.session_state.historial_busq = []
                 hist = st.session_state.historial_busq
                 if not any(h["nombre"] == nuevo["nombre"] for h in hist):
                     hist.insert(0, nuevo)
                     st.session_state.historial_busq = hist[:3]
+                st.rerun()
             else:
-                with st.spinner("Buscando..."):
-                    res = buscar_lugar(txt)
-                if res:
-                    lat_l, lon_l, nombre = res
-                    cl = clima_lugar(lat_l, lon_l)
-                    nuevo = {"lat": lat_l, "lon": lon_l, "nombre": nombre[:65], "clima": cl}
-                    st.session_state.lugar_buscado = nuevo
-                    if not hasattr(st.session_state, "historial_busq"):
-                        st.session_state.historial_busq = []
-                    hist = st.session_state.historial_busq
-                    if not any(h["nombre"] == nuevo["nombre"] for h in hist):
-                        hist.insert(0, nuevo)
-                        st.session_state.historial_busq = hist[:3]
-                else:
-                    st.error("No encontrado. Intenta con otro nombre.")
+                st.error("No encontrado. Prueba: 'unisinu', 'jaraguay', 'barrio colon'...")
         else:
             st.warning("Ingresa un nombre de lugar.")
 
