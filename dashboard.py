@@ -473,67 +473,96 @@ LUGARES_MONTERIA = {
 }
 
 def buscar_lugar(texto):
-    """Geocodifica con Geoapify — sin caché para siempre obtener resultados frescos."""
+    """Geocodifica un lugar — replica la lógica _buildSearchVariants de Flutter.
+    Orden: 1) dict local exacto  2) Geoapify  3) Nominatim con variantes"""
+
     texto_lower = texto.lower().strip()
 
-    # 1. Diccionario local — instantáneo para lugares muy comunes
+    # ── 1. Diccionario local (coincidencia exacta o parcial) ──────────────
     for clave, (lat, lon, nombre) in LUGARES_MONTERIA.items():
-        if clave == texto_lower:  # solo coincidencia exacta
+        if clave == texto_lower or clave in texto_lower or texto_lower in clave:
             return lat, lon, nombre
 
-    # 2. Geoapify — motor principal, conoce todas las calles y lugares de Colombia
+    # ── 2. Construir variantes de búsqueda (igual que Flutter) ────────────
+    def build_variants(q):
+        variants = []
+        q = q.strip()
+        # Variante base con Montería
+        variants.append(f"{q}, Montería, Córdoba, Colombia")
+        variants.append(f"{q}, Montería, Colombia")
+        variants.append(f"{q}, Córdoba, Colombia")
+        variants.append(f"{q}, Colombia")
+        # Sin tildes/acentos como variante adicional
+        import unicodedata
+        q_norm = unicodedata.normalize('NFD', q)
+        q_ascii = ''.join(c for c in q_norm if unicodedata.category(c) != 'Mn')
+        if q_ascii != q:
+            variants.append(f"{q_ascii}, Montería, Colombia")
+            variants.append(f"{q_ascii}, Colombia")
+        return variants
+
+    variantes = build_variants(texto)
+
+    # ── 3. Geoapify (mejor cobertura Colombia) ────────────────────────────
     try:
         GEOAPIFY_KEY = st.secrets.get("GEOAPIFY_KEY", "c2e2caf4d58643f7a8113aa355ed2356")
-        # Intentar primero con "Montería" explícito
-        for query in [
-            f"{texto}, Montería, Córdoba, Colombia",
-            f"{texto}, Colombia",
-        ]:
-            r = requests.get(
-                "https://api.geoapify.com/v1/geocode/search",
-                params={
-                    "text":   query,
-                    "apiKey": GEOAPIFY_KEY,
-                    "limit":  5,
-                    "lang":   "es",
-                    "filter": "rect:-76.10,8.60,-75.70,8.95",  # bbox Montería
-                },
-                timeout=10
-            ).json()
-            features = r.get("features", [])
-            if features:
-                # Tomar el resultado con mayor confianza (rank)
-                best = max(features,
-                    key=lambda f: f.get("properties", {}).get("rank", {}).get("confidence", 0)
-                )
-                coords  = best["geometry"]["coordinates"]
-                props   = best.get("properties", {})
-                nombre  = props.get("formatted", texto)
-                lat_r   = float(coords[1])
-                lon_r   = float(coords[0])
-                # Verificar que está dentro de Colombia
-                if 8.50 <= lat_r <= 9.00 and -76.20 <= lon_r <= -75.60:
-                    return lat_r, lon_r, nombre[:70]
+        r = requests.get(
+            "https://api.geoapify.com/v1/geocode/search",
+            params={
+                "text":   variantes[0],  # "lugar, Montería, Córdoba, Colombia"
+                "apiKey": GEOAPIFY_KEY,
+                "limit":  5,
+                "lang":   "es",
+                "filter": "rect:-76.20,8.50,-75.60,9.00",
+            },
+            timeout=10
+        ).json()
+        features = r.get("features", [])
+        if features:
+            best = max(features,
+                key=lambda f: f.get("properties", {}).get("rank", {}).get("confidence", 0)
+            )
+            coords = best["geometry"]["coordinates"]
+            props  = best.get("properties", {})
+            lat_r, lon_r = float(coords[1]), float(coords[0])
+            nombre = props.get("formatted", texto)
+            if 8.50 <= lat_r <= 9.00 and -76.20 <= lon_r <= -75.60:
+                return lat_r, lon_r, nombre[:70]
     except Exception:
         pass
 
-    # 3. Nominatim como respaldo final
-    try:
-        r = requests.get(
-            "https://nominatim.openstreetmap.org/search",
-            params={
-                "q":      f"{texto}, Montería, Córdoba, Colombia",
-                "format": "json",
-                "limit":  1,
-                "countrycodes": "co",
-            },
-            headers={"User-Agent": "BioMonitorMonteria/2.0"},
-            timeout=8
-        ).json()
-        if r:
-            return float(r[0]["lat"]), float(r[0]["lon"]), r[0]["display_name"]
-    except Exception:
-        pass
+    # ── 4. Nominatim con TODAS las variantes (igual que Flutter) ─────────
+    headers = {"User-Agent": "BioMonitorMonteria/2.0 (contacto@biomonitor.co)"}
+    for query in variantes:
+        try:
+            r = requests.get(
+                "https://nominatim.openstreetmap.org/search",
+                params={
+                    "q":            query,
+                    "format":       "json",
+                    "limit":        3,
+                    "addressdetails": 1,
+                    "countrycodes": "co",
+                },
+                headers=headers,
+                timeout=8
+            ).json()
+            if r:
+                # Preferir resultado más cercano a Montería
+                mejor = None
+                min_dist = float("inf")
+                for res in r:
+                    lat_r = float(res["lat"])
+                    lon_r = float(res["lon"])
+                    # Distancia al centro de Montería
+                    dist = ((lat_r - 8.7479)**2 + (lon_r + 75.8814)**2) ** 0.5
+                    if dist < min_dist:
+                        min_dist = dist
+                        mejor = res
+                if mejor:
+                    return float(mejor["lat"]), float(mejor["lon"]), mejor["display_name"][:70]
+        except Exception:
+            continue
 
     return None
 
