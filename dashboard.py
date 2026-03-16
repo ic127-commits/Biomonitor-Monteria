@@ -381,33 +381,34 @@ def cargar_datos():
         return fc.result(), fa.result(), fi.result()
 
 # Diccionario de lugares conocidos de Montería
-# Coordenadas verificadas — respaldo instantáneo si Nominatim falla
+# Coordenadas verificadas con OpenStreetMap + direcciones oficiales
 LUGARES_MONTERIA = {
-    # Universidades
-    "unisinu":                  (8.7542, -75.8812, "Universidad del Sinú, Montería"),
-    "universidad del sinu":     (8.7542, -75.8812, "Universidad del Sinú, Montería"),
+    # ── Universidades (coordenadas verificadas) ───────────
+    "unisinu":                  (8.7638, -75.9018, "Universidad del Sinú, Montería"),
+    "universidad del sinu":     (8.7638, -75.9018, "Universidad del Sinú, Montería"),
+    "unisinú":                  (8.7638, -75.9018, "Universidad del Sinú, Montería"),
     "unicordoba":               (8.7892, -75.8541, "Universidad de Córdoba, Montería"),
     "universidad de cordoba":   (8.7892, -75.8541, "Universidad de Córdoba, Montería"),
+    "upb":                      (8.7980, -75.8650, "Universidad Pontificia Bolivariana, Montería"),
+    "universidad pontificia":   (8.7980, -75.8650, "UPB Montería"),
     "uniremington":             (8.7558, -75.8750, "Uniremington, Montería"),
     "cecar":                    (8.7530, -75.8720, "CECAR, Montería"),
     "sena":                     (8.7620, -75.8680, "SENA, Montería"),
     "cun":                      (8.7545, -75.8790, "CUN Montería"),
-    # Hospitales y clínicas
+    # ── Hospitales y clínicas ──────────────────────────────
     "hospital san jeronimo":    (8.7495, -75.8742, "Hospital San Jerónimo, Montería"),
     "san jeronimo":             (8.7495, -75.8742, "Hospital San Jerónimo, Montería"),
     "clinica la esperanza":     (8.7550, -75.8770, "Clínica La Esperanza, Montería"),
-    "clinica monteria":         (8.7538, -75.8758, "Clínica Montería"),
     "ese camu":                 (8.7480, -75.8700, "ESE CAMU, Montería"),
     "hospital del sinu":        (8.7520, -75.8760, "Hospital del Sinú, Montería"),
     "clinica del caribe":       (8.7562, -75.8715, "Clínica del Caribe, Montería"),
-    # Colegios
-    "liceo de monteria":        (8.7540, -75.8810, "Liceo de Montería"),
-    "inem":                     (8.7610, -75.8650, "INEM Lorenzo María Lleras, Montería"),
-    "colegio la salle":         (8.7530, -75.8800, "Colegio La Salle, Montería"),
-    # Barrios
+    # ── Barrios (coordenadas verificadas OSM) ─────────────
     "centro":                   (8.7550, -75.8814, "Centro de Montería"),
     "barrio colon":             (8.7480, -75.8780, "Barrio Colón, Montería"),
     "colon":                    (8.7480, -75.8780, "Barrio Colón, Montería"),
+    "juan xxiii":               (8.7640, -75.9010, "Barrio Juan XXIII, Montería"),
+    "alamedas":                 (8.7720, -75.8620, "Alamedas del Sinú, Montería"),
+    "alamedas del sinu":        (8.7720, -75.8620, "Alamedas del Sinú, Montería"),
     "ronda del sinu":           (8.7560, -75.8912, "Ronda del Sinú, Montería"),
     "av primera":               (8.7560, -75.8912, "Avenida Primera, Montería"),
     "avenida primera":          (8.7560, -75.8912, "Avenida Primera, Montería"),
@@ -416,8 +417,8 @@ LUGARES_MONTERIA = {
     "el recreo":                (8.7735, -75.8695, "El Recreo, Montería"),
     "la granja":                (8.7285, -75.9035, "La Granja, Montería"),
     "villa cielo":              (8.7320, -75.8720, "Villa Cielo, Montería"),
-    "mocari":                   (8.7180, -75.8900, "Mocarí, Montería"),
-    "mocarí":                   (8.7180, -75.8900, "Mocarí, Montería"),
+    "mocari":                   (8.7980, -75.8660, "Mocarí, Montería"),
+    "mocarí":                   (8.7980, -75.8660, "Mocarí, Montería"),
     "camilo torres":            (8.7620, -75.8750, "Barrio Camilo Torres, Montería"),
     "alto prado":               (8.7680, -75.8620, "Alto Prado, Montería"),
     "la castellana":            (8.7720, -75.8580, "La Castellana, Montería"),
@@ -431,15 +432,25 @@ LUGARES_MONTERIA = {
     "panzenu":                  (8.7420, -75.8700, "Panzenú, Montería"),
     "panzenú":                  (8.7420, -75.8700, "Panzenú, Montería"),
     "av circunvalar":           (8.7600, -75.8600, "Avenida Circunvalar, Montería"),
-    # Comercio y servicios
+    "buenavista":               (8.7510, -75.8480, "Buenavista, Montería"),
+    "chuchurubi":               (8.7460, -75.8820, "Chuchurubi, Montería"),
+    "cantabria":                (8.7750, -75.8620, "Cantabria, Montería"),
+    "la ceiba":                 (8.7680, -75.8700, "La Ceiba, Montería"),
+    "el edén":                  (8.7800, -75.8580, "El Edén, Montería"),
+    "el eden":                  (8.7800, -75.8580, "El Edén, Montería"),
+    "granada":                  (8.7530, -75.8650, "Granada, Montería"),
+    "costa de oro":             (8.7460, -75.8650, "Costa de Oro, Montería"),
+    "el ceibal":                (8.7820, -75.8540, "El Ceibal, Montería"),
+    "bosques de sevilla":       (8.7780, -75.8600, "Bosques de Sevilla, Montería"),
+    # ── Comercio y servicios ──────────────────────────────
     "mercado central":          (8.7512, -75.8795, "Mercado Central, Montería"),
     "parque simon bolivar":     (8.7540, -75.8814, "Parque Simón Bolívar, Montería"),
     "parque central":           (8.7540, -75.8814, "Parque Central, Montería"),
     "muelle turistico":         (8.7800, -75.8873, "Muelle Turístico del Sinú, Montería"),
     "estadio jaraguay":         (8.7648, -75.8588, "Estadio Jaraguay, Montería"),
     "jaraguay":                 (8.7648, -75.8588, "Estadio Jaraguay, Montería"),
-    "buenavista":               (8.7558, -75.8548, "C.C. Buenavista, Montería"),
-    "centro comercial":         (8.7558, -75.8548, "C.C. Buenavista, Montería"),
+    "cc buenavista":            (8.7510, -75.8480, "C.C. Buenavista, Montería"),
+    "centro comercial buenavista": (8.7510, -75.8480, "C.C. Buenavista, Montería"),
     "exito":                    (8.7540, -75.8700, "Éxito Montería"),
     "homecenter":               (8.7620, -75.8520, "Homecenter Montería"),
     "makro":                    (8.7580, -75.8480, "Makro Montería"),
@@ -449,10 +460,13 @@ LUGARES_MONTERIA = {
     "palacio de justicia":      (8.7535, -75.8815, "Palacio de Justicia, Montería"),
     "terminal":                 (8.7420, -75.8650, "Terminal de Transportes, Montería"),
     "terminal de transporte":   (8.7420, -75.8650, "Terminal de Transportes, Montería"),
-    # Aeropuerto
+    "inem":                     (8.7610, -75.8650, "INEM Lorenzo María Lleras, Montería"),
+    "liceo de monteria":        (8.7540, -75.8810, "Liceo de Montería"),
+    "colegio la salle":         (8.7530, -75.8800, "Colegio La Salle, Montería"),
+    # ── Aeropuerto ────────────────────────────────────────
     "aeropuerto":               (8.8233, -75.8258, "Aeropuerto Los Garzones, Montería"),
     "los garzones":             (8.8233, -75.8258, "Aeropuerto Los Garzones, Montería"),
-    # Puntos del río
+    # ── Puntos del río ────────────────────────────────────
     "rio sinu":                 (8.7560, -75.8912, "Río Sinú, Montería"),
     "puente segundo centenario":(8.7650, -75.8845, "Puente Segundo Centenario, Montería"),
     "cienaga betanci":          (8.4000, -75.8667, "Ciénaga de Betancí, Córdoba"),
