@@ -4,7 +4,9 @@ import numpy as np
 import folium
 from streamlit_folium import st_folium
 import matplotlib.pyplot as plt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone, UTC
+from zoneinfo import ZoneInfo
+TZ_COL = ZoneInfo('America/Bogota')  # UTC-5 Colombia
 from PIL import Image
 import requests
 import concurrent.futures
@@ -352,7 +354,7 @@ def _fetch_ideam():
     # Capa 3: fallback histórico
     return {
         "nivel":  4.2,
-        "fecha":  datetime.today().strftime("%Y-%m-%d"),
+        "fecha":  datetime.now(TZ_COL).strftime("%Y-%m-%d"),
         "ok":     False,
         "fuente": "Histórico"
     }
@@ -368,19 +370,27 @@ def cargar_datos():
 
 @st.cache_data(ttl=604800)
 def buscar_lugar(texto):
-    """Geocodifica un lugar en Montería vía Nominatim"""
-    try:
-        r = requests.get(
-            "https://nominatim.openstreetmap.org/search",
-            params={"q": f"{texto}, Montería, Córdoba, Colombia", "format": "json", "limit": 1},
-            headers={"User-Agent": "BioMonitorMonteria/2.0"},
-            timeout=8
-        ).json()
-        if r:
-            return float(r[0]["lat"]), float(r[0]["lon"]), r[0]["display_name"]
-        return None
-    except Exception:
-        return None
+    """Geocodifica un lugar en Montería vía Nominatim — intenta múltiples variantes"""
+    variantes = [
+        f"{texto}, Montería, Córdoba, Colombia",
+        f"{texto}, Montería, Colombia",
+        f"{texto}, Córdoba, Colombia",
+        f"{texto}, Colombia",
+    ]
+    headers = {"User-Agent": "BioMonitorMonteria/2.0"}
+    for query in variantes:
+        try:
+            r = requests.get(
+                "https://nominatim.openstreetmap.org/search",
+                params={"q": query, "format": "json", "limit": 1},
+                headers=headers,
+                timeout=8
+            ).json()
+            if r:
+                return float(r[0]["lat"]), float(r[0]["lon"]), r[0]["display_name"]
+        except Exception:
+            continue
+    return None
 
 @st.cache_data(ttl=1800)
 def clima_lugar(lat, lon):
@@ -682,7 +692,7 @@ niveles = nivel_rio(clima["lluvia_7d"], base=nivel_base)
 if clima["fechas"]:
     dias = [datetime.strptime(f, "%Y-%m-%d").strftime("%d %b") for f in clima["fechas"]]
 else:
-    dias = [(datetime.today() + timedelta(days=i)).strftime("%d %b") for i in range(7)]
+    dias = [(datetime.now(TZ_COL) + timedelta(days=i)).strftime("%d %b") for i in range(7)]
 
 rio_txt, rio_badge, rio_color = alerta_rio(niveles[0])
 aqi_txt, aqi_badge = cat_aqi(aire["aqi"])
@@ -733,8 +743,8 @@ with col_btns:
                 margin:6px 0;padding:5px 0;
                 border-top:1px solid rgba(0,229,195,0.08);
                 border-bottom:1px solid rgba(0,229,195,0.08)'>
-        Última actualización: <b style="color:#4FC3F7">{datetime.now().strftime('%H:%M')}</b>
-        &nbsp;·&nbsp; {datetime.now().strftime('%d/%m/%Y')}
+        Última actualización: <b style="color:#4FC3F7">{datetime.now(TZ_COL).strftime('%H:%M')}</b>
+        &nbsp;·&nbsp; {datetime.now(TZ_COL).strftime('%d/%m/%Y')}
     </div>""", unsafe_allow_html=True)
 
     # Toggle info
@@ -1212,7 +1222,7 @@ st.markdown(f"""
             border-top:1px solid rgba(0,229,195,0.08);
             margin-top:14px;line-height:2'>
     <b style='color:#00E5C3;font-size:0.9rem'>BioMonitor Montería</b>
-    &nbsp;·&nbsp; {datetime.now().strftime('%d/%m/%Y %H:%M')}
+    &nbsp;·&nbsp; {datetime.now(TZ_COL).strftime('%d/%m/%Y %H:%M')}
     &nbsp;·&nbsp; Open-Meteo · IDEAM · GBIF
     &nbsp;·&nbsp; LSTM + MobileNetV2
     &nbsp;·&nbsp; <b style='color:#00E5C3'>© Ivan Contreras</b>
