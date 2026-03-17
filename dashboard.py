@@ -799,9 +799,14 @@ with col_mapa:
         alerta_lbl,_,_ = alerta_rio(niveles[idx])
         folium.Marker([lat,lon],
             popup=folium.Popup(
-                f"<b>🌊 {nombre}</b><br>Nivel: <b>{niveles[idx]}m</b><br>Estado: {alerta_lbl}",
-                max_width=230),
-            tooltip=f"🌊 {nombre}",
+                f"<b>🌊 {nombre}</b><br>"
+                f"📊 Nivel actual: <b>{niveles[idx]}m</b><br>"
+                f"🔔 Estado: <b>{alerta_lbl}</b><br>"
+                f"📡 Fuente: {fuente_rio}",
+                max_width=260),
+            tooltip=folium.Tooltip(
+                f"🌊 {nombre} · {niveles[idx]}m · {alerta_lbl}",
+                sticky=True),
             icon=folium.Icon(color="blue",icon="tint",prefix="fa")
         ).add_to(g_rio)
 
@@ -911,27 +916,46 @@ with col_mapa:
 
     # ── Estaciones aire ────────────────────────────────────
     for lat,lon,nombre,txt in [
-        (8.7550,-75.8750,"💨 Estación Centro",f"PM2.5: {aire['pm25']} µg/m³ · AQI: {aire['aqi']}"),
-        (8.7350,-75.8650,"💨 Estación Sur",   f"PM10: {aire['pm10']} µg/m³ · NO₂: {aire['no2']} µg/m³"),
+        (8.7550,-75.8750,"💨 Estación Centro",
+         f"PM2.5: {aire['pm25']} µg/m³<br>AQI: {aire['aqi']}<br>NO₂: {aire['no2']} µg/m³"),
+        (8.7350,-75.8650,"💨 Estación Sur",
+         f"PM10: {aire['pm10']} µg/m³<br>PM2.5: {aire['pm25']} µg/m³<br>Viento: {clima['viento']} km/h"),
     ]:
         folium.Marker([lat,lon],
-            popup=folium.Popup(f"<b>{nombre}</b><br>{txt}",max_width=220),
-            tooltip=nombre,
+            popup=folium.Popup(
+                f"<b>{nombre}</b><br>{txt}<br>📡 Open-Meteo · tiempo real",
+                max_width=230),
+            tooltip=folium.Tooltip(nombre, sticky=True),
             icon=folium.Icon(color="green",icon="cloud",prefix="fa")
         ).add_to(g_aire)
 
     # ── Fauna ──────────────────────────────────────────────
-    for lat,lon,nombre,txt in [
-        (8.7560,-75.8912,"🦎 Iguana iguana",         "Ronda del Sinú · 12 registros"),
-        (8.7735,-75.8695,"🐦 Leptotila verreauxi",   "Norte · 5 registros"),
-        (8.7800,-75.8873,"🦆 Cairina moschata",      "Muelle · 3 registros"),
-        (8.7454,-75.8888,"🌺 Heliconia psittacorum", "Campus UniSinú · 8 registros"),
-        (8.7118,-75.8276,"🐢 Chelonoidis carbonarius","Zona sur · 2 registros"),
-    ]:
+    FAUNA_DATA = [
+        (8.7560,-75.8912,"🦎 Iguana iguana","Iguana verde",
+         "Ronda del Sinú","12 registros GBIF","No evaluado"),
+        (8.7735,-75.8695,"🐦 Leptotila verreauxi","Paloma guarumera",
+         "Ronda Norte","5 registros GBIF","LC"),
+        (8.7800,-75.8873,"🦆 Cairina moschata","Pato real",
+         "Muelle Turístico","3 registros GBIF","LC"),
+        (8.7454,-75.8888,"🌺 Heliconia psittacorum","Heliconia de loro",
+         "Campus UniSinú","8 registros GBIF","No evaluado"),
+        (8.7118,-75.8276,"🐢 Chelonoidis carbonarius","Morrocoy",
+         "Zona sur","2 registros GBIF","Vulnerable"),
+    ]
+    for lat,lon,especie,nombre_com,zona,registros,estado in FAUNA_DATA:
+        color_estado = "red" if estado=="Vulnerable" else "purple"
         folium.Marker([lat,lon],
-            popup=folium.Popup(f"<b>{nombre}</b><br>{txt}",max_width=220),
-            tooltip=nombre,
-            icon=folium.Icon(color="purple",icon="paw",prefix="fa")
+            popup=folium.Popup(
+                f"<b>{especie}</b><br>"
+                f"🏷️ Nombre común: <b>{nombre_com}</b><br>"
+                f"📍 Zona: {zona}<br>"
+                f"📊 {registros}<br>"
+                f"🔴 Estado IUCN: {estado}",
+                max_width=240),
+            tooltip=folium.Tooltip(
+                f"<b>{especie}</b><br>{nombre_com} · {zona}",
+                sticky=True),
+            icon=folium.Icon(color=color_estado, icon="paw", prefix="fa")
         ).add_to(g_fauna)
 
     # ── Agregar capas y control ────────────────────────────
@@ -939,7 +963,7 @@ with col_mapa:
         g.add_to(m)
     folium.LayerControl(collapsed=False,position="topright").add_to(m)
 
-    st_folium(m, width=None, height=420, returned_objects=[])
+    st_folium(m, width=None, height=460, use_container_width=True)
 
 with col_pred:
     st.markdown('<div class="section-header">🌊 Predicción 7 días · LSTM</div>', unsafe_allow_html=True)
