@@ -174,7 +174,7 @@ html, body, [data-testid="stAppViewContainer"] {
 }
 
 /* ── Fuente tag ──────────────────────────────────────── */
-.fuente-tag { font-size:0.67rem; color:#888780; margin-top:4px; }
+.fuente-tag { font-size:0.67rem; color:#5F5E5A; margin-top:4px; }
 
 /* ── Copyright ───────────────────────────────────────── */
 .copyright {
@@ -753,7 +753,7 @@ html, body, [data-testid="stAppViewContainer"] {
 }
 
 /* ── Fuente tag ──────────────────────────────────────── */
-.fuente-tag { font-size:0.67rem; color:#888780; margin-top:4px; }
+.fuente-tag { font-size:0.67rem; color:#5F5E5A; margin-top:4px; }
 
 /* ── Copyright ───────────────────────────────────────── */
 .copyright {
@@ -1239,12 +1239,12 @@ st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
 col_hero, col_estado = st.columns([3, 1], gap="medium")
 
 with col_hero:
-    # ── Logo grande ────────────────────────────────────────
+    # ── Logo centrado ──────────────────────────────────────
     try:
         logo_img = Image.open("Biomotorlogo.png")
-        col_logo_img, _ = st.columns([0.22, 1], gap="small")
+        _, col_logo_img, _ = st.columns([0.3, 1, 3], gap="small")
         with col_logo_img:
-            st.image(logo_img, width=200)
+            st.image(logo_img, width=220)
     except Exception:
         st.markdown("""
         <div class="hero-banner">
@@ -2548,9 +2548,9 @@ with tab_alertas:
             <div class="info-card">
                 <span class="badge {badge_color}">{zona}</span>
                 <b style="margin-left:8px">{barrios}</b><br>
-                <span style="color:#888780;font-size:0.8rem">📍 {ubicacion}</span><br>
-                <span style="color:#5F5E5A;font-size:0.82rem">📊 {estado_txt}</span><br>
-                <span style="color:#888780;font-size:0.78rem">💡 {accion}</span>
+                <span style="color:#444441;font-size:0.82rem">📍 {ubicacion}</span><br>
+                <span style="color:#2C2C2A;font-size:0.82rem;font-weight:500">📊 {estado_txt}</span><br>
+                <span style="color:#444441;font-size:0.8rem">💡 {accion}</span>
             </div>""", unsafe_allow_html=True)
         st.markdown('<div class="info-card">📞 <b>Emergencias:</b> Defensa Civil 144 · Bomberos 119 · Cruz Roja 132</div>', unsafe_allow_html=True)
 
