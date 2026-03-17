@@ -1239,31 +1239,16 @@ st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
 col_hero, col_estado = st.columns([3, 1], gap="medium")
 
 with col_hero:
-    # ── Card título con logo ──────────────────────────────
+    # ── Logo grande ────────────────────────────────────────
     try:
         logo_img = Image.open("Biomotorlogo.png")
-        col_logo_img, col_hero_txt = st.columns([0.22, 1], gap="small")
+        col_logo_img, _ = st.columns([0.22, 1], gap="small")
         with col_logo_img:
-            st.image(logo_img, width=155)
-        with col_hero_txt:
-            st.markdown("""
-            <div style="background:#FFFFFF;border:0.5px solid #D3D1C7;
-                        border-radius:12px;padding:16px 20px;height:100%;
-                        display:flex;flex-direction:column;justify-content:center">
-                <div style="font-size:1.55rem;font-weight:700;color:#2C2C2A;line-height:1.2">
-                    BioMonitor Montería
-                </div>
-                <div style="font-size:0.85rem;color:#5F5E5A;margin-top:4px">
-                    Plataforma de monitoreo ambiental · Córdoba, Colombia
-                </div>
-            </div>""", unsafe_allow_html=True)
+            st.image(logo_img, width=200)
     except Exception:
         st.markdown("""
         <div class="hero-banner">
             <div class="hero-title">🌿 BioMonitor Montería</div>
-            <div style="font-size:0.85rem;color:#5F5E5A">
-                Plataforma de monitoreo ambiental · Córdoba, Colombia
-            </div>
         </div>""", unsafe_allow_html=True)
 
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
@@ -1670,19 +1655,25 @@ with tab_mapa:
 
         tipo = st.session_state.mapa_tipo
         if tipo == "Satelital":
-            tiles = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            tiles = "Esri.WorldImagery"
             attr  = "Tiles © Esri"
         elif tipo == "Oscuro":
             tiles, attr = "CartoDB dark_matter", "© CartoDB"
         else:
             tiles, attr = "OpenStreetMap", "© OpenStreetMap contributors"
     
-        m = folium.Map(
-            location=[8.7700, -75.8750],
-            zoom_start=13,
-            tiles=tiles, attr=attr,
-            prefer_canvas=True
-        )
+        if tipo == "Satelital":
+            m = folium.Map(location=[8.7700, -75.8750], zoom_start=13,
+                           tiles=None, prefer_canvas=True)
+            folium.TileLayer(
+                tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+                attr="Tiles © Esri",
+                name="Satelital",
+                overlay=False, control=True
+            ).add_to(m)
+        else:
+            m = folium.Map(location=[8.7700, -75.8750], zoom_start=13,
+                           tiles=tiles, attr=attr, prefer_canvas=True)
     
         # Grupos de capas — cada uno se puede activar/desactivar
         g_rio        = folium.FeatureGroup(name="🌊 Río y estaciones",   show=True)
