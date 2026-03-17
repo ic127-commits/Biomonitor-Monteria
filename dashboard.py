@@ -751,7 +751,7 @@ st.markdown("""
   animation:ledPulse 1.8s ease-in-out infinite;position:relative;top:-1px;
 }
 </style>
-<div style="padding:42px 0 14px 0;animation:fadeInUp 0.3s ease both">
+<div style="padding:62px 0 14px 0;animation:fadeInUp 0.3s ease both">
   <div class="biomonitor-title" style="font-family:'Outfit',sans-serif;font-size:1.65rem;
               font-weight:900;color:#3B6D11;letter-spacing:-0.5px;line-height:1;margin-bottom:5px">
     🌿 BioMonitor Montería
