@@ -260,33 +260,56 @@ iframe { max-width:100% !important; }
 /* ── Streamlit tabs ─────────────────────────────────── */
 .stTabs [data-baseweb="tab-list"] {
     background:#FFFFFF;
-    border-radius:10px 10px 0 0;
-    padding:4px 8px 0 8px;
-    border-bottom:1.5px solid #D3D1C7;
+    border-radius:10px;
+    padding:6px 8px;
+    border:0.5px solid #D3D1C7;
     gap:4px;
+    margin-bottom:8px;
 }
 .stTabs [data-baseweb="tab"] {
     background:transparent;
-    border-radius:8px 8px 0 0;
-    color:#5F5E5A;
+    border-radius:8px;
+    color:#5F5E5A !important;
     font-weight:500;
     font-size:0.88rem;
-    padding:8px 16px;
+    padding:8px 18px;
     border:none;
 }
+.stTabs [data-baseweb="tab"]:hover {
+    background:#F1EFE8;
+    color:#2C2C2A !important;
+}
 .stTabs [aria-selected="true"] {
-    background:#EAF3DE !important;
-    color:#27500A !important;
-    border-bottom:2px solid #3B6D11 !important;
+    background:#3B6D11 !important;
+    color:#FFFFFF !important;
+    font-weight:600 !important;
+}
+.stTabs [aria-selected="true"] p,
+.stTabs [aria-selected="true"] span,
+.stTabs [aria-selected="true"] div {
+    color:#FFFFFF !important;
 }
 .stTabs [data-baseweb="tab-panel"] {
-    padding-top:16px;
+    padding-top:12px;
 }
 /* ── Dataframe tema claro ────────────────────────────── */
-.stDataFrame [data-testid="stDataFrameResizable"] {
-    background:#FFFFFF !important;
+.stDataFrame { background:#FFFFFF !important; }
+.stDataFrame thead tr th {
+    background:#F1EFE8 !important;
+    color:#2C2C2A !important;
 }
-iframe[title="st_aggrid"] { background:#FFFFFF !important; }
+.stDataFrame tbody tr td { color:#2C2C2A !important; }
+/* ── Download button ─────────────────────────────────── */
+.stDownloadButton > button {
+    background:#3B6D11 !important;
+    color:#FFFFFF !important;
+    font-weight:600 !important;
+    border:none !important;
+    border-radius:9px !important;
+}
+.stDownloadButton > button:hover { background:#27500A !important; }
+/* ── st.warning / success / info colores suaves ──────── */
+.stAlert { border-radius:10px !important; font-size:0.88rem !important; }
 
 </style>
 """, unsafe_allow_html=True)
@@ -586,46 +609,96 @@ aqi_txt, aqi_badge = cat_aqi(aire["aqi"])
 # ── HEADER ────────────────────────────────────────────────
 # ══════════════════════════════════════════════════════════
 
-col_hero, col_estado = st.columns([3, 1], gap="small")
+# ── Separación top ────────────────────────────────────
+st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+
+# ── Hero con logo ──────────────────────────────────────
+col_hero, col_estado = st.columns([3, 1], gap="medium")
 
 with col_hero:
-    st.markdown(f"""
+    # Cargar logo
+    try:
+        logo_img = Image.open("Biomotorlogo.png")
+        col_logo_img, col_hero_txt = st.columns([0.18, 1], gap="small")
+        with col_logo_img:
+            st.image(logo_img, width=72)
+        with col_hero_txt:
+            st.markdown("""
+            <div style="padding:4px 0 0 4px">
+                <div style="font-size:1.4rem;font-weight:700;color:#2C2C2A;line-height:1.2">
+                    BioMonitor Montería
+                </div>
+                <div style="font-size:0.82rem;color:#888780;margin-top:2px">
+                    Plataforma de monitoreo ambiental · Córdoba, Colombia
+                </div>
+            </div>""", unsafe_allow_html=True)
+    except Exception:
+        st.markdown("""
+        <div class="hero-banner">
+            <div class="hero-title">🌿 BioMonitor Montería</div>
+        </div>""", unsafe_allow_html=True)
+
+    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+    st.markdown("""
     <div class="hero-banner">
-        <div class="hero-title">🌿 BioMonitor Montería</div>
-        <div class="hero-sub">
+        <div class="hero-sub" style="margin-bottom:10px">
             Plataforma de monitoreo ambiental en tiempo real para Montería, Córdoba, Colombia.
-            Datos de calidad del aire, nivel del río Sinú y biodiversidad actualizados cada 15 minutos.
+            Integra datos oficiales de <b>IDEAM</b>, <b>Open-Meteo</b> y <b>GBIF</b> para
+            monitorear la calidad del aire, el nivel del río Sinú y la biodiversidad local.
+            Los datos se actualizan automáticamente cada 15 minutos.
         </div>
-        <div style="margin-top:8px">
-            <span class="hero-badge">🌡️ Clima</span>
+        <div>
+            <span class="hero-badge">🌡️ Clima en tiempo real</span>
             <span class="hero-badge">💨 Calidad del aire</span>
-            <span class="hero-badge">🌊 Río Sinú</span>
-            <span class="hero-badge">🦜 Biodiversidad</span>
+            <span class="hero-badge">🌊 Nivel Río Sinú</span>
+            <span class="hero-badge">🦜 Biodiversidad GBIF</span>
+            <span class="hero-badge">🗺️ Mapa interactivo</span>
         </div>
     </div>""", unsafe_allow_html=True)
 
 with col_estado:
-    # Estado general basado en datos actuales
+    st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
     nivel_actual_hero = niveles[0] if niveles else 0
     pm_actual_hero    = aire.get("pm25", 0)
+    hi_hero, _, _, _  = calcular_heat_index(clima.get("temp",30), clima.get("humedad",75))
+
     if nivel_actual_hero >= 5.5 or pm_actual_hero >= 25:
-        estado_cls, estado_ico, estado_txt = "estado-alert", "🔴", "Atención requerida"
-    elif nivel_actual_hero >= 4.0 or pm_actual_hero >= 15:
-        estado_cls, estado_ico, estado_txt = "estado-warn",  "🟡", "Monitorear de cerca"
+        estado_ico, estado_txt, estado_color, estado_bg = "🔴", "Atención requerida", "#791F1F", "#FCEBEB"
+        estado_desc = "Hay condiciones de riesgo activas"
+    elif nivel_actual_hero >= 4.0 or pm_actual_hero >= 15 or hi_hero >= 32:
+        estado_ico, estado_txt, estado_color, estado_bg = "🟡", "Monitorear de cerca", "#633806", "#FAEEDA"
+        estado_desc = "Algunas variables requieren atención"
     else:
-        estado_cls, estado_ico, estado_txt = "estado-ok",    "🟢", "Todo en orden"
+        estado_ico, estado_txt, estado_color, estado_bg = "🟢", "Todo en orden", "#27500A", "#EAF3DE"
+        estado_desc = "Todas las variables dentro del rango normal"
+
     hora_actual = datetime.now(TZ_COL).strftime("%H:%M")
     st.markdown(f"""
-    <div class="kpi-card" style="text-align:center;padding:20px 14px;min-height:130px">
-        <div class="kpi-label">Estado general</div>
-        <div style="font-size:2.2rem;margin:6px 0">{estado_ico}</div>
-        <div style="font-size:0.9rem;font-weight:700;color:#2C2C2A">{estado_txt}</div>
-        <div style="font-size:0.7rem;color:#888780;margin-top:6px">Actualizado {hora_actual} COT</div>
+    <div class="kpi-card" style="text-align:center;padding:18px 14px;
+         border-left:4px solid {estado_color};border-radius:0 12px 12px 0">
+        <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;
+                    color:#888780;margin-bottom:8px;font-weight:600">
+            ¿Cómo está Montería ahora?
+        </div>
+        <div style="font-size:2.4rem;margin:4px 0;line-height:1">{estado_ico}</div>
+        <div style="font-size:0.95rem;font-weight:700;color:{estado_color};margin-top:6px">
+            {estado_txt}
+        </div>
+        <div style="font-size:0.75rem;color:#5F5E5A;margin-top:5px;line-height:1.4">
+            {estado_desc}
+        </div>
+        <div style="font-size:0.68rem;color:#888780;margin-top:8px;
+                    border-top:0.5px solid #D3D1C7;padding-top:6px">
+            Actualizado {hora_actual} hora Colombia
+        </div>
     </div>""", unsafe_allow_html=True)
 
+    st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
     if st.button("🔄 Actualizar datos", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
+
+st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════════════════
@@ -633,8 +706,8 @@ with col_estado:
 # ── NAVEGACIÓN POR TABS ───────────────────────────────────
 # ══════════════════════════════════════════════════════════
 
-tab_dash, tab_mapa, tab_analisis, tab_bio, tab_alertas = st.tabs([
-    "📊 Dashboard",
+tab_inicio, tab_mapa, tab_analisis, tab_bio, tab_alertas = st.tabs([
+    "🏠 Inicio",
     "🗺️ Mapa",
     "📈 Análisis",
     "🦜 Biodiversidad",
@@ -642,9 +715,9 @@ tab_dash, tab_mapa, tab_analisis, tab_bio, tab_alertas = st.tabs([
 ])
 
 # ══════════════════════════════════════════════════════════
-# TAB 1 — DASHBOARD (KPIs principales)
+# TAB 1 — INICIO (KPIs principales)
 # ══════════════════════════════════════════════════════════
-with tab_dash:
+with tab_inicio:
     # ── KPIs PRINCIPALES ─────────────────────────────────────
     # ══════════════════════════════════════════════════════════
     
@@ -676,220 +749,271 @@ with tab_dash:
     with k6: _kpi_card("kpi-card kpi-card-purple","🦜 Especies GBIF",  "≥12",                    "Córdoba 2026", "badge-purple", "GBIF · Córdoba, CO")
     
     st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
-    
-    
-    @st.cache_data(ttl=86400)
-    def obtener_avistamientos_mapa():
-        """
+
+    # ── Resumen rápido del estado actual ──────────────────
+    st.markdown('<div class="section-header">📋 Resumen del estado actual</div>', unsafe_allow_html=True)
+
+    hi_inicio, hi_lbl_inicio, _, hi_color_inicio = calcular_heat_index(
+        clima.get("temp",30), clima.get("humedad",75))
+    alerta_rio_txt, _, _ = alerta_rio(niveles[0])
+
+    resumen_items = [
+        ("🌊", "Río Sinú",
+         f"Nivel {niveles[0]}m · Alerta {alerta_rio_txt}",
+         "badge-yellow" if niveles[0] >= 4.0 else "badge-green",
+         "Estación Ronda del Sinú · IDEAM"),
+        ("🌡️", "Temperatura y calor",
+         f"{clima.get('temp','—')}°C real · {hi_inicio}°C aparente · {hi_lbl_inicio}",
+         "badge-yellow" if hi_inicio >= 32 else "badge-green",
+         "Open-Meteo · tiempo real"),
+        ("💨", "Calidad del aire",
+         f"PM2.5: {aire.get('pm25','—')} µg/m³ · AQI: {aire.get('aqi','—')} · {'Buena' if aire.get('pm25',0)<15 else 'Regular'}",
+         "badge-green" if aire.get('pm25',0) < 15 else "badge-yellow",
+         "Open-Meteo Air Quality · tiempo real"),
+        ("🌧️", "Lluvia",
+         f"{clima.get('lluvia_hoy','0')} mm hoy · {(clima.get('prob_lluvia',[0])[0] if clima.get('prob_lluvia') else 0)}% de probabilidad",
+         "badge-blue",
+         "Open-Meteo · tiempo real"),
+        ("🌿", "Biodiversidad",
+         f"≥12 especies registradas en Córdoba · datos GBIF actualizados",
+         "badge-purple",
+         "GBIF · Córdoba, Colombia · 2026"),
+    ]
+
+    for ico, titulo, desc, badge_cls, fuente in resumen_items:
+        st.markdown(f"""
+        <div class="info-card" style="display:flex;align-items:flex-start;gap:12px;margin-bottom:8px">
+            <div style="font-size:1.4rem;line-height:1;flex-shrink:0">{ico}</div>
+            <div style="flex:1">
+                <div style="font-weight:600;color:#2C2C2A;font-size:0.9rem">{titulo}</div>
+                <div style="color:#5F5E5A;font-size:0.82rem;margin-top:2px">{desc}</div>
+                <div style="color:#888780;font-size:0.7rem;margin-top:3px">{fuente}</div>
+            </div>
+            <span class="badge {badge_cls}" style="flex-shrink:0;align-self:center">
+                {'✓ Normal' if 'green' in badge_cls else '⚠ Atención' if 'yellow' in badge_cls else '● Activo'}
+            </span>
+        </div>""", unsafe_allow_html=True)
+
+    st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
+    st.markdown("""
+    <div class="info-card" style="font-size:0.8rem;color:#888780;text-align:center">
+        💡 Usa las pestañas de arriba para ver el <b>Mapa</b> interactivo, el <b>Análisis</b> histórico,
+        la <b>Biodiversidad</b> en tiempo real y el panel de <b>Alertas</b>.
+    </div>""", unsafe_allow_html=True)
+
+@st.cache_data(ttl=86400)
+def obtener_avistamientos_mapa():
+    """
         Obtiene coordenadas exactas de avistamientos reales de GBIF
         para las especies más representativas de Montería.
         Filtra solo registros con coordenadas dentro del bbox de Montería.
         """
-        ESPECIES = [
-            ("Iguana iguana",              "🦎", "Iguana verde",       "No evaluado", "purple"),
-            ("Leptotila verreauxi",        "🐦", "Paloma guarumera",   "LC",          "purple"),
-            ("Cairina moschata",           "🦆", "Pato real",          "LC",          "purple"),
-            ("Heliconia psittacorum",      "🌺", "Heliconia de loro",  "No evaluado", "purple"),
-            ("Chelonoidis carbonarius",    "🐢", "Morrocoy",           "Vulnerable",  "red"),
-            ("Columbina talpacoti",        "🐦", "Tortolita rojiza",   "LC",          "purple"),
-            ("Jacana jacana",              "🦅", "Gallito de ciénaga", "LC",          "purple"),
-            ("Ardea alba",                 "🦢", "Garza blanca",       "LC",          "purple"),
-            ("Pitangus sulphuratus",       "🐦", "Bichofué",           "LC",          "purple"),
-            ("Coragyps atratus",           "🦅", "Gallinazo negro",    "LC",          "purple"),
-        ]
+    ESPECIES = [
+        ("Iguana iguana",              "🦎", "Iguana verde",       "No evaluado", "purple"),
+        ("Leptotila verreauxi",        "🐦", "Paloma guarumera",   "LC",          "purple"),
+        ("Cairina moschata",           "🦆", "Pato real",          "LC",          "purple"),
+        ("Heliconia psittacorum",      "🌺", "Heliconia de loro",  "No evaluado", "purple"),
+        ("Chelonoidis carbonarius",    "🐢", "Morrocoy",           "Vulnerable",  "red"),
+        ("Columbina talpacoti",        "🐦", "Tortolita rojiza",   "LC",          "purple"),
+        ("Jacana jacana",              "🦅", "Gallito de ciénaga", "LC",          "purple"),
+        ("Ardea alba",                 "🦢", "Garza blanca",       "LC",          "purple"),
+        ("Pitangus sulphuratus",       "🐦", "Bichofué",           "LC",          "purple"),
+        ("Coragyps atratus",           "🦅", "Gallinazo negro",    "LC",          "purple"),
+    ]
     
-        # Bbox Montería: lat 8.68-8.85, lon -75.95 a -75.78
-        BBOX = "8.68,-75.95,8.85,-75.78"
-        avistamientos = []
+    # Bbox Montería: lat 8.68-8.85, lon -75.95 a -75.78
+    BBOX = "8.68,-75.95,8.85,-75.78"
+    avistamientos = []
     
-        for especie, emoji, nombre_com, estado, color in ESPECIES:
-            try:
-                r = requests.get(
-                    "https://api.gbif.org/v1/occurrence/search",
-                    params={
-                        "scientificName":  especie,
-                        "decimalLatitude": "8.68,8.85",
-                        "decimalLongitude": "-75.95,-75.78",
-                        "hasCoordinate":   "true",
-                        "country":         "CO",
-                        "limit":           10,
-                    },
-                    timeout=8
-                ).json()
-    
-                registros = r.get("results", [])
-                for rec in registros:
-                    lat = rec.get("decimalLatitude")
-                    lon = rec.get("decimalLongitude")
-                    if lat and lon:
-                        # Verificar que está dentro del bbox de Montería
-                        if 8.68 <= lat <= 8.85 and -75.95 <= lon <= -75.78:
-                            fecha = rec.get("eventDate", "")[:10] if rec.get("eventDate") else "Sin fecha"
-                            localidad = rec.get("locality", rec.get("municipality", "Montería"))
-                            avistamientos.append({
-                                "lat":       lat,
-                                "lon":       lon,
-                                "especie":   especie,
-                                "emoji":     emoji,
-                                "nombre":    nombre_com,
-                                "estado":    estado,
-                                "color":     color,
-                                "fecha":     fecha,
-                                "localidad": localidad[:40] if localidad else "Montería",
-                                "key":       rec.get("key", ""),
-                            })
-            except Exception:
-                continue
-    
-        return avistamientos
-    
-    @st.cache_data(ttl=3600)
-    def obtener_historico_30dias():
-        """Obtiene datos históricos de los últimos 30 días desde Open-Meteo."""
+    for especie, emoji, nombre_com, estado, color in ESPECIES:
         try:
-            fecha_fin   = datetime.now(TZ_COL).strftime("%Y-%m-%d")
-            fecha_ini   = (datetime.now(TZ_COL) - timedelta(days=30)).strftime("%Y-%m-%d")
             r = requests.get(
-                "https://api.open-meteo.com/v1/forecast",
+                "https://api.gbif.org/v1/occurrence/search",
                 params={
-                    "latitude": 8.7479, "longitude": -75.8814,
-                    "daily": ["temperature_2m_max","temperature_2m_min",
-                              "precipitation_sum","wind_speed_10m_max"],
-                    "timezone": "America/Bogota",
-                    "start_date": fecha_ini,
-                    "end_date":   fecha_fin,
-                }, timeout=10
+                    "scientificName":  especie,
+                    "decimalLatitude": "8.68,8.85",
+                    "decimalLongitude": "-75.95,-75.78",
+                    "hasCoordinate":   "true",
+                    "country":         "CO",
+                    "limit":           10,
+                },
+                timeout=8
             ).json()
-            d = r.get("daily", {})
-            return {
-                "fechas":    d.get("time", []),
-                "temp_max":  d.get("temperature_2m_max", []),
-                "temp_min":  d.get("temperature_2m_min", []),
-                "lluvia":    d.get("precipitation_sum", []),
-                "viento":    d.get("wind_speed_10m_max", []),
-                "ok": True
-            }
-        except Exception:
-            return {"ok": False, "fechas": [], "temp_max": [], "temp_min": [],
-                    "lluvia": [], "viento": []}
     
-    @st.cache_data(ttl=3600)
-    def obtener_historico_aire_30dias():
-        """Obtiene PM2.5 histórico de los últimos 30 días."""
-        try:
-            fecha_fin = datetime.now(TZ_COL).strftime("%Y-%m-%d")
-            fecha_ini = (datetime.now(TZ_COL) - timedelta(days=30)).strftime("%Y-%m-%d")
-            r = requests.get(
-                "https://air-quality-api.open-meteo.com/v1/air-quality",
-                params={
-                    "latitude": 8.7479, "longitude": -75.8814,
-                    "hourly": ["pm2_5","pm10"],
-                    "timezone": "America/Bogota",
-                    "start_date": fecha_ini,
-                    "end_date":   fecha_fin,
-                }, timeout=10
-            ).json()
-            h = r.get("hourly", {})
-            # Promediar por día
-            pm25_h = h.get("pm2_5", [])
-            fechas_h = h.get("time", [])
-            dias_pm25 = {}
-            for t, v in zip(fechas_h, pm25_h):
-                if v is not None:
-                    dia = t[:10]
-                    dias_pm25.setdefault(dia, []).append(v)
-            fechas_d = sorted(dias_pm25.keys())
-            pm25_d   = [round(sum(dias_pm25[d])/len(dias_pm25[d]), 1) for d in fechas_d]
-            return {"fechas": fechas_d, "pm25": pm25_d, "ok": True}
+            registros = r.get("results", [])
+            for rec in registros:
+                lat = rec.get("decimalLatitude")
+                lon = rec.get("decimalLongitude")
+                if lat and lon:
+                    # Verificar que está dentro del bbox de Montería
+                    if 8.68 <= lat <= 8.85 and -75.95 <= lon <= -75.78:
+                        fecha = rec.get("eventDate", "")[:10] if rec.get("eventDate") else "Sin fecha"
+                        localidad = rec.get("locality", rec.get("municipality", "Montería"))
+                        avistamientos.append({
+                            "lat":       lat,
+                            "lon":       lon,
+                            "especie":   especie,
+                            "emoji":     emoji,
+                            "nombre":    nombre_com,
+                            "estado":    estado,
+                            "color":     color,
+                            "fecha":     fecha,
+                            "localidad": localidad[:40] if localidad else "Montería",
+                            "key":       rec.get("key", ""),
+                        })
         except Exception:
-            return {"ok": False, "fechas": [], "pm25": []}
+            continue
     
-    def calcular_heat_index(temp_c, humedad):
-        """Calcula el índice de calor aparente (Heat Index) en °C."""
-        t = temp_c * 9/5 + 32  # convertir a Fahrenheit
-        rh = humedad
-        hi = (-42.379 + 2.04901523*t + 10.14333127*rh
-              - 0.22475541*t*rh - 6.83783e-3*t**2
-              - 5.481717e-2*rh**2 + 1.22874e-3*t**2*rh
-              + 8.5282e-4*t*rh**2 - 1.99e-6*t**2*rh**2)
-        hi_c = round((hi - 32) * 5/9, 1)
-        # Categorías de alerta
-        if hi_c < 27:   return hi_c, "✅ Confortable",    "badge-green",  "#00E5C3"
-        elif hi_c < 32: return hi_c, "🟡 Precaución",     "badge-yellow", "#FFD600"
-        elif hi_c < 41: return hi_c, "🟠 Precaución extrema","badge-yellow","#FF9800"
-        elif hi_c < 54: return hi_c, "🔴 Peligro",        "badge-red",    "#FF5252"
-        else:           return hi_c, "🔴 Peligro extremo","badge-red",    "#FF0000"
+    return avistamientos
+
+@st.cache_data(ttl=3600)
+def obtener_historico_30dias():
+    """Obtiene datos históricos de los últimos 30 días desde Open-Meteo."""
+    try:
+        fecha_fin   = datetime.now(TZ_COL).strftime("%Y-%m-%d")
+        fecha_ini   = (datetime.now(TZ_COL) - timedelta(days=30)).strftime("%Y-%m-%d")
+        r = requests.get(
+            "https://api.open-meteo.com/v1/forecast",
+            params={
+                "latitude": 8.7479, "longitude": -75.8814,
+                "daily": ["temperature_2m_max","temperature_2m_min",
+                          "precipitation_sum","wind_speed_10m_max"],
+                "timezone": "America/Bogota",
+                "start_date": fecha_ini,
+                "end_date":   fecha_fin,
+            }, timeout=10
+        ).json()
+        d = r.get("daily", {})
+        return {
+            "fechas":    d.get("time", []),
+            "temp_max":  d.get("temperature_2m_max", []),
+            "temp_min":  d.get("temperature_2m_min", []),
+            "lluvia":    d.get("precipitation_sum", []),
+            "viento":    d.get("wind_speed_10m_max", []),
+            "ok": True
+        }
+    except Exception:
+        return {"ok": False, "fechas": [], "temp_max": [], "temp_min": [],
+                "lluvia": [], "viento": []}
+    
+@st.cache_data(ttl=3600)
+def obtener_historico_aire_30dias():
+    """Obtiene PM2.5 histórico de los últimos 30 días."""
+    try:
+        fecha_fin = datetime.now(TZ_COL).strftime("%Y-%m-%d")
+        fecha_ini = (datetime.now(TZ_COL) - timedelta(days=30)).strftime("%Y-%m-%d")
+        r = requests.get(
+            "https://air-quality-api.open-meteo.com/v1/air-quality",
+            params={
+                "latitude": 8.7479, "longitude": -75.8814,
+                "hourly": ["pm2_5","pm10"],
+                "timezone": "America/Bogota",
+                "start_date": fecha_ini,
+                "end_date":   fecha_fin,
+            }, timeout=10
+        ).json()
+        h = r.get("hourly", {})
+        # Promediar por día
+        pm25_h = h.get("pm2_5", [])
+        fechas_h = h.get("time", [])
+        dias_pm25 = {}
+        for t, v in zip(fechas_h, pm25_h):
+            if v is not None:
+                dia = t[:10]
+                dias_pm25.setdefault(dia, []).append(v)
+        fechas_d = sorted(dias_pm25.keys())
+        pm25_d   = [round(sum(dias_pm25[d])/len(dias_pm25[d]), 1) for d in fechas_d]
+        return {"fechas": fechas_d, "pm25": pm25_d, "ok": True}
+    except Exception:
+        return {"ok": False, "fechas": [], "pm25": []}
+    
+
+def calcular_heat_index(temp_c, humedad):
+    """Calcula el índice de calor aparente (Heat Index) en °C."""
+    t = temp_c * 9/5 + 32  # convertir a Fahrenheit
+    rh = humedad
+    hi = (-42.379 + 2.04901523*t + 10.14333127*rh
+          - 0.22475541*t*rh - 6.83783e-3*t**2
+          - 5.481717e-2*rh**2 + 1.22874e-3*t**2*rh
+          + 8.5282e-4*t*rh**2 - 1.99e-6*t**2*rh**2)
+    hi_c = round((hi - 32) * 5/9, 1)
+    # Categorías de alerta
+    if hi_c < 27:   return hi_c, "✅ Confortable",    "badge-green",  "#00E5C3"
+    elif hi_c < 32: return hi_c, "🟡 Precaución",     "badge-yellow", "#FFD600"
+    elif hi_c < 41: return hi_c, "🟠 Precaución extrema","badge-yellow","#FF9800"
+    elif hi_c < 54: return hi_c, "🔴 Peligro",        "badge-red",    "#FF5252"
+    else:           return hi_c, "🔴 Peligro extremo","badge-red",    "#FF0000"
     
     # ── Cauce real del Río Sinú — coordenadas trazadas en geojson.io ──────
     CAUCE_SINU_FALLBACK = [
-        [8.69768846, -75.94782194], [8.70122071, -75.94240658],
-        [8.69987114, -75.93560537], [8.70305888, -75.93594981],
-        [8.71192054, -75.94286909], [8.71863785, -75.94379077],
-        [8.72535501, -75.93734223], [8.72193985, -75.93215672],
-        [8.71557630, -75.92536160], [8.71855524, -75.92260906],
-        [8.72478702, -75.92213802], [8.73127622, -75.92305694],
-        [8.73640083, -75.92213510], [8.73961492, -75.91957351],
-        [8.74013571, -75.91535784], [8.73778687, -75.90851478],
-        [8.74351866, -75.90587567], [8.74727880, -75.90322958],
-        [8.74922018, -75.90126533], [8.74922025, -75.89856450],
-        [8.74764320, -75.89414539], [8.74788577, -75.89242679],
-        [8.75261750, -75.89193544], [8.75686353, -75.88984919],
-        [8.76280817, -75.88518463], [8.77045286, -75.88223726],
-        [8.77215134, -75.87941382], [8.76936038, -75.87450396],
-        [8.76802566, -75.87290836], [8.76826901, -75.87094317],
-        [8.77118166, -75.86959167], [8.78367731, -75.87364386],
-        [8.78883840, -75.86806919], [8.79362685, -75.86414634],
-        [8.80022730, -75.85977915], [8.80295920, -75.85977891],
-        [8.80887841, -75.86254257], [8.82094414, -75.85770413],
-        [8.82936742, -75.85632123], [8.83164380, -75.85309608],
-        [8.83594253, -75.85423387], [8.84148501, -75.85633728],
-        [8.84841300, -75.85668785],
+    [8.69768846, -75.94782194], [8.70122071, -75.94240658],
+    [8.69987114, -75.93560537], [8.70305888, -75.93594981],
+    [8.71192054, -75.94286909], [8.71863785, -75.94379077],
+    [8.72535501, -75.93734223], [8.72193985, -75.93215672],
+    [8.71557630, -75.92536160], [8.71855524, -75.92260906],
+    [8.72478702, -75.92213802], [8.73127622, -75.92305694],
+    [8.73640083, -75.92213510], [8.73961492, -75.91957351],
+    [8.74013571, -75.91535784], [8.73778687, -75.90851478],
+    [8.74351866, -75.90587567], [8.74727880, -75.90322958],
+    [8.74922018, -75.90126533], [8.74922025, -75.89856450],
+    [8.74764320, -75.89414539], [8.74788577, -75.89242679],
+    [8.75261750, -75.89193544], [8.75686353, -75.88984919],
+    [8.76280817, -75.88518463], [8.77045286, -75.88223726],
+    [8.77215134, -75.87941382], [8.76936038, -75.87450396],
+    [8.76802566, -75.87290836], [8.76826901, -75.87094317],
+    [8.77118166, -75.86959167], [8.78367731, -75.87364386],
+    [8.78883840, -75.86806919], [8.79362685, -75.86414634],
+    [8.80022730, -75.85977915], [8.80295920, -75.85977891],
+    [8.80887841, -75.86254257], [8.82094414, -75.85770413],
+    [8.82936742, -75.85632123], [8.83164380, -75.85309608],
+    [8.83594253, -75.85423387], [8.84148501, -75.85633728],
+    [8.84841300, -75.85668785],
     ]
     
-    def obtener_cauce_sinu():
-        """Retorna el cauce real del Río Sinú trazado en geojson.io."""
-        return None  # Siempre usa CAUCE_SINU_FALLBACK (coordenadas reales verificadas)
-    
-    # ── Lugares con dirección exacta verificada ──────────────
-    # Geocodificados con Geoapify en tiempo de ejecución
-    # Si falla la API usa coordenadas de respaldo calculadas
-    
-    # Coordenadas verificadas desde OpenStreetMap, sitios oficiales y mapcarta
-    # Fuentes: mapcarta.com, sitios web oficiales de cada institución
-    # ── Coordenadas verificadas con Google Maps por el usuario ──────────
-    UNIVERSIDADES_GLOBAL = [
-        (8.7678248873423,   -75.88483868572298, "🎓 Universidad del Sinú",
-         "Cra. 1W #38-153, Barrio Juan XXIII", "Institución privada · ~8,000 estudiantes"),
-        (8.791868230231875, -75.86243514566901, "🎓 Universidad de Córdoba",
-         "Cra. 6 #77-305, Montería", "Universidad pública · ~15,000 estudiantes"),
-        (8.80502372813011,  -75.8504521385269,  "🎓 Universidad Pontificia Bolivariana",
-         "Cra. 6 #97A-99, Barrio Mocarí", "Institución privada · sede Montería"),
-        (8.774657079543962, -75.8644811469475,  "🎓 Universidad Luis Amigó",
-         "Cl. 64 #6-108, Montería", "Institución privada · sede Montería"),
-        (8.766214543910708, -75.86885384879858, "🎓 Universidad Cooperativa de Colombia",
-         "Cl. 52 #6-79, Montería", "Institución privada · sede Montería"),
-        (8.756837644153618, -75.88483213345532, "🎓 CUN Montería",
-         "Cra. 4 #30-20, Montería", "Corporación Unificada Nacional"),
-        (8.767419911567938, -75.88224655290996, "🎓 Politécnico Gran Colombiano",
-         "Cl. 66 #5-70 Local 103, Montería", "Institución privada · sede Montería"),
-        (8.754969967892375, -75.88607423530627, "🎓 Uniremington",
-         "Cl. 27 #4-31, Montería", "Corporación Universitaria Remington"),
-        (8.75708789506036,  -75.88234492154572, "🏫 Instituto Tecnológico San Agustín",
-         "Cra. 6 #33-02, Centro, Montería", "Institución educativa"),
-    ]
-    
-    CC_GLOBAL = [
-        (8.779113660375875, -75.86157613345505, "🛍️ C.C. Buenavista",
-         "Cra. 6 #68-72, Montería", "Centro comercial principal de Montería"),
-        (8.743285562064065, -75.8681799622913,  "🛍️ C.C. Nuestro",
-         "Tv. 29 #29-69, Montería", "Centro comercial Nuestro"),
-        (8.76328684876092,  -75.87336956044,    "🛍️ C.C. Alamedas",
-         "Cl. 44 #10-91, Montería", "Centro comercial Alamedas del Sinú"),
-    ]
-    
-    UNIVERSIDADES_GLOBAL, CC_GLOBAL = UNIVERSIDADES_GLOBAL, CC_GLOBAL
-    
-    # ══════════════════════════════════════════════════════════
+def obtener_cauce_sinu():
+    """Retorna el cauce real del Río Sinú trazado en geojson.io."""
+    return None  # Siempre usa CAUCE_SINU_FALLBACK (coordenadas reales verificadas)
+
+# ── Lugares con dirección exacta verificada ──────────────
+# Geocodificados con Geoapify en tiempo de ejecución
+# Si falla la API usa coordenadas de respaldo calculadas
+
+# Coordenadas verificadas desde OpenStreetMap, sitios oficiales y mapcarta
+# Fuentes: mapcarta.com, sitios web oficiales de cada institución
+# ── Coordenadas verificadas con Google Maps por el usuario ──────────
+UNIVERSIDADES_GLOBAL = [
+(8.7678248873423,   -75.88483868572298, "🎓 Universidad del Sinú",
+ "Cra. 1W #38-153, Barrio Juan XXIII", "Institución privada · ~8,000 estudiantes"),
+(8.791868230231875, -75.86243514566901, "🎓 Universidad de Córdoba",
+ "Cra. 6 #77-305, Montería", "Universidad pública · ~15,000 estudiantes"),
+(8.80502372813011,  -75.8504521385269,  "🎓 Universidad Pontificia Bolivariana",
+ "Cra. 6 #97A-99, Barrio Mocarí", "Institución privada · sede Montería"),
+(8.774657079543962, -75.8644811469475,  "🎓 Universidad Luis Amigó",
+ "Cl. 64 #6-108, Montería", "Institución privada · sede Montería"),
+(8.766214543910708, -75.86885384879858, "🎓 Universidad Cooperativa de Colombia",
+ "Cl. 52 #6-79, Montería", "Institución privada · sede Montería"),
+(8.756837644153618, -75.88483213345532, "🎓 CUN Montería",
+ "Cra. 4 #30-20, Montería", "Corporación Unificada Nacional"),
+(8.767419911567938, -75.88224655290996, "🎓 Politécnico Gran Colombiano",
+ "Cl. 66 #5-70 Local 103, Montería", "Institución privada · sede Montería"),
+(8.754969967892375, -75.88607423530627, "🎓 Uniremington",
+ "Cl. 27 #4-31, Montería", "Corporación Universitaria Remington"),
+(8.75708789506036,  -75.88234492154572, "🏫 Instituto Tecnológico San Agustín",
+ "Cra. 6 #33-02, Centro, Montería", "Institución educativa"),
+]
+
+CC_GLOBAL = [
+(8.779113660375875, -75.86157613345505, "🛍️ C.C. Buenavista",
+ "Cra. 6 #68-72, Montería", "Centro comercial principal de Montería"),
+(8.743285562064065, -75.8681799622913,  "🛍️ C.C. Nuestro",
+ "Tv. 29 #29-69, Montería", "Centro comercial Nuestro"),
+(8.76328684876092,  -75.87336956044,    "🛍️ C.C. Alamedas",
+ "Cl. 44 #10-91, Montería", "Centro comercial Alamedas del Sinú"),
+]
+
+UNIVERSIDADES_GLOBAL, CC_GLOBAL = UNIVERSIDADES_GLOBAL, CC_GLOBAL
+
+# ══════════════════════════════════════════════════════════
 
 # ══════════════════════════════════════════════════════════
 # TAB 2 — MAPA
