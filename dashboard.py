@@ -380,13 +380,478 @@ def cargar_datos():
         fi = ex.submit(_fetch_ideam)
         return fc.result(), fa.result(), fi.result()
 
+# Diccionario de lugares de Montería — coordenadas verificadas desde fuentes oficiales
+# Fuentes: vymaps.com, Wikidata, OSM, sitios web oficiales
+LUGARES_MONTERIA = {
+    # ── Universidades (coordenadas verificadas) ───────────────────────────
+    "unisinu":                     (8.7454, -75.8888, "Universidad del Sinú, Montería"),
+    "universidad del sinu":        (8.7454, -75.8888, "Universidad del Sinú, Montería"),
+    "unisinú":                     (8.7454, -75.8888, "Universidad del Sinú, Montería"),
+    "unicordoba":                  (8.7892, -75.8541, "Universidad de Córdoba, Montería"),
+    "universidad de cordoba":      (8.7892, -75.8541, "Universidad de Córdoba, Montería"),
+    "upb monteria":                (8.7850, -75.8620, "UPB Montería"),
+    "uniremington":                (8.7558, -75.8750, "Uniremington, Montería"),
+    "cecar":                       (8.7530, -75.8720, "CECAR, Montería"),
+    "sena monteria":               (8.7620, -75.8680, "SENA, Montería"),
+    # ── Estadios y deportes (coordenadas verificadas Wikidata) ────────────
+    "estadio jaraguay":            (8.7118, -75.8276, "Estadio Jaraguay, Montería"),
+    "jaraguay":                    (8.7118, -75.8276, "Estadio Jaraguay, Montería"),
+    "estadio municipal":           (8.7118, -75.8276, "Estadio Jaraguay, Montería"),
+    # ── Hospitales ────────────────────────────────────────────────────────
+    "hospital san jeronimo":       (8.7495, -75.8742, "Hospital San Jerónimo, Montería"),
+    "san jeronimo":                (8.7495, -75.8742, "Hospital San Jerónimo, Montería"),
+    "ese camu":                    (8.7480, -75.8700, "ESE CAMU, Montería"),
+    "clinica la esperanza":        (8.7550, -75.8770, "Clínica La Esperanza, Montería"),
+    "hospital del sinu":           (8.7520, -75.8760, "Hospital del Sinú, Montería"),
+    # ── Centro y puntos de referencia ────────────────────────────────────
+    "centro":                      (8.7550, -75.8814, "Centro de Montería"),
+    "parque simon bolivar":        (8.7540, -75.8814, "Parque Simón Bolívar, Montería"),
+    "parque central":              (8.7540, -75.8814, "Parque Central, Montería"),
+    "catedral san jeronimo":       (8.7542, -75.8812, "Catedral San Jerónimo, Montería"),
+    "catedral":                    (8.7542, -75.8812, "Catedral San Jerónimo, Montería"),
+    "alcaldia":                    (8.7540, -75.8810, "Alcaldía de Montería"),
+    "gobernacion":                 (8.7538, -75.8808, "Gobernación de Córdoba"),
+    "palacio de justicia":         (8.7535, -75.8815, "Palacio de Justicia, Montería"),
+    "mercado central":             (8.7512, -75.8795, "Mercado Central, Montería"),
+    # ── Centros comerciales ───────────────────────────────────────────────
+    "buenavista":                  (8.7510, -75.8480, "C.C. Buenavista, Montería"),
+    "cc buenavista":               (8.7510, -75.8480, "C.C. Buenavista, Montería"),
+    "centro comercial buenavista": (8.7510, -75.8480, "C.C. Buenavista, Montería"),
+    "homecenter":                  (8.7620, -75.8520, "Homecenter Montería"),
+    "makro":                       (8.7580, -75.8480, "Makro Montería"),
+    # ── Barrios ───────────────────────────────────────────────────────────
+    "ronda del sinu":              (8.7560, -75.8912, "Ronda del Sinú, Montería"),
+    "avenida primera":             (8.7560, -75.8912, "Avenida Primera, Montería"),
+    "av primera":                  (8.7560, -75.8912, "Avenida Primera, Montería"),
+    "juan xxiii":                  (8.7454, -75.8888, "Barrio Juan XXIII, Montería"),
+    "barrio juan xxiii":           (8.7454, -75.8888, "Barrio Juan XXIII, Montería"),
+    "pie del cerro":               (8.7598, -75.8702, "Pie del Cerro, Montería"),
+    "edmundo lopez":               (8.7700, -75.8680, "Barrio Edmundo López, Montería"),
+    "el recreo":                   (8.7735, -75.8695, "El Recreo, Montería"),
+    "la granja":                   (8.7285, -75.9035, "La Granja, Montería"),
+    "villa cielo":                 (8.7320, -75.8720, "Villa Cielo, Montería"),
+    "barrio colon":                (8.7480, -75.8780, "Barrio Colón, Montería"),
+    "colon":                       (8.7480, -75.8780, "Barrio Colón, Montería"),
+    "alamedas":                    (8.7720, -75.8620, "Alamedas del Sinú, Montería"),
+    "alamedas del sinu":           (8.7720, -75.8620, "Alamedas del Sinú, Montería"),
+    "alto prado":                  (8.7680, -75.8620, "Alto Prado, Montería"),
+    "la castellana":               (8.7720, -75.8580, "La Castellana, Montería"),
+    "boston":                      (8.7580, -75.8650, "Barrio Boston, Montería"),
+    "paris":                       (8.7640, -75.8580, "Barrio París, Montería"),
+    "santa fe":                    (8.7460, -75.8750, "Santa Fe, Montería"),
+    "nueva granada":               (8.7430, -75.8760, "Nueva Granada, Montería"),
+    "camilo torres":               (8.7620, -75.8750, "Camilo Torres, Montería"),
+    "mocari":                      (8.7980, -75.8660, "Mocarí, Montería"),
+    "mocarí":                      (8.7980, -75.8660, "Mocarí, Montería"),
+    "cantabria":                   (8.7750, -75.8620, "Cantabria, Montería"),
+    "la ceiba":                    (8.7680, -75.8700, "La Ceiba, Montería"),
+    "el ceibal":                   (8.7820, -75.8540, "El Ceibal, Montería"),
+    "granada":                     (8.7530, -75.8650, "Granada, Montería"),
+    "la victoria":                 (8.7380, -75.8680, "La Victoria, Montería"),
+    "panzenu":                     (8.7420, -75.8700, "Panzenú, Montería"),
+    "panzenú":                     (8.7420, -75.8700, "Panzenú, Montería"),
+    "av circunvalar":              (8.7600, -75.8600, "Avenida Circunvalar, Montería"),
+    # ── Transporte ───────────────────────────────────────────────────────
+    "aeropuerto":                  (8.8233, -75.8258, "Aeropuerto Los Garzones, Montería"),
+    "los garzones":                (8.8233, -75.8258, "Aeropuerto Los Garzones, Montería"),
+    "terminal":                    (8.7420, -75.8650, "Terminal de Transportes, Montería"),
+    "terminal de transporte":      (8.7420, -75.8650, "Terminal de Transportes, Montería"),
+    # ── Río Sinú ─────────────────────────────────────────────────────────
+    "rio sinu":                    (8.7560, -75.8912, "Río Sinú, Montería"),
+    "muelle turistico":            (8.7800, -75.8873, "Muelle Turístico del Sinú, Montería"),
+    "puente segundo centenario":   (8.7650, -75.8845, "Puente Segundo Centenario, Montería"),
+    "cienaga betanci":             (8.4000, -75.8667, "Ciénaga de Betancí, Córdoba"),
+}
+
+import streamlit as st
+import pandas as pd
+import numpy as np
+import folium
+from streamlit_folium import st_folium
+import matplotlib.pyplot as plt
+from datetime import datetime, timedelta, timezone, UTC
+from zoneinfo import ZoneInfo
+TZ_COL = ZoneInfo('America/Bogota')  # UTC-5 Colombia
+from PIL import Image
+import requests
+import concurrent.futures
+import warnings
+warnings.filterwarnings("ignore")
+
+# ── Session state ─────────────────────────────────────────
+if "initialized" not in st.session_state:
+    st.session_state.initialized    = True
+    st.session_state.show_info      = False
+    st.session_state.lugar_buscado  = None
+    st.session_state.historial_busq = []  # últimos 3 lugares buscados
+
+st.set_page_config(
+    page_title="BioMonitor Montería",
+    page_icon="🌿",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+# ── CSS ───────────────────────────────────────────────────
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+html, body, [data-testid="stAppViewContainer"] {
+    background-color: #060d1a !important;
+}
+.main { background-color: #060d1a; }
+.block-container {
+    padding-top:2rem !important;
+    padding-left:2rem !important;
+    padding-right:2rem !important;
+    max-width: 1400px;
+}
+
+/* Hero */
+.hero-sub { color:#5a7a9a; font-size:1rem; line-height:1.6; margin:0; }
+.hero-badge {
+    display:inline-block;
+    background:rgba(0,229,195,0.1);
+    border:1px solid rgba(0,229,195,0.3);
+    color:#00E5C3;
+    padding:3px 12px;
+    border-radius:20px;
+    font-size:0.75rem;
+    font-weight:600;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    margin-right:6px;
+    margin-top:4px;
+}
+
+/* KPI Cards */
+.kpi-card {
+    background:linear-gradient(135deg,#0d1b2e,#0a1628);
+    border:1px solid rgba(0,229,195,0.15);
+    border-radius:16px;
+    padding:18px 20px;
+    position:relative;
+    overflow:hidden;
+    margin-bottom:10px;
+    min-height: 120px;
+}
+.kpi-card::before {
+    content:'';
+    position:absolute;
+    top:0; left:0;
+    width:4px; height:100%;
+    background:linear-gradient(180deg,#00E5C3,#4FC3F7);
+    border-radius:4px 0 0 4px;
+}
+.kpi-card-red::before    { background:linear-gradient(180deg,#FF5252,#FF9800); }
+.kpi-card-blue::before   { background:linear-gradient(180deg,#4FC3F7,#7B61FF); }
+.kpi-card-green::before  { background:linear-gradient(180deg,#00E5C3,#69F0AE); }
+.kpi-card-purple::before { background:linear-gradient(180deg,#7B61FF,#E040FB); }
+
+.kpi-label {
+    font-size:0.7rem;
+    color:#5a7a9a;
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+    font-weight:600;
+    margin-bottom:6px;
+}
+.kpi-value    { font-size:2rem;  font-weight:800; color:#e8f4ff; line-height:1; margin-bottom:8px; }
+.kpi-value-sm { font-size:1.4rem; font-weight:700; color:#e8f4ff; line-height:1; margin-bottom:8px; }
+
+/* Badges */
+.badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:600; }
+.badge-green  { background:rgba(0,229,195,0.15);  color:#00E5C3; border:1px solid rgba(0,229,195,0.3); }
+.badge-yellow { background:rgba(255,214,0,0.15);  color:#FFD600; border:1px solid rgba(255,214,0,0.3); }
+.badge-red    { background:rgba(255,82,82,0.15);  color:#FF5252; border:1px solid rgba(255,82,82,0.3); }
+.badge-blue   { background:rgba(79,195,247,0.15); color:#4FC3F7; border:1px solid rgba(79,195,247,0.3); }
+.badge-purple { background:rgba(123,97,255,0.15); color:#7B61FF; border:1px solid rgba(123,97,255,0.3); }
+
+.section-header {
+    font-size:1.05rem;
+    font-weight:700;
+    color:#4FC3F7;
+    letter-spacing:0.5px;
+    margin-bottom:14px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+.section-header::after {
+    content:'';
+    flex:1;
+    height:1px;
+    background:linear-gradient(90deg,rgba(79,195,247,0.3),transparent);
+}
+
+.fuente-tag { font-size:0.68rem; color:#3a5a7a; margin-top:4px; }
+.stat-row {
+    background:rgba(0,229,195,0.05);
+    border:1px solid rgba(0,229,195,0.1);
+    border-radius:10px;
+    padding:10px 14px;
+    margin-top:8px;
+    font-size:0.82rem;
+    color:#5a7a9a;
+}
+
+/* Copyright fijo */
+.copyright {
+    position:fixed;
+    bottom:10px;
+    right:16px;
+    color:#2a4a6a;
+    font-size:0.72rem;
+    z-index:9999;
+}
+
+/* Botones */
+.stButton > button {
+    background:linear-gradient(135deg,#00E5C3,#4FC3F7) !important;
+    color:#060d1a !important;
+    font-weight:700 !important;
+    border:none !important;
+    border-radius:10px !important;
+    transition: opacity 0.2s;
+}
+.stButton > button:hover { opacity: 0.88; }
+
+/* Ocultar footer y menú */
+footer { visibility:hidden; }
+#MainMenu { visibility:hidden; }
+
+/* Dataframe */
+.stDataFrame { border-radius: 12px; overflow: hidden; }
+
+/* Expander */
+.streamlit-expanderHeader {
+    background: rgba(0,229,195,0.05) !important;
+    border: 1px solid rgba(0,229,195,0.15) !important;
+    border-radius: 10px !important;
+    color: #4FC3F7 !important;
+    font-weight: 600 !important;
+}
+
+/* Radio */
+.stRadio > div { gap: 8px !important; }
+.stRadio label { color: #5a7a9a !important; font-size: 0.85rem !important; }
+
+/* ══ RESPONSIVE MÓVIL ══════════════════════════════════ */
+
+/* Tablet (≤900px) */
+@media (max-width:900px) {
+    .block-container { padding-left:1rem !important; padding-right:1rem !important; }
+    .kpi-value { font-size:1.6rem !important; }
+    .hero-sub  { font-size:0.88rem !important; }
+}
+
+/* Móvil (≤768px) — breakpoint principal */
+@media (max-width:768px) {
+
+    /* Padding mínimo */
+    .block-container {
+        padding-top:1rem !important;
+        padding-left:0.6rem !important;
+        padding-right:0.6rem !important;
+    }
+
+    /* KPI cards: 2 columnas en móvil */
+    .kpi-value    { font-size:1.35rem !important; }
+    .kpi-value-sm { font-size:1.1rem  !important; }
+    .kpi-label    { font-size:0.62rem !important; letter-spacing:1px !important; }
+    .kpi-card     { min-height:auto !important; padding:12px 14px !important; margin-bottom:8px !important; }
+
+    /* Forzar columnas Streamlit a apilarse */
+    [data-testid="column"] { min-width:100% !important; }
+
+    /* Hero badges: wrap */
+    .hero-badge { font-size:0.65rem !important; padding:2px 8px !important; margin-bottom:4px !important; }
+    .hero-sub   { font-size:0.82rem !important; }
+
+    /* Section headers más compactos */
+    .section-header { font-size:0.9rem !important; }
+
+    /* Stat row */
+    .stat-row { font-size:0.76rem !important; }
+
+    /* Copyright oculto en móvil (ocupa espacio) */
+    .copyright { display:none !important; }
+
+    /* Botones más grandes para touch */
+    .stButton > button {
+        min-height:44px !important;
+        font-size:0.9rem !important;
+    }
+
+    /* Badges más pequeños */
+    .badge { font-size:0.68rem !important; padding:2px 7px !important; }
+
+    /* Radio horizontal → apilado */
+    .stRadio > div { flex-direction:column !important; gap:4px !important; }
+
+    /* Expander header */
+    .streamlit-expanderHeader { font-size:0.85rem !important; }
+
+    /* Galería: 2 cols en móvil */
+    .galeria-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+    /* Dataframe scroll horizontal */
+    .stDataFrame { overflow-x:auto !important; }
+
+    /* Fuente tag */
+    .fuente-tag { font-size:0.62rem !important; }
+}
+
+/* Móvil pequeño (≤480px) */
+@media (max-width:480px) {
+    .block-container {
+        padding-left:0.3rem !important;
+        padding-right:0.3rem !important;
+    }
+    .kpi-value    { font-size:1.15rem !important; }
+    .kpi-label    { font-size:0.58rem !important; }
+    .section-header { font-size:0.82rem !important; }
+    .hero-sub { font-size:0.78rem !important; }
+    .stButton > button { font-size:0.82rem !important; }
+}
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown('<div class="copyright">© Ivan Contreras</div>', unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════
+# ── FUNCIONES DE DATOS ───────────────────────────────────
+# ══════════════════════════════════════════════════════════
+
+def _fetch_clima():
+    """Obtiene clima actual + pronóstico 7 días de Open-Meteo"""
+    try:
+        r = requests.get(
+            "https://api.open-meteo.com/v1/forecast",
+            params={
+                "latitude": 8.7479, "longitude": -75.8814,
+                "current": ["temperature_2m","relative_humidity_2m",
+                            "precipitation","wind_speed_10m","rain"],
+                "daily":   ["precipitation_sum","temperature_2m_max",
+                            "temperature_2m_min","precipitation_probability_max",
+                            "rain_sum"],
+                "timezone": "America/Bogota",
+                "forecast_days": 7
+            }, timeout=8
+        ).json()
+        c, d = r.get("current", {}), r.get("daily", {})
+        # lluvia_hoy: suma del día actual (más representativa que la instantánea)
+        lluvia_sum_hoy = d.get("precipitation_sum", [0])[0] if d.get("precipitation_sum") else 0
+        # prob lluvia: limpiar None → 0
+        prob_raw = d.get("precipitation_probability_max", [])
+        prob_lluvia = [int(p) if p is not None else 0 for p in prob_raw] if prob_raw else [0]*7
+        return {
+            "temp":       round(c.get("temperature_2m", 28.4), 1),
+            "humedad":    c.get("relative_humidity_2m", 75),
+            "lluvia_hoy": round(lluvia_sum_hoy, 1),
+            "lluvia_inst":round(c.get("precipitation", 0), 1),
+            "viento":     round(c.get("wind_speed_10m", 12), 1),
+            "lluvia_7d":  d.get("precipitation_sum", [0]*7),
+            "prob_lluvia":prob_lluvia,
+            "temp_max":   d.get("temperature_2m_max", [32]*7),
+            "temp_min":   d.get("temperature_2m_min", [23]*7),
+            "fechas":     d.get("time", []),
+            "ok": True
+        }
+    except Exception:
+        return {
+            "temp":28.4,"humedad":75,"lluvia_hoy":0,"lluvia_inst":0,"viento":12,
+            "lluvia_7d":[2]*7,"prob_lluvia":[10]*7,
+            "temp_max":[32]*7,"temp_min":[23]*7,
+            "fechas":[],"ok":False
+        }
+
+def _fetch_aire():
+    """Obtiene calidad del aire desde Open-Meteo Air Quality API"""
+    try:
+        r = requests.get(
+            "https://air-quality-api.open-meteo.com/v1/air-quality",
+            params={
+                "latitude": 8.7479, "longitude": -75.8814,
+                "current":  ["pm10","pm2_5","nitrogen_dioxide","european_aqi"],
+                "timezone": "America/Bogota"
+            }, timeout=8
+        ).json()
+        c = r.get("current", {})
+        return {
+            "pm25": round(c.get("pm2_5", 9.5), 1),
+            "pm10": round(c.get("pm10", 11.9), 1),
+            "no2":  round(c.get("nitrogen_dioxide", 3.3), 1),
+            "aqi":  round(c.get("european_aqi", 26), 0),
+            "ok":   True
+        }
+    except Exception:
+        return {"pm25":9.5,"pm10":11.9,"no2":3.3,"aqi":26,"ok":False}
+
+def _fetch_ideam():
+    """Consulta nivel real del Río Sinú desde datos.gov.co (IDEAM)"""
+    # Capa 1: API datos.gov.co — estación Montería
+    try:
+        r = requests.get(
+            "https://www.datos.gov.co/resource/sbwg-7ju4.json",
+            params={
+                "$where": "codigoestacion='23197130'",
+                "$order": "fechaobservacion DESC",
+                "$limit": "1"
+            }, timeout=5
+        ).json()
+        if r and "valor" in r[0]:
+            return {
+                "nivel": round(float(r[0]["valor"]), 2),
+                "fecha": r[0].get("fechaobservacion", "")[:10],
+                "ok":    True,
+                "fuente": "IDEAM · datos.gov.co"
+            }
+    except Exception:
+        pass
+
+    # Capa 2: IDEAM DHIME (respaldo)
+    try:
+        r2 = requests.get(
+            "https://www.datos.gov.co/resource/s54a-sgyg.json",
+            params={"municipio": "MONTERIA", "$limit": "1", "$order": "fecha DESC"},
+            timeout=5
+        ).json()
+        if r2 and "valor" in r2[0]:
+            return {
+                "nivel": round(float(r2[0]["valor"]), 2),
+                "fecha": r2[0].get("fecha", "")[:10],
+                "ok":    True,
+                "fuente": "IDEAM · DHIME"
+            }
+    except Exception:
+        pass
+
+    # Capa 3: fallback histórico
+    return {
+        "nivel":  4.2,
+        "fecha":  datetime.now(TZ_COL).strftime("%Y-%m-%d"),
+        "ok":     False,
+        "fuente": "Histórico"
+    }
+
+@st.cache_data(ttl=900)  # 15 min — datos más frescos
+def cargar_datos():
+    """Carga paralela de clima, aire e IDEAM"""
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as ex:
+        fc = ex.submit(_fetch_clima)
+        fa = ex.submit(_fetch_aire)
+        fi = ex.submit(_fetch_ideam)
+        return fc.result(), fa.result(), fi.result()
+
 # Diccionario de lugares conocidos de Montería
 # Coordenadas verificadas con OpenStreetMap + direcciones oficiales
 LUGARES_MONTERIA = {
     # ── Universidades (coordenadas verificadas) ───────────
-    "unisinu":                  (8.7638, -75.9018, "Universidad del Sinú, Montería"),
-    "universidad del sinu":     (8.7638, -75.9018, "Universidad del Sinú, Montería"),
-    "unisinú":                  (8.7638, -75.9018, "Universidad del Sinú, Montería"),
+    "unisinu":                  (8.7718, -75.8658, "Universidad del Sinú, Montería"),
+    "universidad del sinu":     (8.7718, -75.8658, "Universidad del Sinú, Montería"),
+    "unisinú":                  (8.7718, -75.8658, "Universidad del Sinú, Montería"),
     "unicordoba":               (8.7892, -75.8541, "Universidad de Córdoba, Montería"),
     "universidad de cordoba":   (8.7892, -75.8541, "Universidad de Córdoba, Montería"),
     "upb":                      (8.7980, -75.8650, "Universidad Pontificia Bolivariana, Montería"),
