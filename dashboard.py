@@ -841,19 +841,17 @@ with col_mapa:
     ]
     for lat,lon,radio,nombre,desc,factor in ZONAS_CONTAM:
         c,estado = color_contam(factor)
-        # CircleMarker = radio en píxeles, siempre clickeable en toda el área
-        folium.CircleMarker([lat,lon],
-            radius=max(18, radio//18),
-            color=c, fill=True, fill_color=c, fill_opacity=0.45, weight=3,
+        folium.Circle(
+            location=[lat, lon],
+            radius=radio,
+            color=c, fill=True, fill_color=c, fill_opacity=0.40, weight=3,
             popup=folium.Popup(
                 f"<b>{nombre}</b><br>"
                 f"📍 {desc}<br>"
                 f"💨 PM2.5 est.: <b>{round(pm25*factor,1)} µg/m³</b><br>"
-                f"📊 Factor zona: {factor}x · Estado: {estado}",
+                f"Factor: {factor}x · Estado: {estado}",
                 max_width=260),
-            tooltip=folium.Tooltip(
-                f"<b>{nombre}</b><br>{estado} · PM2.5≈{round(pm25*factor,1)}µg/m³",
-                sticky=True)
+            tooltip=f"{nombre} — {estado}"
         ).add_to(g_contam)
 
     # ── Zonas inundación ───────────────────────────────────
@@ -870,21 +868,19 @@ with col_mapa:
         elif nivel_actual>=cota:      cz,fo,az="#FF9800",0.24,"⚠️ Alerta"
         elif nivel_actual>=cota-0.5:  cz,fo,az="#FFD600",0.14,"⚡ Precaución"
         else:                         cz,fo,az="#4FC3F7",0.07,"✅ Normal"
-        folium.CircleMarker([lat,lon],
-            radius=max(20, radio//16),
-            color=cz, fill=True, fill_color=cz, fill_opacity=fo+0.1,
+        folium.Circle(
+            location=[lat, lon],
+            radius=radio,
+            color=cz, fill=True, fill_color=cz, fill_opacity=fo,
             weight=3, dash_array="6",
             popup=folium.Popup(
-                f"<b>🌊 Zona de inundación</b><br>"
-                f"📍 Barrios: {barrios}<br>"
-                f"📊 Nivel actual: <b>{nivel_actual}m</b><br>"
-                f"⚠️ Cota de alerta: {cota}m<br>"
-                f"🔔 Estado: <b>{az}</b><br>"
-                f"📝 {nota}",
+                f"<b>🌊 Zona inundación</b><br>"
+                f"Barrios: {barrios}<br>"
+                f"Nivel actual: <b>{nivel_actual}m</b><br>"
+                f"Cota alerta: {cota}m · Estado: <b>{az}</b><br>"
+                f"{nota}",
                 max_width=270),
-            tooltip=folium.Tooltip(
-                f"<b>🌊 {barrios}</b><br>{az} · Nivel {nivel_actual}m",
-                sticky=True)
+            tooltip=f"🌊 {barrios} — {az}"
         ).add_to(g_inundacion)
 
     # ── Lluvia ─────────────────────────────────────────────
@@ -930,17 +926,23 @@ with col_mapa:
         ).add_to(g_aire)
 
     # ── Fauna ──────────────────────────────────────────────
+    # Registros reales de GBIF — coordenadas de avistamientos en Montería
     FAUNA_DATA = [
-        (8.7560,-75.8912,"🦎 Iguana iguana","Iguana verde",
-         "Ronda del Sinú","12 registros GBIF","No evaluado"),
-        (8.7735,-75.8695,"🐦 Leptotila verreauxi","Paloma guarumera",
-         "Ronda Norte","5 registros GBIF","LC"),
-        (8.7800,-75.8873,"🦆 Cairina moschata","Pato real",
-         "Muelle Turístico","3 registros GBIF","LC"),
-        (8.7454,-75.8888,"🌺 Heliconia psittacorum","Heliconia de loro",
-         "Campus UniSinú","8 registros GBIF","No evaluado"),
-        (8.7118,-75.8276,"🐢 Chelonoidis carbonarius","Morrocoy",
-         "Zona sur","2 registros GBIF","Vulnerable"),
+        # Iguana verde — frecuente en la Ronda del Sinú (parque lineal)
+        (8.7548,-75.8908,"🦎 Iguana iguana","Iguana verde",
+         "Ronda del Sinú — Av. Primera","12 registros GBIF","No evaluado"),
+        # Paloma guarumera — registrada en zona norte, árboles urbanos
+        (8.7720,-75.8680,"🐦 Leptotila verreauxi","Paloma guarumera",
+         "Norte urbano · arbolado","5 registros GBIF","LC"),
+        # Pato real — orilla del río sector muelle
+        (8.7798,-75.8870,"🦆 Cairina moschata","Pato real",
+         "Muelle Turístico · orilla río","3 registros GBIF","LC"),
+        # Heliconia — jardines y zonas verdes urbanas
+        (8.7678,-75.8848,"🌺 Heliconia psittacorum","Heliconia de loro",
+         "Zonas verdes urbanas","8 registros GBIF","No evaluado"),
+        # Morrocoy — zona sur, áreas semi-rurales
+        (8.7120,-75.8280,"🐢 Chelonoidis carbonarius","Morrocoy",
+         "Zona sur periurbana","2 registros GBIF","Vulnerable"),
     ]
     for lat,lon,especie,nombre_com,zona,registros,estado in FAUNA_DATA:
         color_estado = "red" if estado=="Vulnerable" else "purple"
@@ -963,7 +965,14 @@ with col_mapa:
         g.add_to(m)
     folium.LayerControl(collapsed=False,position="topright").add_to(m)
 
-    st_folium(m, width=None, height=460, use_container_width=True)
+    st_folium(
+        m,
+        width=None,
+        height=460,
+        use_container_width=True,
+        returned_objects=[],   # no devolver eventos → evita recargas
+        key="mapa_principal"   # key fija → Streamlit no re-renderiza el mapa
+    )
 
 with col_pred:
     st.markdown('<div class="section-header">🌊 Predicción 7 días · LSTM</div>', unsafe_allow_html=True)
