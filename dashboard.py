@@ -907,12 +907,24 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ── Botón actualizar pegado debajo del card izquierdo ─────
+# ── Botón pegado al card izquierdo ────────────────────────
+st.markdown("""
+<style>
+/* Eliminar margen automático de Streamlit entre elementos */
+.btn-row { margin-top:-12px !important; }
+.btn-row .stButton > button {
+  margin-top:0 !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 col_act, _ = st.columns([3.35, 1], gap="small")
 with col_act:
+    st.markdown('<div class="btn-row">', unsafe_allow_html=True)
     if st.button("🔄 Actualizar datos", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("<div style='height:2px'></div>", unsafe_allow_html=True)
 
