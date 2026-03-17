@@ -797,9 +797,9 @@ except Exception:
     pass
 
 if logo_b64:
-    logo_html = f'<img src="data:image/png;base64,{logo_b64}" style="width:200px;object-fit:contain;border-radius:12px;flex-shrink:0">'
+    logo_html = f'<img src="data:image/png;base64,{logo_b64}" style="width:170px;object-fit:contain;border-radius:12px;flex-shrink:0;align-self:center">'
 else:
-    logo_html = '<div style="width:200px;background:linear-gradient(135deg,#EAF3DE,#E0EFCE);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:4rem;flex-shrink:0">🌿</div>'
+    logo_html = '<div style="width:170px;background:linear-gradient(135deg,#EAF3DE,#E0EFCE);border-radius:12px;padding:20px;display:flex;align-items:center;justify-content:center;font-size:4rem;flex-shrink:0;align-self:center">🌿</div>'
 
 # ── TODO el header en un solo div HTML — sin columnas Streamlit ──
 st.markdown("""
@@ -809,10 +809,10 @@ st.markdown("""
   margin-bottom:10px;animation:fadeInUp 0.35s ease both;
 }
 .hero-left {
-  flex:3;display:flex;align-items:center;gap:22px;
+  flex:3;display:flex;align-items:center;gap:20px;
   background:linear-gradient(135deg,#FFFFFF 60%,#F0F7E8 100%);
   border:1px solid #E8E6DF;border-left:4px solid #3B6D11;
-  border-radius:0 14px 14px 0;padding:20px 26px;
+  border-radius:0 14px 14px 0;padding:16px 22px;
   box-shadow:0 2px 8px rgba(0,0,0,0.06);
 }
 .hero-right {
