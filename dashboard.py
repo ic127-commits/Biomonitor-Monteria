@@ -805,15 +805,16 @@ else:
 st.markdown("""
 <style>
 .header-wrapper {
-  display:flex;gap:16px;align-items:stretch;
+  display:flex;gap:16px;align-items:flex-start;
   margin-bottom:10px;animation:fadeInUp 0.35s ease both;
 }
 .hero-left {
   flex:3;display:flex;align-items:center;gap:20px;
   background:linear-gradient(135deg,#FFFFFF 60%,#F0F7E8 100%);
   border:1px solid #E8E6DF;border-left:4px solid #3B6D11;
-  border-radius:0 14px 14px 0;padding:16px 22px;
+  border-radius:0 14px 14px 0;padding:22px 24px;
   box-shadow:0 2px 8px rgba(0,0,0,0.06);
+  min-height:0;height:fit-content;
 }
 .hero-right {
   flex:1;display:flex;flex-direction:column;gap:10px;
