@@ -719,7 +719,7 @@ aqi_txt, aqi_badge = cat_aqi(aire["aqi"])
 # ══════════════════════════════════════════════════════════
 # ── HEADER ────────────────────────────────────────────────
 # ══════════════════════════════════════════════════════════
-st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:2px'></div>", unsafe_allow_html=True)
 
 col_hero, col_estado = st.columns([3, 1], gap="medium")
 
@@ -736,9 +736,9 @@ with col_hero:
         pass
 
     if logo_b64:
-        logo_html = f'<img src="data:image/png;base64,{logo_b64}" style="width:130px;height:130px;object-fit:contain;flex-shrink:0;border-radius:12px">'
+        logo_html = f'<img src="data:image/png;base64,{logo_b64}" style="width:180px;height:180px;object-fit:contain;flex-shrink:0;border-radius:12px">'
     else:
-        logo_html = '<div style="width:130px;height:130px;background:linear-gradient(135deg,#EAF3DE,#E0EFCE);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:3rem;flex-shrink:0">🌿</div>'
+        logo_html = '<div style="width:180px;height:180px;background:linear-gradient(135deg,#EAF3DE,#E0EFCE);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:4rem;flex-shrink:0">🌿</div>'
 
     st.markdown(f"""
     <div style="display:flex;align-items:center;gap:24px;
@@ -831,7 +831,7 @@ with col_estado:
         st.cache_data.clear()
         st.rerun()
 
-st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════
 # ── NAVEGACIÓN POR TABS ───────────────────────────────────
