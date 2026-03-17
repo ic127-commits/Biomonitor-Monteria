@@ -724,42 +724,49 @@ st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 col_hero, col_estado = st.columns([3, 1], gap="medium")
 
 with col_hero:
-    # ── Hero unificado: logo izquierda + texto derecha ──────
-    col_logo_h, col_texto_h = st.columns([1, 2.6], gap="small")
+    # ── Hero unificado: logo + texto en un solo bloque HTML ─
+    logo_b64 = ""
+    try:
+        import base64, io as _io
+        logo_img = Image.open("Biomotorlogo.png")
+        buf = _io.BytesIO()
+        logo_img.save(buf, format="PNG")
+        logo_b64 = base64.b64encode(buf.getvalue()).decode()
+    except Exception:
+        pass
 
-    with col_logo_h:
-        try:
-            logo_img = Image.open("Biomotorlogo.png")
-            st.image(logo_img, use_container_width=True)
-        except Exception:
-            st.markdown("""
-            <div style="display:flex;align-items:center;justify-content:center;
-                        height:100%;min-height:120px;
-                        background:linear-gradient(135deg,#EAF3DE,#E0EFCE);
-                        border-radius:14px;font-size:3.5rem;text-align:center">
-              🌿
-            </div>""", unsafe_allow_html=True)
+    if logo_b64:
+        logo_html = f'<img src="data:image/png;base64,{logo_b64}" style="width:130px;height:130px;object-fit:contain;flex-shrink:0;border-radius:12px">'
+    else:
+        logo_html = '<div style="width:130px;height:130px;background:linear-gradient(135deg,#EAF3DE,#E0EFCE);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:3rem;flex-shrink:0">🌿</div>'
 
-    with col_texto_h:
-        st.markdown("""
-        <div class="hero-banner" style="height:100%;margin-bottom:0;
-             display:flex;flex-direction:column;justify-content:center">
-          <div class="hero-sub" style="margin-bottom:12px">
-            Plataforma de monitoreo ambiental en tiempo real para
-            <b style="color:#1E1E1C">Montería, Córdoba, Colombia</b>.
-            Integra datos oficiales de <b style="color:#3B6D11">IDEAM</b>,
-            <b style="color:#3B6D11">Open-Meteo</b> y <b style="color:#3B6D11">GBIF</b>
-            para monitorear la calidad del aire, el nivel del río Sinú y la
-            biodiversidad local. Actualización automática cada 15 minutos.
-          </div>
-          <div>
-            <span class="hero-badge">🌡️ Clima en tiempo real</span>
-            <span class="hero-badge">💨 Calidad del aire</span>
-            <span class="hero-badge">🌊 Nivel Río Sinú</span>
-            <span class="hero-badge">🦜 Biodiversidad GBIF</span>
-            <span class="hero-badge">🗺️ Mapa interactivo</span>
-          </div>
-        </div>""", unsafe_allow_html=True)
+    st.markdown(f"""
+    <div style="display:flex;align-items:center;gap:24px;
+                background:linear-gradient(135deg,#FFFFFF 60%,#F0F7E8 100%);
+                border:1px solid #E8E6DF;border-left:4px solid #3B6D11;
+                border-radius:0 14px 14px 0;padding:22px 28px;
+                box-shadow:0 2px 8px rgba(0,0,0,0.06);
+                animation:fadeInUp 0.35s ease both;">
+      {logo_html}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:0.9rem;color:#5F5E5A;line-height:1.65;
+                    margin-bottom:12px;font-weight:400">
+          Plataforma de monitoreo ambiental en tiempo real para
+          <b style="color:#1E1E1C">Montería, Córdoba, Colombia</b>.
+          Integra datos oficiales de <b style="color:#3B6D11">IDEAM</b>,
+          <b style="color:#3B6D11">Open-Meteo</b> y <b style="color:#3B6D11">GBIF</b>
+          para monitorear la calidad del aire, el nivel del río Sinú y la
+          biodiversidad local. Actualización automática cada 15 minutos.
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <span class="hero-badge">🌡️ Clima en tiempo real</span>
+          <span class="hero-badge">💨 Calidad del aire</span>
+          <span class="hero-badge">🌊 Nivel Río Sinú</span>
+          <span class="hero-badge">🦜 Biodiversidad GBIF</span>
+          <span class="hero-badge">🗺️ Mapa interactivo</span>
+        </div>
+      </div>
+    </div>""", unsafe_allow_html=True)
 
 with col_estado:
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
