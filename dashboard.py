@@ -734,6 +734,83 @@ def obtener_avistamientos_mapa():
 
     return avistamientos
 
+@st.cache_data(ttl=3600)
+def obtener_historico_30dias():
+    """Obtiene datos históricos de los últimos 30 días desde Open-Meteo."""
+    try:
+        fecha_fin   = datetime.now(TZ_COL).strftime("%Y-%m-%d")
+        fecha_ini   = (datetime.now(TZ_COL) - timedelta(days=30)).strftime("%Y-%m-%d")
+        r = requests.get(
+            "https://api.open-meteo.com/v1/forecast",
+            params={
+                "latitude": 8.7479, "longitude": -75.8814,
+                "daily": ["temperature_2m_max","temperature_2m_min",
+                          "precipitation_sum","wind_speed_10m_max"],
+                "timezone": "America/Bogota",
+                "start_date": fecha_ini,
+                "end_date":   fecha_fin,
+            }, timeout=10
+        ).json()
+        d = r.get("daily", {})
+        return {
+            "fechas":    d.get("time", []),
+            "temp_max":  d.get("temperature_2m_max", []),
+            "temp_min":  d.get("temperature_2m_min", []),
+            "lluvia":    d.get("precipitation_sum", []),
+            "viento":    d.get("wind_speed_10m_max", []),
+            "ok": True
+        }
+    except Exception:
+        return {"ok": False, "fechas": [], "temp_max": [], "temp_min": [],
+                "lluvia": [], "viento": []}
+
+@st.cache_data(ttl=3600)
+def obtener_historico_aire_30dias():
+    """Obtiene PM2.5 histórico de los últimos 30 días."""
+    try:
+        fecha_fin = datetime.now(TZ_COL).strftime("%Y-%m-%d")
+        fecha_ini = (datetime.now(TZ_COL) - timedelta(days=30)).strftime("%Y-%m-%d")
+        r = requests.get(
+            "https://air-quality-api.open-meteo.com/v1/air-quality",
+            params={
+                "latitude": 8.7479, "longitude": -75.8814,
+                "hourly": ["pm2_5","pm10"],
+                "timezone": "America/Bogota",
+                "start_date": fecha_ini,
+                "end_date":   fecha_fin,
+            }, timeout=10
+        ).json()
+        h = r.get("hourly", {})
+        # Promediar por día
+        pm25_h = h.get("pm2_5", [])
+        fechas_h = h.get("time", [])
+        dias_pm25 = {}
+        for t, v in zip(fechas_h, pm25_h):
+            if v is not None:
+                dia = t[:10]
+                dias_pm25.setdefault(dia, []).append(v)
+        fechas_d = sorted(dias_pm25.keys())
+        pm25_d   = [round(sum(dias_pm25[d])/len(dias_pm25[d]), 1) for d in fechas_d]
+        return {"fechas": fechas_d, "pm25": pm25_d, "ok": True}
+    except Exception:
+        return {"ok": False, "fechas": [], "pm25": []}
+
+def calcular_heat_index(temp_c, humedad):
+    """Calcula el índice de calor aparente (Heat Index) en °C."""
+    t = temp_c * 9/5 + 32  # convertir a Fahrenheit
+    rh = humedad
+    hi = (-42.379 + 2.04901523*t + 10.14333127*rh
+          - 0.22475541*t*rh - 6.83783e-3*t**2
+          - 5.481717e-2*rh**2 + 1.22874e-3*t**2*rh
+          + 8.5282e-4*t*rh**2 - 1.99e-6*t**2*rh**2)
+    hi_c = round((hi - 32) * 5/9, 1)
+    # Categorías de alerta
+    if hi_c < 27:   return hi_c, "✅ Confortable",    "badge-green",  "#00E5C3"
+    elif hi_c < 32: return hi_c, "🟡 Precaución",     "badge-yellow", "#FFD600"
+    elif hi_c < 41: return hi_c, "🟠 Precaución extrema","badge-yellow","#FF9800"
+    elif hi_c < 54: return hi_c, "🔴 Peligro",        "badge-red",    "#FF5252"
+    else:           return hi_c, "🔴 Peligro extremo","badge-red",    "#FF0000"
+
 # ── Cauce real del Río Sinú — coordenadas trazadas en geojson.io ──────
 CAUCE_SINU_FALLBACK = [
     [8.69768846, -75.94782194], [8.70122071, -75.94240658],
@@ -1211,6 +1288,302 @@ with _a4:
         <span class="badge {aqi_badge}">{aqi_txt}</span>
         <div class="fuente-tag">Open-Meteo · tiempo real</div>
     </div>""", unsafe_allow_html=True)
+
+st.markdown("<hr style='border:1px solid rgba(0,229,195,0.1);margin:14px 0'>", unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════
+# ── ÍNDICE DE CALOR APARENTE ──────────────────────────────
+# ══════════════════════════════════════════════════════════
+
+st.markdown('<div class="section-header">🌡️ Índice de calor aparente · Heat Index</div>', unsafe_allow_html=True)
+
+hi_val, hi_lbl, hi_badge, hi_color = calcular_heat_index(
+    clima.get("temp", 30), clima.get("humedad", 75)
+)
+
+hi_c1, hi_c2, hi_c3, hi_c4 = st.columns(4, gap="small")
+with hi_c1:
+    st.markdown(f"""<div class="kpi-card kpi-card-green">
+        <div class="kpi-label">Temperatura real</div>
+        <div class="kpi-value">{clima.get('temp', '—')}°C</div>
+        <span class="badge badge-green">Termómetro</span>
+        <div class="fuente-tag">Open-Meteo · tiempo real</div>
+    </div>""", unsafe_allow_html=True)
+with hi_c2:
+    st.markdown(f"""<div class="kpi-card kpi-card-green">
+        <div class="kpi-label">Humedad relativa</div>
+        <div class="kpi-value">{clima.get('humedad', '—')}%</div>
+        <span class="badge badge-green">Humedad</span>
+        <div class="fuente-tag">Open-Meteo · tiempo real</div>
+    </div>""", unsafe_allow_html=True)
+with hi_c3:
+    st.markdown(f"""<div class="kpi-card kpi-card-green">
+        <div class="kpi-label">Calor aparente</div>
+        <div class="kpi-value" style="color:{hi_color}">{hi_val}°C</div>
+        <span class="badge {hi_badge}">{hi_lbl}</span>
+        <div class="fuente-tag">Fórmula Steadman/NWS</div>
+    </div>""", unsafe_allow_html=True)
+with hi_c4:
+    st.markdown(f"""<div class="kpi-card kpi-card-green">
+        <div class="kpi-label">Diferencia térmica</div>
+        <div class="kpi-value" style="color:{hi_color}">+{round(hi_val - clima.get('temp',30), 1)}°C</div>
+        <span class="badge {hi_badge}">Sensación extra</span>
+        <div class="fuente-tag">vs temperatura real</div>
+    </div>""", unsafe_allow_html=True)
+
+# Tabla de referencia heat index
+st.markdown("""
+<div style="background:rgba(0,229,195,0.04);border:1px solid rgba(0,229,195,0.1);
+            border-radius:10px;padding:12px 16px;margin-top:8px;font-size:0.8rem">
+    <b style="color:#00E5C3">Escala de riesgo por calor · OMS / NWS:</b><br>
+    <span style="color:#00E5C3">✅ &lt;27°C</span> Confortable &nbsp;·&nbsp;
+    <span style="color:#FFD600">🟡 27-32°C</span> Precaución — fatiga posible &nbsp;·&nbsp;
+    <span style="color:#FF9800">🟠 32-41°C</span> Precaución extrema — golpe de calor posible &nbsp;·&nbsp;
+    <span style="color:#FF5252">🔴 41-54°C</span> Peligro — golpe de calor probable &nbsp;·&nbsp;
+    <span style="color:#FF0000">☠️ &gt;54°C</span> Peligro extremo
+</div>""", unsafe_allow_html=True)
+
+st.markdown("<hr style='border:1px solid rgba(0,229,195,0.1);margin:14px 0'>", unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════
+# ── CORRELACIÓN LLUVIA vs NIVEL DEL RÍO ──────────────────
+# ══════════════════════════════════════════════════════════
+
+st.markdown('<div class="section-header">💧 Correlación lluvia vs nivel del río · 7 días</div>', unsafe_allow_html=True)
+
+lluvia_7d = clima.get("lluvia_7d", [0]*7)
+fig_corr, axes = plt.subplots(1, 2, figsize=(11, 3.5))
+fig_corr.patch.set_facecolor("#0d1b2e")
+
+# Gráfico 1 — Dual axis lluvia + nivel
+ax1 = axes[0]
+ax1.set_facecolor("#0d1b2e")
+ax2 = ax1.twinx()
+dias_cortos = [d.replace(" ","") for d in dias]
+bars_ll = ax1.bar(dias_cortos, lluvia_7d, color="#4FC3F7", alpha=0.6,
+                   width=0.4, label="Lluvia (mm)")
+ax2.plot(dias_cortos, niveles, color="#FFD600", linewidth=2.5,
+         marker="o", markersize=5, label="Nivel río (m)")
+ax1.set_ylabel("Lluvia (mm)", color="#4FC3F7", fontsize=8)
+ax2.set_ylabel("Nivel río (m)", color="#FFD600", fontsize=8)
+ax1.tick_params(colors="#5a7a9a", labelsize=7)
+ax2.tick_params(colors="#FFD600", labelsize=7)
+for spine in ax1.spines.values(): spine.set_color("#1a2a3e")
+for spine in ax2.spines.values(): spine.set_color("#1a2a3e")
+ax1.set_title("Lluvia acumulada vs nivel del río", color="#e8f4ff",
+              fontsize=9, pad=6)
+ax1.tick_params(axis='x', rotation=15)
+ax1.grid(axis="y", color="#1a2a3e", linewidth=0.5)
+lines1, labels1 = ax1.get_legend_handles_labels()
+lines2, labels2 = ax2.get_legend_handles_labels()
+ax1.legend(lines1+lines2, labels1+labels2, fontsize=7,
+           facecolor="#0d1b2e", labelcolor="#8892a4", loc="upper left")
+
+# Gráfico 2 — Scatter correlación
+ax3 = axes[1]
+ax3.set_facecolor("#0d1b2e")
+colores_scatter = ["#00E5C3" if n < 4.0 else "#FFD600" if n < 5.5 else "#FF9800"
+                   for n in niveles]
+ax3.scatter(lluvia_7d, niveles, c=colores_scatter, s=80, zorder=5, alpha=0.9)
+for i, (x, y) in enumerate(zip(lluvia_7d, niveles)):
+    ax3.annotate(dias_cortos[i], (x, y), textcoords="offset points",
+                 xytext=(4, 4), fontsize=6.5, color="#5a7a9a")
+# Línea de tendencia
+if len(lluvia_7d) > 1:
+    z = np.polyfit(lluvia_7d, niveles, 1)
+    p = np.poly1d(z)
+    x_line = np.linspace(min(lluvia_7d), max(lluvia_7d), 50)
+    ax3.plot(x_line, p(x_line), "--", color="#FF9800", linewidth=1.2,
+             alpha=0.7, label="Tendencia")
+    # Correlación de Pearson
+    corr = np.corrcoef(lluvia_7d, niveles)[0, 1]
+    ax3.text(0.05, 0.92, f"r = {corr:.2f}", transform=ax3.transAxes,
+             color="#00E5C3", fontsize=8, fontweight="bold")
+ax3.set_xlabel("Lluvia acumulada (mm)", color="#5a7a9a", fontsize=8)
+ax3.set_ylabel("Nivel del río (m)", color="#5a7a9a", fontsize=8)
+ax3.set_title("Correlación lluvia → nivel", color="#e8f4ff",
+              fontsize=9, pad=6)
+ax3.tick_params(colors="#5a7a9a", labelsize=7)
+for spine in ax3.spines.values(): spine.set_color("#1a2a3e")
+ax3.grid(color="#1a2a3e", linewidth=0.5)
+ax3.legend(fontsize=7, facecolor="#0d1b2e", labelcolor="#8892a4")
+
+plt.tight_layout(pad=0.8)
+st.pyplot(fig_corr)
+plt.close()
+
+corr_val = np.corrcoef(lluvia_7d, niveles)[0, 1] if len(lluvia_7d) > 1 else 0
+interp = ("correlación muy fuerte" if abs(corr_val) > 0.8
+          else "correlación moderada" if abs(corr_val) > 0.5
+          else "correlación débil")
+st.markdown(f"""
+<div style="background:rgba(79,195,247,0.05);border:1px solid rgba(79,195,247,0.15);
+            border-radius:10px;padding:10px 14px;font-size:0.82rem;color:#5a7a9a">
+    📊 <b style="color:#e8f4ff">Coeficiente de Pearson r = {corr_val:.2f}</b> — {interp} entre lluvia y nivel del río en los últimos 7 días.<br>
+    ℹ️ El río Sinú responde a la lluvia con un rezago de 1-2 días por la cuenca hídrica del Alto Sinú.
+</div>""", unsafe_allow_html=True)
+
+st.markdown("<hr style='border:1px solid rgba(0,229,195,0.1);margin:14px 0'>", unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════
+# ── HISTÓRICAS 30 DÍAS ────────────────────────────────────
+# ══════════════════════════════════════════════════════════
+
+st.markdown('<div class="section-header">📈 Históricas 30 días · Temperatura · Lluvia · PM2.5</div>', unsafe_allow_html=True)
+
+hist_clima = obtener_historico_30dias()
+hist_aire  = obtener_historico_aire_30dias()
+
+if hist_clima["ok"] and hist_clima["fechas"]:
+    fechas_hist = [f[5:] for f in hist_clima["fechas"]]  # "MM-DD"
+    paso = max(1, len(fechas_hist)//10)
+    xticks_idx = list(range(0, len(fechas_hist), paso))
+
+    fig_hist, axs = plt.subplots(3, 1, figsize=(11, 8), sharex=False)
+    fig_hist.patch.set_facecolor("#0d1b2e")
+
+    # — Panel 1: Temperatura
+    ax = axs[0]
+    ax.set_facecolor("#0d1b2e")
+    ax.fill_between(range(len(fechas_hist)),
+                    hist_clima["temp_min"], hist_clima["temp_max"],
+                    alpha=0.25, color="#FF9800", label="Rango Tmin-Tmax")
+    ax.plot(range(len(fechas_hist)), hist_clima["temp_max"],
+            color="#FF9800", linewidth=1.5, label="Tmax")
+    ax.plot(range(len(fechas_hist)), hist_clima["temp_min"],
+            color="#4FC3F7", linewidth=1.5, label="Tmin")
+    ax.set_ylabel("°C", color="#5a7a9a", fontsize=8)
+    ax.set_title("Temperatura máx/mín diaria", color="#e8f4ff", fontsize=9, pad=4)
+    ax.tick_params(colors="#5a7a9a", labelsize=7)
+    ax.set_xticks(xticks_idx)
+    ax.set_xticklabels([fechas_hist[i] for i in xticks_idx], rotation=15)
+    for spine in ax.spines.values(): spine.set_color("#1a2a3e")
+    ax.grid(color="#1a2a3e", linewidth=0.5)
+    ax.legend(fontsize=7, facecolor="#0d1b2e", labelcolor="#8892a4", loc="upper right")
+
+    # — Panel 2: Lluvia
+    ax2h = axs[1]
+    ax2h.set_facecolor("#0d1b2e")
+    ax2h.bar(range(len(fechas_hist)), hist_clima["lluvia"],
+             color="#4FC3F7", alpha=0.75, width=0.7)
+    ax2h.set_ylabel("mm", color="#5a7a9a", fontsize=8)
+    ax2h.set_title("Precipitación diaria acumulada", color="#e8f4ff", fontsize=9, pad=4)
+    ax2h.tick_params(colors="#5a7a9a", labelsize=7)
+    ax2h.set_xticks(xticks_idx)
+    ax2h.set_xticklabels([fechas_hist[i] for i in xticks_idx], rotation=15)
+    for spine in ax2h.spines.values(): spine.set_color("#1a2a3e")
+    ax2h.grid(axis="y", color="#1a2a3e", linewidth=0.5)
+
+    # — Panel 3: PM2.5
+    ax3h = axs[2]
+    ax3h.set_facecolor("#0d1b2e")
+    if hist_aire["ok"] and hist_aire["fechas"]:
+        fechas_pm = [f[5:] for f in hist_aire["fechas"]]
+        colores_pm = ["#00E5C3" if v < 10 else "#FFD600" if v < 15
+                      else "#FF9800" if v < 25 else "#FF5252"
+                      for v in hist_aire["pm25"]]
+        ax3h.bar(range(len(fechas_pm)), hist_aire["pm25"],
+                 color=colores_pm, alpha=0.85, width=0.7)
+        ax3h.axhline(y=15, color="#FFD600", linestyle="--", linewidth=1,
+                     alpha=0.7, label="OMS límite (15)")
+        paso_pm = max(1, len(fechas_pm)//10)
+        ax3h.set_xticks(range(0, len(fechas_pm), paso_pm))
+        ax3h.set_xticklabels([fechas_pm[i] for i in range(0, len(fechas_pm), paso_pm)],
+                              rotation=15, fontsize=7)
+        ax3h.legend(fontsize=7, facecolor="#0d1b2e", labelcolor="#8892a4")
+    ax3h.set_ylabel("µg/m³", color="#5a7a9a", fontsize=8)
+    ax3h.set_title("PM2.5 promedio diario", color="#e8f4ff", fontsize=9, pad=4)
+    ax3h.tick_params(colors="#5a7a9a", labelsize=7)
+    for spine in ax3h.spines.values(): spine.set_color("#1a2a3e")
+    ax3h.grid(axis="y", color="#1a2a3e", linewidth=0.5)
+
+    plt.tight_layout(pad=1.2)
+    st.pyplot(fig_hist)
+    plt.close()
+
+    # Estadísticas resumen
+    t_prom = round(sum(hist_clima["temp_max"])/len(hist_clima["temp_max"]), 1)
+    ll_total = round(sum(hist_clima["lluvia"]), 1)
+    ll_max   = round(max(hist_clima["lluvia"]), 1)
+    pm_prom  = round(sum(hist_aire["pm25"])/len(hist_aire["pm25"]), 1) if hist_aire["ok"] and hist_aire["pm25"] else "—"
+
+    st.markdown(f"""
+    <div style="background:rgba(0,229,195,0.04);border:1px solid rgba(0,229,195,0.1);
+                border-radius:10px;padding:12px 16px;font-size:0.82rem">
+        <b style="color:#00E5C3">Resumen últimos 30 días:</b> &nbsp;
+        🌡️ Tmax promedio: <b style="color:#e8f4ff">{t_prom}°C</b> &nbsp;·&nbsp;
+        🌧️ Lluvia total: <b style="color:#4FC3F7">{ll_total} mm</b> &nbsp;·&nbsp;
+        ☔ Día más lluvioso: <b style="color:#4FC3F7">{ll_max} mm</b> &nbsp;·&nbsp;
+        💨 PM2.5 prom.: <b style="color:#e8f4ff">{pm_prom} µg/m³</b>
+    </div>""", unsafe_allow_html=True)
+else:
+    st.info("Cargando datos históricos...")
+
+st.markdown("<hr style='border:1px solid rgba(0,229,195,0.1);margin:14px 0'>", unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════
+# ── EXPORTAR DATOS CSV ────────────────────────────────────
+# ══════════════════════════════════════════════════════════
+
+st.markdown('<div class="section-header">📊 Exportar datos · CSV para análisis externo</div>', unsafe_allow_html=True)
+
+import io
+
+# Construir DataFrame exportable
+df_export = pd.DataFrame({
+    "Fecha":             dias,
+    "Nivel_rio_m":       niveles,
+    "Alerta_rio":        [alerta_rio(n)[0] for n in niveles],
+    "Lluvia_mm":         lluvia_7d,
+    "Temp_max_C":        clima.get("temp_max", [0]*7),
+    "PM25_ug_m3":        [aire["pm25"]] * 7,
+    "PM10_ug_m3":        [aire["pm10"]] * 7,
+    "NO2_ug_m3":         [aire["no2"]] * 7,
+    "AQI_europeo":       [aire["aqi"]] * 7,
+    "Heat_index_C":      [hi_val] * 7,
+    "Alerta_calor":      [hi_lbl] * 7,
+})
+
+ex1, ex2, ex3 = st.columns(3, gap="small")
+
+with ex1:
+    csv_buf = io.StringIO()
+    df_export.to_csv(csv_buf, index=False, encoding="utf-8-sig")
+    st.download_button(
+        label="⬇️ Descargar CSV (7 días)",
+        data=csv_buf.getvalue().encode("utf-8-sig"),
+        file_name=f"biomonitor_monteria_{datetime.now(TZ_COL).strftime('%Y%m%d')}.csv",
+        mime="text/csv",
+        use_container_width=True
+    )
+
+with ex2:
+    if hist_clima["ok"] and hist_clima["fechas"]:
+        df_hist_export = pd.DataFrame({
+            "Fecha":       hist_clima["fechas"],
+            "Temp_max_C":  hist_clima["temp_max"],
+            "Temp_min_C":  hist_clima["temp_min"],
+            "Lluvia_mm":   hist_clima["lluvia"],
+            "Viento_kmh":  hist_clima["viento"],
+        })
+        if hist_aire["ok"] and hist_aire["fechas"]:
+            df_pm = pd.DataFrame({"Fecha": hist_aire["fechas"],
+                                   "PM25_ug_m3": hist_aire["pm25"]})
+            df_hist_export = df_hist_export.merge(df_pm, on="Fecha", how="left")
+        csv_hist = io.StringIO()
+        df_hist_export.to_csv(csv_hist, index=False, encoding="utf-8-sig")
+        st.download_button(
+            label="⬇️ Descargar CSV (30 días)",
+            data=csv_hist.getvalue().encode("utf-8-sig"),
+            file_name=f"biomonitor_historico_{datetime.now(TZ_COL).strftime('%Y%m%d')}.csv",
+            mime="text/csv",
+            use_container_width=True
+        )
+
+with ex3:
+    # Vista previa de la tabla
+    st.dataframe(df_export[["Fecha","Nivel_rio_m","Lluvia_mm","PM25_ug_m3","Heat_index_C"]],
+                 use_container_width=True, hide_index=True, height=180)
 
 st.markdown("<hr style='border:1px solid rgba(0,229,195,0.1);margin:14px 0'>", unsafe_allow_html=True)
 
