@@ -797,9 +797,9 @@ except Exception:
     pass
 
 if logo_b64:
-    logo_html = f'<img src="data:image/png;base64,{logo_b64}" style="width:160px;height:160px;object-fit:contain;border-radius:12px;flex-shrink:0">'
+    logo_html = f'<img src="data:image/png;base64,{logo_b64}" style="width:200px;object-fit:contain;border-radius:12px;flex-shrink:0">'
 else:
-    logo_html = '<div style="width:160px;height:160px;background:linear-gradient(135deg,#EAF3DE,#E0EFCE);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:4rem;flex-shrink:0">🌿</div>'
+    logo_html = '<div style="width:200px;background:linear-gradient(135deg,#EAF3DE,#E0EFCE);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:4rem;flex-shrink:0">🌿</div>'
 
 # ── TODO el header en un solo div HTML — sin columnas Streamlit ──
 st.markdown("""
