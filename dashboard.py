@@ -720,13 +720,31 @@ aqi_txt, aqi_badge = cat_aqi(aire["aqi"])
 # ── HEADER ────────────────────────────────────────────────
 # ══════════════════════════════════════════════════════════
 st.markdown("""
-<div style="padding:14px 0 10px 0;animation:fadeInUp 0.3s ease both">
+<style>
+@keyframes ledPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(59,179,17,0.7), 0 0 6px 2px rgba(59,179,17,0.4); }
+  50%      { box-shadow: 0 0 0 5px rgba(59,179,17,0), 0 0 10px 4px rgba(59,179,17,0.2); }
+}
+.led-dot {
+  display:inline-block;
+  width:9px; height:9px;
+  background:#3BD411;
+  border-radius:50%;
+  margin-right:7px;
+  vertical-align:middle;
+  animation: ledPulse 1.8s ease-in-out infinite;
+  position:relative; top:-1px;
+}
+</style>
+<div style="padding:26px 0 12px 0;animation:fadeInUp 0.3s ease both">
   <div style="font-family:'Outfit',sans-serif;font-size:1.65rem;font-weight:900;
-              color:#3B6D11;letter-spacing:-0.5px;line-height:1;margin-bottom:3px">
+              color:#3B6D11;letter-spacing:-0.5px;line-height:1;margin-bottom:5px">
     🌿 BioMonitor Montería
   </div>
   <div style="font-size:0.75rem;color:#888780;font-weight:600;
-              letter-spacing:1.2px;text-transform:uppercase">
+              letter-spacing:1.2px;text-transform:uppercase;
+              display:flex;align-items:center">
+    <span class="led-dot"></span>
     Monitoreo Ambiental en Tiempo Real &nbsp;·&nbsp; Córdoba, Colombia
   </div>
 </div>
