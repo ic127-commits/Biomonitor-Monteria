@@ -669,6 +669,71 @@ with k6: _kpi_card("kpi-card kpi-card-purple","🦜 Especies GBIF",  "≥12",   
 st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
 
+@st.cache_data(ttl=86400)
+def obtener_avistamientos_mapa():
+    """
+    Obtiene coordenadas exactas de avistamientos reales de GBIF
+    para las especies más representativas de Montería.
+    Filtra solo registros con coordenadas dentro del bbox de Montería.
+    """
+    ESPECIES = [
+        ("Iguana iguana",              "🦎", "Iguana verde",       "No evaluado", "purple"),
+        ("Leptotila verreauxi",        "🐦", "Paloma guarumera",   "LC",          "purple"),
+        ("Cairina moschata",           "🦆", "Pato real",          "LC",          "purple"),
+        ("Heliconia psittacorum",      "🌺", "Heliconia de loro",  "No evaluado", "purple"),
+        ("Chelonoidis carbonarius",    "🐢", "Morrocoy",           "Vulnerable",  "red"),
+        ("Columbina talpacoti",        "🐦", "Tortolita rojiza",   "LC",          "purple"),
+        ("Jacana jacana",              "🦅", "Gallito de ciénaga", "LC",          "purple"),
+        ("Ardea alba",                 "🦢", "Garza blanca",       "LC",          "purple"),
+        ("Pitangus sulphuratus",       "🐦", "Bichofué",           "LC",          "purple"),
+        ("Coragyps atratus",           "🦅", "Gallinazo negro",    "LC",          "purple"),
+    ]
+
+    # Bbox Montería: lat 8.68-8.85, lon -75.95 a -75.78
+    BBOX = "8.68,-75.95,8.85,-75.78"
+    avistamientos = []
+
+    for especie, emoji, nombre_com, estado, color in ESPECIES:
+        try:
+            r = requests.get(
+                "https://api.gbif.org/v1/occurrence/search",
+                params={
+                    "scientificName":  especie,
+                    "decimalLatitude": "8.68,8.85",
+                    "decimalLongitude": "-75.95,-75.78",
+                    "hasCoordinate":   "true",
+                    "country":         "CO",
+                    "limit":           10,
+                },
+                timeout=8
+            ).json()
+
+            registros = r.get("results", [])
+            for rec in registros:
+                lat = rec.get("decimalLatitude")
+                lon = rec.get("decimalLongitude")
+                if lat and lon:
+                    # Verificar que está dentro del bbox de Montería
+                    if 8.68 <= lat <= 8.85 and -75.95 <= lon <= -75.78:
+                        fecha = rec.get("eventDate", "")[:10] if rec.get("eventDate") else "Sin fecha"
+                        localidad = rec.get("locality", rec.get("municipality", "Montería"))
+                        avistamientos.append({
+                            "lat":       lat,
+                            "lon":       lon,
+                            "especie":   especie,
+                            "emoji":     emoji,
+                            "nombre":    nombre_com,
+                            "estado":    estado,
+                            "color":     color,
+                            "fecha":     fecha,
+                            "localidad": localidad[:40] if localidad else "Montería",
+                            "key":       rec.get("key", ""),
+                        })
+        except Exception:
+            continue
+
+    return avistamientos
+
 # ── Cauce real del Río Sinú — coordenadas trazadas en geojson.io ──────
 CAUCE_SINU_FALLBACK = [
     [8.69768846, -75.94782194], [8.70122071, -75.94240658],
@@ -792,9 +857,9 @@ with col_mapa:
 
     # ── Estaciones río ─────────────────────────────────────
     for lat, lon, nombre, idx in [
-        (8.7560,-75.8912,"Ronda del Sinú — Av. Primera",0),
-        (8.7650,-75.8845,"Puente Segundo Centenario",   1),
-        (8.7800,-75.8873,"Muelle Turístico del Sinú",   2),
+        (8.757573799506615, -75.88747047195153, "Ronda del Sinú — Av. Primera", 0),
+        (8.7650,            -75.8845,           "Puente Segundo Centenario",    1),
+        (8.761909556839255, -75.88462084128709, "Muelle Turístico del Sinú",    2),
     ]:
         alerta_lbl,_,_ = alerta_rio(niveles[idx])
         folium.Marker([lat,lon],
@@ -820,24 +885,25 @@ with col_mapa:
         else:      return "#FF5252","🔴 Mala"
 
     ZONAS_CONTAM = [
-        (8.7420,-75.8650,280,"🚌 Terminal de Transportes",
-         "Cl. 44 · buses y camiones · emisiones altas",2.1),
-        (8.7512,-75.8795,260,"🏪 Mercado Central",
-         "Cra. 6 centro · tráfico pesado + vendedores",1.8),
-        (8.7600,-75.8600,240,"🚗 Avenida Circunvalar",
-         "Corredor vial principal E-O de Montería",1.6),
-        (8.7540,-75.8814,200,"🏛️ Parque Simón Bolívar",
-         "Centro histórico · zona concurrida",1.3),
-        (8.7510,-75.8540,200,"🛍️ Zona C.C. Buenavista",
-         "Cra. 6 #68-72 · flujo comercial intenso",1.4),
-        (8.7118,-75.8276,200,"⚽ Estadio Jaraguay",
-         "Estadio Municipal · zona sur periurbana",1.2),
-        (8.7560,-75.8930,320,"🌿 Ronda del Sinú",
-         "Parque lineal más grande de Latinoamérica · pulmón verde",0.6),
-        (8.7800,-75.8873,180,"⚓ Muelle Turístico",
-         "Orilla norte del río · brisa natural",0.7),
-        (8.8233,-75.8258,180,"✈️ Aeropuerto Los Garzones",
-         "Zona norte periférica · baja densidad urbana",0.8),
+        # Coordenadas verificadas con Google Maps
+        (8.7420, -75.8650, 280, "🚌 Terminal de Transportes",
+         "Cl. 44 · buses y camiones · emisiones altas", 2.1),
+        (8.7512, -75.8795, 260, "🏪 Mercado Central",
+         "Cra. 6 centro · tráfico pesado + vendedores", 1.8),
+        (8.7600, -75.8600, 240, "🚗 Avenida Circunvalar",
+         "Corredor vial principal E-O de Montería", 1.6),
+        (8.75594055923935, -75.88700684261966, 200, "🏛️ Parque Simón Bolívar",
+         "Centro histórico · zona más concurrida de Montería", 1.3),
+        (8.779113660375875, -75.86157613345505, 200, "🛍️ Zona C.C. Buenavista",
+         "Cra. 6 #68-72 · flujo comercial intenso", 1.4),
+        (8.71165087231113, -75.82840985065003, 200, "⚽ Estadio Jaraguay",
+         "Estadio Municipal de Montería · zona sur", 1.2),
+        (8.757573799506615, -75.88747047195153, 320, "🌿 Ronda del Sinú",
+         "Parque lineal más grande de Latinoamérica · pulmón verde urbano", 0.6),
+        (8.761909556839255, -75.88462084128709, 180, "⚓ Muelle Turístico",
+         "Orilla del río Sinú · brisa natural", 0.7),
+        (8.8233, -75.8258, 180, "✈️ Aeropuerto Los Garzones",
+         "Zona norte periférica · baja densidad urbana", 0.8),
     ]
     for lat,lon,radio,nombre,desc,factor in ZONAS_CONTAM:
         c,estado = color_contam(factor)
@@ -925,40 +991,48 @@ with col_mapa:
             icon=folium.Icon(color="green",icon="cloud",prefix="fa")
         ).add_to(g_aire)
 
-    # ── Fauna ──────────────────────────────────────────────
-    # Registros reales de GBIF — coordenadas de avistamientos en Montería
-    FAUNA_DATA = [
-        # Iguana verde — frecuente en la Ronda del Sinú (parque lineal)
-        (8.7548,-75.8908,"🦎 Iguana iguana","Iguana verde",
-         "Ronda del Sinú — Av. Primera","12 registros GBIF","No evaluado"),
-        # Paloma guarumera — registrada en zona norte, árboles urbanos
-        (8.7720,-75.8680,"🐦 Leptotila verreauxi","Paloma guarumera",
-         "Norte urbano · arbolado","5 registros GBIF","LC"),
-        # Pato real — orilla del río sector muelle
-        (8.7798,-75.8870,"🦆 Cairina moschata","Pato real",
-         "Muelle Turístico · orilla río","3 registros GBIF","LC"),
-        # Heliconia — jardines y zonas verdes urbanas
-        (8.7678,-75.8848,"🌺 Heliconia psittacorum","Heliconia de loro",
-         "Zonas verdes urbanas","8 registros GBIF","No evaluado"),
-        # Morrocoy — zona sur, áreas semi-rurales
-        (8.7120,-75.8280,"🐢 Chelonoidis carbonarius","Morrocoy",
-         "Zona sur periurbana","2 registros GBIF","Vulnerable"),
-    ]
-    for lat,lon,especie,nombre_com,zona,registros,estado in FAUNA_DATA:
-        color_estado = "red" if estado=="Vulnerable" else "purple"
-        folium.Marker([lat,lon],
-            popup=folium.Popup(
-                f"<b>{especie}</b><br>"
-                f"🏷️ Nombre común: <b>{nombre_com}</b><br>"
-                f"📍 Zona: {zona}<br>"
-                f"📊 {registros}<br>"
-                f"🔴 Estado IUCN: {estado}",
-                max_width=240),
-            tooltip=folium.Tooltip(
-                f"<b>{especie}</b><br>{nombre_com} · {zona}",
-                sticky=True),
-            icon=folium.Icon(color=color_estado, icon="paw", prefix="fa")
-        ).add_to(g_fauna)
+    # ── FAUNA — Coordenadas exactas desde GBIF en tiempo real ─
+    avistamientos_reales = obtener_avistamientos_mapa()
+    if avistamientos_reales:
+        from collections import defaultdict
+        por_especie = defaultdict(list)
+        for av in avistamientos_reales:
+            por_especie[av["especie"]].append(av)
+        for especie, registros in por_especie.items():
+            for av in registros:
+                color_m = "red" if av["estado"]=="Vulnerable" else "purple"
+                folium.Marker([av["lat"], av["lon"]],
+                    popup=folium.Popup(
+                        f"<b>{av['emoji']} {av['especie']}</b><br>"
+                        f"🏷️ <b>{av['nombre']}</b><br>"
+                        f"📍 {av['localidad']}<br>"
+                        f"📅 {av['fecha']}<br>"
+                        f"🔴 Estado IUCN: {av['estado']}<br>"
+                        f"📡 Fuente: GBIF · coordenadas reales",
+                        max_width=260),
+                    tooltip=folium.Tooltip(
+                        f"{av['emoji']} {av['especie']}<br>{av['nombre']} · {av['fecha']}",
+                        sticky=True),
+                    icon=folium.Icon(color=color_m, icon="paw", prefix="fa")
+                ).add_to(g_fauna)
+    else:
+        # Fallback si GBIF no responde
+        for lat,lon,esp,nom,zona,est in [
+            (8.757573799506615,-75.88747047195153,"🦎 Iguana iguana","Iguana verde","Ronda del Sinú","No evaluado"),
+            (8.7720,-75.8680,"🐦 Leptotila verreauxi","Paloma guarumera","Norte urbano","LC"),
+            (8.761909556839255,-75.88462084128709,"🦆 Cairina moschata","Pato real","Muelle Turístico","LC"),
+            (8.7678248873423,-75.88483868572298,"🌺 Heliconia psittacorum","Heliconia de loro","Zonas verdes","No evaluado"),
+            (8.71165087231113,-75.82840985065003,"🐢 Chelonoidis carbonarius","Morrocoy","Zona sur","Vulnerable"),
+        ]:
+            folium.Marker([lat,lon],
+                popup=folium.Popup(
+                    f"<b>{esp}</b><br>🏷️ {nom}<br>📍 {zona}<br>"
+                    f"🔴 Estado IUCN: {est}<br>⚠️ Respaldo · GBIF no disponible",
+                    max_width=250),
+                tooltip=folium.Tooltip(f"{esp} · {nom}", sticky=True),
+                icon=folium.Icon(color="red" if est=="Vulnerable" else "purple",
+                                icon="paw", prefix="fa")
+            ).add_to(g_fauna)
 
     # ── Agregar capas y control ────────────────────────────
     for g in [g_inundacion,g_lluvia,g_contam,g_rio,g_aire,g_univ,g_cc,g_fauna]:
