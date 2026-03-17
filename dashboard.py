@@ -741,337 +741,172 @@ with col_mapa:
     else:
         tiles, attr = "OpenStreetMap", "© OpenStreetMap contributors"
 
-    m = folium.Map(location=[8.7560, -75.8814], zoom_start=13,
-                   tiles=tiles, attr=attr)
+    m = folium.Map(
+        location=[8.7560, -75.8850],
+        zoom_start=13,
+        tiles=tiles, attr=attr,
+        prefer_canvas=True
+    )
 
-    # ── Cauce real del Río Sinú ────────────────────────────
+    # Grupos de capas — cada uno se puede activar/desactivar
+    g_rio        = folium.FeatureGroup(name="🌊 Río y estaciones",   show=True)
+    g_contam     = folium.FeatureGroup(name="💨 Contaminación",      show=True)
+    g_inundacion = folium.FeatureGroup(name="🌊 Zonas inundación",   show=True)
+    g_lluvia     = folium.FeatureGroup(name="🌧️ Lluvia",             show=True)
+    g_univ       = folium.FeatureGroup(name="🎓 Universidades",      show=True)
+    g_cc         = folium.FeatureGroup(name="🛍️ C. Comerciales",     show=True)
+    g_aire       = folium.FeatureGroup(name="💨 Estaciones aire",    show=True)
+    g_fauna      = folium.FeatureGroup(name="🦜 Fauna",              show=True)
+
+    # ── Cauce Río Sinú ─────────────────────────────────────
     _cauce = obtener_cauce_sinu() or CAUCE_SINU_FALLBACK
     folium.PolyLine(
-        locations=_cauce,
-        color="#4FC3F7", weight=5, opacity=0.9,
-        tooltip="Río Sinú"
-    ).add_to(m)
-
-    # ── Área de monitoreo ──────────────────────────────────
+        locations=_cauce, color="#4FC3F7",
+        weight=5, opacity=0.9, tooltip="Río Sinú"
+    ).add_to(g_rio)
     folium.Circle(
-        [8.7560, -75.8814], radius=5000,
-        color="#00E5C3", fill=True, fill_opacity=0.03,
+        [8.7560,-75.8850], radius=6000,
+        color="#00E5C3", fill=True, fill_opacity=0.02,
         weight=1, dash_array="6"
-    ).add_to(m)
+    ).add_to(g_rio)
 
-    # ══════════════════════════════════════════════════════
-    # PUNTOS MÁS TRANSITADOS DE MONTERÍA — coordenadas verificadas
-    # con niveles de contaminación diferenciados por zona
-    # ══════════════════════════════════════════════════════
-
-    pm25 = aire["pm25"]
-    aqi  = aire["aqi"]
-
-    # Función para color según contaminación relativa por zona
-    def color_contam(factor):
-        """factor 1.0=normal, >1=más contaminado, <1=más limpio"""
-        val = pm25 * factor
-        if val < 10:   return "#00E5C3", "🟢 Buena"
-        elif val < 15: return "#FFD600", "🟡 Moderada"
-        elif val < 25: return "#FF9800", "🟠 Regular"
-        else:          return "#FF5252", "🔴 Mala"
-
-    # ── ZONAS DE ALTA CONTAMINACIÓN (tráfico + industria) ──
-    # Mercado Central — alto tráfico vehicular, vendedores ambulantes
-    c, estado = color_contam(1.8)
-    folium.CircleMarker(
-        [8.7512, -75.8795], radius=18,
-        color=c, fill=True, fill_color=c, fill_opacity=0.5, weight=2,
-        popup=folium.Popup(
-            f"<b>🏪 Mercado Central</b><br>"
-            f"Zona: Alta contaminación<br>"
-            f"PM2.5 est.: {round(pm25*1.8,1)} µg/m³<br>"
-            f"Causa: tráfico pesado + vendedores<br>"
-            f"Estado: {estado}", max_width=220),
-        tooltip="🏪 Mercado Central — Alta contaminación"
-    ).add_to(m)
-
-    # Terminal de Transportes — buses y camiones
-    c, estado = color_contam(2.1)
-    folium.CircleMarker(
-        [8.7420, -75.8650], radius=18,
-        color=c, fill=True, fill_color=c, fill_opacity=0.5, weight=2,
-        popup=folium.Popup(
-            f"<b>🚌 Terminal de Transportes</b><br>"
-            f"Zona: Muy alta contaminación<br>"
-            f"PM2.5 est.: {round(pm25*2.1,1)} µg/m³<br>"
-            f"Causa: emisiones de buses y camiones<br>"
-            f"Estado: {estado}", max_width=220),
-        tooltip="🚌 Terminal — Muy alta contaminación"
-    ).add_to(m)
-
-    # Avenida Circunvalar — tráfico vehicular intenso
-    c, estado = color_contam(1.6)
-    folium.CircleMarker(
-        [8.7600, -75.8600], radius=16,
-        color=c, fill=True, fill_color=c, fill_opacity=0.45, weight=2,
-        popup=folium.Popup(
-            f"<b>🚗 Av. Circunvalar</b><br>"
-            f"Zona: Alta contaminación<br>"
-            f"PM2.5 est.: {round(pm25*1.6,1)} µg/m³<br>"
-            f"Causa: corredor vial principal<br>"
-            f"Estado: {estado}", max_width=220),
-        tooltip="🚗 Av. Circunvalar — Alta contaminación"
-    ).add_to(m)
-
-    # ── ZONAS DE CONTAMINACIÓN MEDIA ──────────────────────
-    # Centro histórico — Parque Simón Bolívar
-    c, estado = color_contam(1.3)
-    folium.CircleMarker(
-        [8.7540, -75.8814], radius=15,
-        color=c, fill=True, fill_color=c, fill_opacity=0.45, weight=2,
-        popup=folium.Popup(
-            f"<b>🏛️ Parque Simón Bolívar</b><br>"
-            f"Zona: Contaminación moderada<br>"
-            f"PM2.5 est.: {round(pm25*1.3,1)} µg/m³<br>"
-            f"Causa: centro urbano concurrido<br>"
-            f"Estado: {estado}", max_width=220),
-        tooltip="🏛️ Parque Simón Bolívar — Moderada"
-    ).add_to(m)
-
-    # Universidad del Sinú — zona universitaria
-    c, estado = color_contam(1.1)
-    folium.CircleMarker(
-        [8.7454, -75.8888], radius=14,
-        color=c, fill=True, fill_color=c, fill_opacity=0.4, weight=2,
-        popup=folium.Popup(
-            f"<b>🎓 Universidad del Sinú</b><br>"
-            f"Zona: Contaminación baja-moderada<br>"
-            f"PM2.5 est.: {round(pm25*1.1,1)} µg/m³<br>"
-            f"Causa: zona residencial-universitaria<br>"
-            f"Estado: {estado}", max_width=220),
-        tooltip="🎓 UniSinú — Baja-moderada"
-    ).add_to(m)
-
-    # C.C. Buenavista — zona comercial
-    c, estado = color_contam(1.4)
-    folium.CircleMarker(
-        [8.7510, -75.8480], radius=15,
-        color=c, fill=True, fill_color=c, fill_opacity=0.45, weight=2,
-        popup=folium.Popup(
-            f"<b>🛍️ C.C. Buenavista</b><br>"
-            f"Zona: Contaminación moderada<br>"
-            f"PM2.5 est.: {round(pm25*1.4,1)} µg/m³<br>"
-            f"Causa: alto flujo vehicular comercial<br>"
-            f"Estado: {estado}", max_width=220),
-        tooltip="🛍️ C.C. Buenavista — Moderada"
-    ).add_to(m)
-
-    # Estadio Jaraguay — zona sur
-    c, estado = color_contam(1.2)
-    folium.CircleMarker(
-        [8.7118, -75.8276], radius=14,
-        color=c, fill=True, fill_color=c, fill_opacity=0.4, weight=2,
-        popup=folium.Popup(
-            f"<b>⚽ Estadio Jaraguay</b><br>"
-            f"Zona: Contaminación moderada<br>"
-            f"PM2.5 est.: {round(pm25*1.2,1)} µg/m³<br>"
-            f"Causa: zona periurbana sur<br>"
-            f"Estado: {estado}", max_width=220),
-        tooltip="⚽ Estadio Jaraguay — Moderada"
-    ).add_to(m)
-
-    # ── ZONAS LIMPIAS (parques y río) ─────────────────────
-    # Ronda del Sinú — parque lineal, pulmón verde
-    c, estado = color_contam(0.6)
-    folium.CircleMarker(
-        [8.7560, -75.8912], radius=20,
-        color=c, fill=True, fill_color=c, fill_opacity=0.45, weight=2,
-        popup=folium.Popup(
-            f"<b>🌿 Ronda del Sinú</b><br>"
-            f"Parque lineal más grande de Latinoamérica<br>"
-            f"PM2.5 est.: {round(pm25*0.6,1)} µg/m³<br>"
-            f"Causa: pulmón verde urbano, arborización<br>"
-            f"Estado: {estado}", max_width=220),
-        tooltip="🌿 Ronda del Sinú — Zona limpia"
-    ).add_to(m)
-
-    # Muelle Turístico — orilla norte del río
-    c, estado = color_contam(0.7)
-    folium.CircleMarker(
-        [8.7800, -75.8873], radius=14,
-        color=c, fill=True, fill_color=c, fill_opacity=0.4, weight=2,
-        popup=folium.Popup(
-            f"<b>⚓ Muelle Turístico del Sinú</b><br>"
-            f"Zona: Buena calidad de aire<br>"
-            f"PM2.5 est.: {round(pm25*0.7,1)} µg/m³<br>"
-            f"Causa: orilla del río, brisa natural<br>"
-            f"Estado: {estado}", max_width=220),
-        tooltip="⚓ Muelle Turístico — Zona limpia"
-    ).add_to(m)
-
-    # Aeropuerto Los Garzones — zona norte periférica
-    c, estado = color_contam(0.8)
-    folium.CircleMarker(
-        [8.8233, -75.8258], radius=14,
-        color=c, fill=True, fill_color=c, fill_opacity=0.4, weight=2,
-        popup=folium.Popup(
-            f"<b>✈️ Aeropuerto Los Garzones</b><br>"
-            f"PM2.5 est.: {round(pm25*0.8,1)} µg/m³<br>"
-            f"Causa: zona norte, menos densidad urbana<br>"
-            f"Estado: {estado}", max_width=220),
-        tooltip="✈️ Aeropuerto Los Garzones"
-    ).add_to(m)
-
-    # ── UNIVERSIDADES (usa lista global verificada) ──────────────────────
-    UNIVERSIDADES = UNIVERSIDADES_GLOBAL
-    for lat, lon, nombre, direccion, info in UNIVERSIDADES:
-        folium.Marker(
-            [lat, lon],
-            popup=folium.Popup(
-                f"<b>{nombre}</b><br>"
-                f"📍 {direccion}<br>"
-                f"ℹ️ {info}", max_width=240),
-            tooltip=nombre,
-            icon=folium.Icon(color="orange", icon="graduation-cap", prefix="fa")
-        ).add_to(m)
-
-    # ── CENTROS COMERCIALES ───────────────────────────────────────────────
-    for lat, lon, nombre, direccion, info in CC_GLOBAL:
-        folium.Marker(
-            [lat, lon],
-            popup=folium.Popup(
-                f"<b>{nombre}</b><br>"
-                f"📍 {direccion}<br>"
-                f"ℹ️ {info}", max_width=240),
-            tooltip=nombre,
-            icon=folium.Icon(color="red", icon="shopping-cart", prefix="fa")
-        ).add_to(m)
-
-    # ── Estaciones de monitoreo de aire (marcadores verdes) ──
-    for lat, lon, nombre, popup_txt in [
-        (8.7550, -75.8750, "💨 Estación Centro",
-         f"PM2.5: {aire['pm25']} µg/m³ · AQI: {aire['aqi']}"),
-        (8.7350, -75.8650, "💨 Estación Sur",
-         f"PM10: {aire['pm10']} µg/m³ · NO₂: {aire['no2']} µg/m³"),
-    ]:
-        folium.Marker(
-            [lat, lon],
-            popup=folium.Popup(f"<b>{nombre}</b><br>{popup_txt}", max_width=220),
-            tooltip=nombre,
-            icon=folium.Icon(color="green", icon="cloud", prefix="fa")
-        ).add_to(m)
-
-    # ── Estaciones río Sinú ────────────────────────────────
+    # ── Estaciones río ─────────────────────────────────────
     for lat, lon, nombre, idx in [
-        (8.7560, -75.8912, "Ronda del Sinú — Av. Primera", 0),
-        (8.7650, -75.8845, "Puente Segundo Centenario",    1),
-        (8.7800, -75.8873, "Muelle Turístico del Sinú",    2),
+        (8.7560,-75.8912,"Ronda del Sinú — Av. Primera",0),
+        (8.7650,-75.8845,"Puente Segundo Centenario",   1),
+        (8.7800,-75.8873,"Muelle Turístico del Sinú",   2),
     ]:
-        alerta_lbl, _, _ = alerta_rio(niveles[idx])
-        folium.Marker(
-            [lat, lon],
+        alerta_lbl,_,_ = alerta_rio(niveles[idx])
+        folium.Marker([lat,lon],
             popup=folium.Popup(
-                f"<b>🌊 {nombre}</b><br>"
-                f"Nivel: <b>{niveles[idx]}m</b><br>"
-                f"Estado: {alerta_lbl}", max_width=230),
+                f"<b>🌊 {nombre}</b><br>Nivel: <b>{niveles[idx]}m</b><br>Estado: {alerta_lbl}",
+                max_width=230),
             tooltip=f"🌊 {nombre}",
-            icon=folium.Icon(color="blue", icon="tint", prefix="fa")
-        ).add_to(m)
+            icon=folium.Icon(color="blue",icon="tint",prefix="fa")
+        ).add_to(g_rio)
 
-    # ── Capa de lluvia si hay probabilidad ─────────────────
-    prob_hoy = clima.get("prob_lluvia", [0])[0] if clima.get("prob_lluvia") else 0
-    if prob_hoy >= 20 or clima.get("lluvia_hoy", 0) > 0:
-        if prob_hoy >= 60:   color_lluvia, op = "#0066FF", 0.30
-        elif prob_hoy >= 30: color_lluvia, op = "#00AAFF", 0.18
-        else:                color_lluvia, op = "#00CCFF", 0.10
-        for lat_z, lon_z, peso in [
-            (8.7550,-75.8914,1.0),(8.7480,-75.9000,0.9),
-            (8.7750,-75.8870,0.8),(8.7280,-75.9050,0.7),
-            (8.7600,-75.8700,0.6),(8.7400,-75.8750,0.5),
-        ]:
-            folium.Circle(
-                [lat_z, lon_z], radius=int(2000*peso),
-                color=color_lluvia, fill=True,
-                fill_color=color_lluvia,
-                fill_opacity=op*peso, weight=0,
-                tooltip=f"🌧️ Prob. lluvia: {prob_hoy}%"
-            ).add_to(m)
+    # ── Zonas contaminación ────────────────────────────────
+    pm25 = aire["pm25"]
+    def color_contam(f):
+        v = pm25*f
+        if v<10:   return "#00E5C3","🟢 Buena"
+        elif v<15: return "#FFD600","🟡 Moderada"
+        elif v<25: return "#FF9800","🟠 Regular"
+        else:      return "#FF5252","🔴 Mala"
 
-    # ── Marcadores fauna ───────────────────────────────────
-    fauna_puntos = [
-        (8.7560, -75.8912, "🦎 Iguana iguana",           "Ronda del Sinú · 12 registros"),
-        (8.7735, -75.8695, "🐦 Leptotila verreauxi",      "Norte · 5 registros"),
-        (8.7800, -75.8873, "🦆 Cairina moschata",         "Muelle · 3 registros"),
-        (8.7454, -75.8888, "🌺 Heliconia psittacorum",    "Campus UniSinú · 8 registros"),
-        (8.7118, -75.8276, "🐢 Chelonoidis carbonarius",  "Zona sur · 2 registros"),
+    ZONAS_CONTAM = [
+        (8.7420,-75.8650,280,"🚌 Terminal de Transportes",
+         "Cl. 44 · buses y camiones · emisiones altas",2.1),
+        (8.7512,-75.8795,260,"🏪 Mercado Central",
+         "Cra. 6 centro · tráfico pesado + vendedores",1.8),
+        (8.7600,-75.8600,240,"🚗 Avenida Circunvalar",
+         "Corredor vial principal E-O de Montería",1.6),
+        (8.7540,-75.8814,200,"🏛️ Parque Simón Bolívar",
+         "Centro histórico · zona concurrida",1.3),
+        (8.7510,-75.8540,200,"🛍️ Zona C.C. Buenavista",
+         "Cra. 6 #68-72 · flujo comercial intenso",1.4),
+        (8.7118,-75.8276,200,"⚽ Estadio Jaraguay",
+         "Estadio Municipal · zona sur periurbana",1.2),
+        (8.7560,-75.8930,320,"🌿 Ronda del Sinú",
+         "Parque lineal más grande de Latinoamérica · pulmón verde",0.6),
+        (8.7800,-75.8873,180,"⚓ Muelle Turístico",
+         "Orilla norte del río · brisa natural",0.7),
+        (8.8233,-75.8258,180,"✈️ Aeropuerto Los Garzones",
+         "Zona norte periférica · baja densidad urbana",0.8),
     ]
-    for lat, lon, nombre, popup_txt in fauna_puntos:
-        folium.Marker(
-            [lat, lon],
-            popup=folium.Popup(f"<b>{nombre}</b><br>{popup_txt}", max_width=220),
-            tooltip=nombre,
-            icon=folium.Icon(color="purple", icon="paw", prefix="fa")
-        ).add_to(m)
-
-    # ── Leyenda profesional ────────────────────────────────
-    m.get_root().html.add_child(folium.Element("""
-    <div style="position:fixed;bottom:20px;left:20px;z-index:1000;
-                background:rgba(6,13,26,0.93);padding:12px 16px;
-                border-radius:12px;font-size:11px;color:#8892a4;
-                border:1px solid rgba(0,229,195,0.2);min-width:180px">
-        <b style="color:#00E5C3;font-size:12px">Leyenda</b><br>
-        <span style="color:#FF5252">🔴</span> Alta &nbsp;
-        <span style="color:#FF9800">🟠</span> Media &nbsp;
-        <span style="color:#FFD600">🟡</span> Moderada &nbsp;
-        <span style="color:#00E5C3">🟢</span> Limpia<br>
-        <span style="color:#4FC3F7">🔵</span> Río &nbsp;
-        <span style="color:#00E5C3">🟢</span> Aire &nbsp;
-        <span style="color:#7B61FF">🟣</span> Fauna<br>
-        <span style="color:#FFA500">🟠</span> Universidades &nbsp;
-        <span style="color:#FF5252">🔴</span> C. Comerciales &nbsp;
-        <span style="color:#00AAFF">🔵</span> Lluvia<br>
-        <span style="color:#4FC3F7">━━</span> Cauce Río Sinú
-    </div>"""))
-
-    # ── Zonas de inundación según nivel actual del río ────
-    ZONAS_INUNDACION = [
-        (8.7560, -75.8950, 600, "Zona riesgo ALTO",
-         "La Granja · La Ribera · Los Nogales",
-         4.0, "Primera zona en afectarse históricamente"),
-        (8.7480, -75.8920, 500, "Zona riesgo ALTO",
-         "Barrio Colón · Chuchurubi · Santa Fe",
-         4.0, "Área de inundación histórica recurrente"),
-        (8.7650, -75.8930, 450, "Zona riesgo MEDIO",
-         "Ronda del Sinú norte · Av. Primera",
-         5.5, "Afectada cuando el río supera 5.5m"),
-        (8.7800, -75.8900, 400, "Zona riesgo MEDIO",
-         "El Recreo · sector norte ribera",
-         5.5, "Afectada cuando el río supera 5.5m"),
-        (8.7350, -75.8970, 350, "Zona riesgo ALTO",
-         "Mocarí rural · zona baja sur",
-         4.0, "Zona baja — riesgo en temporada de lluvias"),
-    ]
-    nivel_actual = niveles[0]
-    for lat_z, lon_z, radio, zona, barrios, cota, nota in ZONAS_INUNDACION:
-        if nivel_actual >= cota + 1.5:
-            cz, fo, iz = "#FF5252", 0.40, "⚠️ INUNDACIÓN ACTIVA"
-        elif nivel_actual >= cota:
-            cz, fo, iz = "#FF9800", 0.28, "⚠️ En alerta"
-        elif nivel_actual >= cota - 0.5:
-            cz, fo, iz = "#FFD600", 0.15, "⚡ Precaución"
-        else:
-            cz, fo, iz = "#4FC3F7", 0.06, "✅ Normal"
-        folium.Circle(
-            [lat_z, lon_z], radius=radio,
-            color=cz, fill=True, fill_color=cz,
-            fill_opacity=fo, weight=2, dash_array="6",
+    for lat,lon,radio,nombre,desc,factor in ZONAS_CONTAM:
+        c,estado = color_contam(factor)
+        folium.Circle([lat,lon],radius=radio,
+            color=c,fill=True,fill_color=c,fill_opacity=0.32,weight=2,
             popup=folium.Popup(
-                f"<b>🌊 {zona}</b><br>"
-                f"<b>Estado:</b> {iz}<br>"
-                f"<b>Barrios:</b> {barrios}<br>"
-                f"<b>Nivel actual:</b> {nivel_actual}m<br>"
-                f"<b>Cota alerta:</b> {cota}m<br>"
-                f"<b>Nota:</b> {nota}", max_width=270),
-            tooltip=f"🌊 {zona} · {iz}"
-        ).add_to(m)
+                f"<b>{nombre}</b><br>📍 {desc}<br>"
+                f"PM2.5 est.: <b>{round(pm25*factor,1)} µg/m³</b><br>"
+                f"Factor zona: {factor}x · Estado: {estado}",max_width=250),
+            tooltip=f"{nombre} · {estado}"
+        ).add_to(g_contam)
 
-    st_folium(m, width=None, height=450, returned_objects=[])
+    # ── Zonas inundación ───────────────────────────────────
+    nivel_actual = niveles[0]
+    ZONAS_INUND = [
+        (8.7480,-75.8960,300,"La Granja · La Ribera",    4.0,"Zona baja occidental"),
+        (8.7430,-75.8880,260,"Barrio Colón · Chuchurubi",4.0,"Inundación histórica"),
+        (8.7650,-75.8930,240,"Ronda Sinú norte",         5.5,"Afectada cota 5.5m"),
+        (8.7800,-75.8900,200,"El Recreo · ribera norte", 5.5,"Afectada cota 5.5m"),
+        (8.7280,-75.9000,200,"Mocarí · zona sur",        4.0,"Zona baja sur"),
+    ]
+    for lat,lon,radio,barrios,cota,nota in ZONAS_INUND:
+        if nivel_actual>=cota+1.5:   cz,fo,az="#FF5252",0.38,"⚠️ INUNDACIÓN"
+        elif nivel_actual>=cota:      cz,fo,az="#FF9800",0.24,"⚠️ Alerta"
+        elif nivel_actual>=cota-0.5:  cz,fo,az="#FFD600",0.14,"⚡ Precaución"
+        else:                         cz,fo,az="#4FC3F7",0.07,"✅ Normal"
+        folium.Circle([lat,lon],radius=radio,
+            color=cz,fill=True,fill_color=cz,fill_opacity=fo,
+            weight=2,dash_array="6",
+            popup=folium.Popup(
+                f"<b>🌊 Zona inundación</b><br>Barrios: {barrios}<br>"
+                f"Nivel: {nivel_actual}m · Cota alerta: {cota}m<br>"
+                f"Estado: {az} · {nota}",max_width=260),
+            tooltip=f"🌊 {barrios} · {az}"
+        ).add_to(g_inundacion)
+
+    # ── Lluvia ─────────────────────────────────────────────
+    prob_h = clima.get("prob_lluvia",[0])[0] if clima.get("prob_lluvia") else 0
+    if prob_h>=20 or clima.get("lluvia_hoy",0)>0:
+        cl_r,op_r = ("#0066FF",0.22) if prob_h>=60 else ("#00AAFF",0.13) if prob_h>=30 else ("#00CCFF",0.07)
+        for lat_z,lon_z,peso in [(8.7550,-75.8914,1.0),(8.7480,-75.9000,0.9),(8.7750,-75.8870,0.8)]:
+            folium.Circle([lat_z,lon_z],radius=int(2000*peso),
+                color=cl_r,fill=True,fill_color=cl_r,
+                fill_opacity=op_r*peso,weight=0,
+                tooltip=f"🌧️ Prob. lluvia: {prob_h}%"
+            ).add_to(g_lluvia)
+
+    # ── Universidades ──────────────────────────────────────
+    for lat,lon,nombre,direccion,info in UNIVERSIDADES_GLOBAL:
+        folium.Marker([lat,lon],
+            popup=folium.Popup(f"<b>{nombre}</b><br>📍 {direccion}<br>ℹ️ {info}",max_width=250),
+            tooltip=nombre,
+            icon=folium.Icon(color="orange",icon="graduation-cap",prefix="fa")
+        ).add_to(g_univ)
+
+    # ── Centros comerciales ────────────────────────────────
+    for lat,lon,nombre,direccion,info in CC_GLOBAL:
+        folium.Marker([lat,lon],
+            popup=folium.Popup(f"<b>{nombre}</b><br>📍 {direccion}<br>ℹ️ {info}",max_width=250),
+            tooltip=nombre,
+            icon=folium.Icon(color="red",icon="shopping-cart",prefix="fa")
+        ).add_to(g_cc)
+
+    # ── Estaciones aire ────────────────────────────────────
+    for lat,lon,nombre,txt in [
+        (8.7550,-75.8750,"💨 Estación Centro",f"PM2.5: {aire['pm25']} µg/m³ · AQI: {aire['aqi']}"),
+        (8.7350,-75.8650,"💨 Estación Sur",   f"PM10: {aire['pm10']} µg/m³ · NO₂: {aire['no2']} µg/m³"),
+    ]:
+        folium.Marker([lat,lon],
+            popup=folium.Popup(f"<b>{nombre}</b><br>{txt}",max_width=220),
+            tooltip=nombre,
+            icon=folium.Icon(color="green",icon="cloud",prefix="fa")
+        ).add_to(g_aire)
+
+    # ── Fauna ──────────────────────────────────────────────
+    for lat,lon,nombre,txt in [
+        (8.7560,-75.8912,"🦎 Iguana iguana",         "Ronda del Sinú · 12 registros"),
+        (8.7735,-75.8695,"🐦 Leptotila verreauxi",   "Norte · 5 registros"),
+        (8.7800,-75.8873,"🦆 Cairina moschata",      "Muelle · 3 registros"),
+        (8.7454,-75.8888,"🌺 Heliconia psittacorum", "Campus UniSinú · 8 registros"),
+        (8.7118,-75.8276,"🐢 Chelonoidis carbonarius","Zona sur · 2 registros"),
+    ]:
+        folium.Marker([lat,lon],
+            popup=folium.Popup(f"<b>{nombre}</b><br>{txt}",max_width=220),
+            tooltip=nombre,
+            icon=folium.Icon(color="purple",icon="paw",prefix="fa")
+        ).add_to(g_fauna)
+
+    # ── Agregar capas y control ────────────────────────────
+    for g in [g_inundacion,g_lluvia,g_contam,g_rio,g_aire,g_univ,g_cc,g_fauna]:
+        g.add_to(m)
+    folium.LayerControl(collapsed=False,position="topright").add_to(m)
+
+    st_folium(m, width=None, height=480, returned_objects=[])
 
 with col_pred:
     st.markdown('<div class="section-header">🌊 Predicción 7 días · LSTM</div>', unsafe_allow_html=True)
