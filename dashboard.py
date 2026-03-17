@@ -765,117 +765,128 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-col_hero, col_estado = st.columns([3, 1], gap="medium")
+# ── Calcular estado para el HTML ──────────────────────────
+nivel_actual_hero = niveles[0] if niveles else 0
+pm_actual_hero    = aire.get("pm25", 0)
+hi_hero, _, _, _  = calcular_heat_index(clima.get("temp",30), clima.get("humedad",75))
 
-with col_hero:
-    # ── Hero unificado: logo + texto en un solo bloque HTML ─
-    logo_b64 = ""
-    try:
-        import base64, io as _io
-        logo_img = Image.open("Biomotorlogo.png")
-        buf = _io.BytesIO()
-        logo_img.save(buf, format="PNG")
-        logo_b64 = base64.b64encode(buf.getvalue()).decode()
-    except Exception:
-        pass
+if nivel_actual_hero >= 5.5 or pm_actual_hero >= 25:
+    estado_ico, estado_txt   = "🔴", "Atención requerida"
+    estado_color, estado_desc = "#791F1F", "Hay condiciones de riesgo activas"
+    borde_color = "#A32D2D"
+elif nivel_actual_hero >= 4.0 or pm_actual_hero >= 15 or hi_hero >= 32:
+    estado_ico, estado_txt   = "🟡", "Monitorear de cerca"
+    estado_color, estado_desc = "#633806", "Algunas variables requieren atención"
+    borde_color = "#854F0B"
+else:
+    estado_ico, estado_txt   = "🟢", "Todo en orden"
+    estado_color, estado_desc = "#27500A", "Todas las variables dentro del rango normal"
+    borde_color = "#3B6D11"
 
-    if logo_b64:
-        logo_html = f'<img src="data:image/png;base64,{logo_b64}" style="width:200px;height:200px;object-fit:contain;flex-shrink:0;border-radius:12px">'
-    else:
-        logo_html = '<div style="width:200px;height:200px;background:linear-gradient(135deg,#EAF3DE,#E0EFCE);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:4.5rem;flex-shrink:0">🌿</div>'
+hora_actual = datetime.now(TZ_COL).strftime("%H:%M")
 
-    st.markdown(f"""
-    <div class="hero-card-inner" style="display:flex;align-items:center;gap:24px;
-                background:linear-gradient(135deg,#FFFFFF 60%,#F0F7E8 100%);
-                border:1px solid #E8E6DF;border-left:4px solid #3B6D11;
-                border-radius:0 14px 14px 0;padding:22px 28px;
-                box-shadow:0 2px 8px rgba(0,0,0,0.06);
-                animation:fadeInUp 0.35s ease both;">
-      {logo_html}
-      <div style="flex:1;min-width:0">
-        <div style="font-size:0.9rem;color:#5F5E5A;line-height:1.65;
-                    margin-bottom:12px;font-weight:400">
-          Plataforma de monitoreo ambiental en tiempo real para
-          <b style="color:#1E1E1C">Montería, Córdoba, Colombia</b>.
-          Integra datos oficiales de <b style="color:#3B6D11">IDEAM</b>,
-          <b style="color:#3B6D11">Open-Meteo</b> y <b style="color:#3B6D11">GBIF</b>
-          para monitorear la calidad del aire, el nivel del río Sinú y la
-          biodiversidad local. Actualización automática cada 15 minutos.
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px">
-          <span class="hero-badge">🌡️ Clima en tiempo real</span>
-          <span class="hero-badge">💨 Calidad del aire</span>
-          <span class="hero-badge">🌊 Nivel Río Sinú</span>
-          <span class="hero-badge">🦜 Biodiversidad GBIF</span>
-          <span class="hero-badge">🗺️ Mapa interactivo</span>
-        </div>
+# ── Logo en base64 ─────────────────────────────────────────
+logo_b64 = ""
+try:
+    import base64, io as _io
+    logo_img = Image.open("Biomotorlogo.png")
+    buf = _io.BytesIO()
+    logo_img.save(buf, format="PNG")
+    logo_b64 = base64.b64encode(buf.getvalue()).decode()
+except Exception:
+    pass
+
+if logo_b64:
+    logo_html = f'<img src="data:image/png;base64,{logo_b64}" style="width:190px;height:190px;object-fit:contain;border-radius:12px;flex-shrink:0">'
+else:
+    logo_html = '<div style="width:190px;height:190px;background:linear-gradient(135deg,#EAF3DE,#E0EFCE);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:4rem;flex-shrink:0">🌿</div>'
+
+# ── TODO el header en un solo div HTML — sin columnas Streamlit ──
+st.markdown(f"""
+<div style="display:flex;gap:16px;align-items:stretch;
+            margin-bottom:10px;animation:fadeInUp 0.35s ease both">
+
+  <!-- IZQUIERDA: hero card -->
+  <div style="flex:3;display:flex;align-items:center;gap:22px;
+              background:linear-gradient(135deg,#FFFFFF 60%,#F0F7E8 100%);
+              border:1px solid #E8E6DF;border-left:4px solid #3B6D11;
+              border-radius:0 14px 14px 0;padding:22px 26px;
+              box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+    {logo_html}
+    <div style="flex:1;min-width:0">
+      <div style="font-size:0.88rem;color:#5F5E5A;line-height:1.65;
+                  margin-bottom:12px;font-weight:400">
+        Plataforma de monitoreo ambiental en tiempo real para
+        <b style="color:#1E1E1C">Montería, Córdoba, Colombia</b>.
+        Integra datos oficiales de <b style="color:#3B6D11">IDEAM</b>,
+        <b style="color:#3B6D11">Open-Meteo</b> y <b style="color:#3B6D11">GBIF</b>
+        para monitorear la calidad del aire, el nivel del río Sinú y la
+        biodiversidad local. Actualización automática cada 15 minutos.
       </div>
-    </div>""", unsafe_allow_html=True)
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        <span class="hero-badge">🌡️ Clima en tiempo real</span>
+        <span class="hero-badge">💨 Calidad del aire</span>
+        <span class="hero-badge">🌊 Nivel Río Sinú</span>
+        <span class="hero-badge">🦜 Biodiversidad GBIF</span>
+        <span class="hero-badge">🗺️ Mapa interactivo</span>
+      </div>
+    </div>
+  </div>
 
-with col_estado:
-    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-    nivel_actual_hero = niveles[0] if niveles else 0
-    pm_actual_hero    = aire.get("pm25", 0)
-    hi_hero, _, _, _  = calcular_heat_index(clima.get("temp",30), clima.get("humedad",75))
+  <!-- DERECHA: estado card -->
+  <div style="flex:1;display:flex;flex-direction:column;gap:10px;min-width:220px">
 
-    if nivel_actual_hero >= 5.5 or pm_actual_hero >= 25:
-        estado_ico, estado_txt   = "🔴", "Atención requerida"
-        estado_color, estado_desc = "#791F1F", "Hay condiciones de riesgo activas"
-        borde_color = "#A32D2D"
-    elif nivel_actual_hero >= 4.0 or pm_actual_hero >= 15 or hi_hero >= 32:
-        estado_ico, estado_txt   = "🟡", "Monitorear de cerca"
-        estado_color, estado_desc = "#633806", "Algunas variables requieren atención"
-        borde_color = "#854F0B"
-    else:
-        estado_ico, estado_txt   = "🟢", "Todo en orden"
-        estado_color, estado_desc = "#27500A", "Todas las variables dentro del rango normal"
-        borde_color = "#3B6D11"
-
-    hora_actual = datetime.now(TZ_COL).strftime("%H:%M")
-    st.markdown(f"""
-    <div style="background:#FFFFFF;border:1px solid #E8E6DF;
+    <!-- Card estado -->
+    <div style="flex:1;background:#FFFFFF;border:1px solid #E8E6DF;
                 border-left:4px solid {borde_color};border-radius:0 14px 14px 0;
-                padding:20px 16px;text-align:center;
+                padding:18px 16px;text-align:center;
                 box-shadow:0 2px 8px rgba(0,0,0,0.06);
-                transition:all 0.18s ease;animation:fadeInUp 0.4s ease 0.1s both;">
-      <div style="font-family:'Outfit',sans-serif;font-size:0.64rem;text-transform:uppercase;
-                  letter-spacing:1.2px;color:#888780;margin-bottom:10px;font-weight:700">
+                display:flex;flex-direction:column;justify-content:center">
+      <div style="font-family:'Outfit',sans-serif;font-size:0.62rem;text-transform:uppercase;
+                  letter-spacing:1.2px;color:#888780;margin-bottom:8px;font-weight:700">
         ¿Cómo está Montería ahora?
       </div>
-      <div style="font-size:2.6rem;margin:4px 0;line-height:1;
+      <div style="font-size:2.4rem;line-height:1;
                   filter:drop-shadow(0 2px 6px rgba(0,0,0,0.15))">{estado_ico}</div>
-      <div style="font-family:'Outfit',sans-serif;font-size:1rem;font-weight:800;
-                  color:{estado_color};margin-top:8px;letter-spacing:-0.2px">
+      <div style="font-family:'Outfit',sans-serif;font-size:0.95rem;font-weight:800;
+                  color:{estado_color};margin-top:8px">
         {estado_txt}
       </div>
-      <div style="font-size:0.76rem;color:#5F5E5A;margin-top:5px;line-height:1.5;font-weight:500">
+      <div style="font-size:0.74rem;color:#5F5E5A;margin-top:4px;line-height:1.5;font-weight:500">
         {estado_desc}
       </div>
-      <div style="font-size:0.68rem;color:#888780;margin-top:10px;
-                  border-top:1px solid #E8E6DF;padding-top:8px;font-weight:500">
+      <div style="font-size:0.67rem;color:#888780;margin-top:8px;
+                  border-top:1px solid #E8E6DF;padding-top:7px;font-weight:500">
         <span style="display:inline-block;width:6px;height:6px;background:{borde_color};
                      border-radius:50%;margin-right:4px;vertical-align:middle;
-                     box-shadow:0 0 0 3px rgba(59,109,17,0.2)"></span>
+                     box-shadow:0 0 0 3px rgba(59,109,17,0.15)"></span>
         Actualizado {hora_actual} hora Colombia
       </div>
     </div>
-    <div style="margin-top:10px;font-size:0.75rem;color:#444441;
-                background:linear-gradient(135deg,#F4F2EE,#EEECEA);
-                border-radius:10px;padding:12px 14px;border:1px solid #D3D1C7;
-                line-height:1.8;font-weight:500">
-      <b style="color:#1E1E1C;display:block;margin-bottom:6px;
-                font-family:'Outfit',sans-serif;font-size:0.77rem">¿Qué significa el color?</b>
-      <span style="color:#27500A;font-weight:600">🟢 Verde</span> — Todo en orden, sin alertas<br>
-      <span style="color:#633806;font-weight:600">🟡 Amarillo</span> — Algo requiere atención<br>
-      <span style="color:#791F1F;font-weight:600">🔴 Rojo</span> — Condición de riesgo activa
-    </div>""", unsafe_allow_html=True)
 
-    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+    <!-- Card colores -->
+    <div style="background:linear-gradient(135deg,#F4F2EE,#EEECEA);
+                border:1px solid #D3D1C7;border-radius:10px;
+                padding:11px 14px;font-size:0.74rem;color:#444441;line-height:1.9;font-weight:500">
+      <b style="color:#1E1E1C;display:block;margin-bottom:5px;
+                font-family:'Outfit',sans-serif;font-size:0.76rem">¿Qué significa el color?</b>
+      <span style="color:#27500A;font-weight:700">🟢 Verde</span> — Sin alertas<br>
+      <span style="color:#633806;font-weight:700">🟡 Amarillo</span> — Requiere atención<br>
+      <span style="color:#791F1F;font-weight:700">🔴 Rojo</span> — Riesgo activo
+    </div>
+
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+# Botón actualizar — columna derecha alineada
+_, col_btn = st.columns([3.15, 1])
+with col_btn:
     if st.button("🔄 Actualizar datos", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
 
-st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════
 # ── NAVEGACIÓN POR TABS ───────────────────────────────────
