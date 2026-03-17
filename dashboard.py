@@ -902,85 +902,21 @@ st.markdown(f"""
       <span style="color:#633806;font-weight:700">🟡 Amarillo</span> — Requiere atención<br>
       <span style="color:#791F1F;font-weight:700">🔴 Rojo</span> — Riesgo activo
     </div>
-    <button class="btn-actualizar" style="display:none"></button>
   </div>
 
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
-# ── BARRA DE CONTROLES — modo oscuro + actualizar ─────────
-# Session state para modo oscuro
-if "dark_mode" not in st.session_state:
-    st.session_state.dark_mode = False
-
-col_space, col_dm, col_act = st.columns([3.2, 1, 0.6], gap="small")
-
-with col_dm:
-    icono = "☀️ Modo claro" if st.session_state.dark_mode else "🌙 Modo oscuro"
-    if st.button(icono, use_container_width=True):
-        st.session_state.dark_mode = not st.session_state.dark_mode
-        st.rerun()
-
+# ── Botón actualizar — alineado a la derecha ──────────────
+_, col_act = st.columns([4, 1])
 with col_act:
-    if st.button("🔄", use_container_width=True, help="Actualizar datos"):
+    if st.button("🔄 Actualizar datos", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
 
-# ── Aplicar CSS modo oscuro si está activo ────────────────
-if st.session_state.dark_mode:
-    st.markdown("""
-    <style>
-    html, body, [data-testid="stAppViewContainer"], .main {
-      background-color: #141412 !important;
-    }
-    .block-container { background-color: #141412 !important; }
-    .hero-left {
-      background: linear-gradient(135deg,#1E1E1C 60%,#1A2810 100%) !important;
-      border-color: #3A3A38 !important;
-    }
-    .hero-right > div {
-      background: #1E1E1C !important; border-color: #3A3A38 !important;
-    }
-    .kpi-card {
-      background: #1E1E1C !important; border-color: #3A3A38 !important;
-    }
-    .info-card {
-      background: #1E1E1C !important; border-color: #3A3A38 !important;
-      color: #C8C6C0 !important;
-    }
-    .section-header { color: #E8E6DF !important; border-color: #2A3A1A !important; }
-    .kpi-value, .kpi-value-sm { color: #F0EEE8 !important; }
-    .kpi-label { color: #888780 !important; }
-    .stat-row {
-      background: #252522 !important; border-color: #3A3A38 !important;
-      color: #C8C6C0 !important;
-    }
-    .stat-row b, .stat-row * { color: #E8E6DF !important; }
-    .stTabs [data-baseweb="tab-list"] {
-      background: #1E1E1C !important; border-color: #3A3A38 !important;
-    }
-    .stTabs [data-baseweb="tab"] { color: #888780 !important; }
-    .hero-badge {
-      background: #1A2810 !important; color: #97C459 !important;
-      border-color: #3B6D11 !important;
-    }
-    p, span, label { color: #C8C6C0 !important; }
-    b { color: #E8E6DF !important; }
-    .fuente-tag { color: #666460 !important; }
-    [data-testid="stMarkdownContainer"] p { color: #C8C6C0 !important; }
-    .stDataFrame { background: #1E1E1C !important; }
-    .stDataFrame thead tr th {
-      background: #252522 !important; color: #97C459 !important;
-    }
-    .stDataFrame tbody tr td { color: #C8C6C0 !important; }
-    .streamlit-expanderHeader {
-      background: #252522 !important; border-color: #3A3A38 !important;
-      color: #E8E6DF !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════
 tab_inicio, tab_mapa, tab_analisis, tab_bio, tab_alertas = st.tabs([
