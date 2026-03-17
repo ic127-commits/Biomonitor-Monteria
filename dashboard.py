@@ -902,7 +902,7 @@ st.markdown(f"""
       <span style="color:#633806;font-weight:700">🟡 Amarillo</span> — Requiere atención<br>
       <span style="color:#791F1F;font-weight:700">🔴 Rojo</span> — Riesgo activo
     </div>
-    <button class="btn-actualizar" onclick="window.location.reload()">🔄 Actualizar datos</button>
+    <button class="btn-actualizar" style="display:none"></button>
   </div>
 
 </div>
@@ -910,126 +910,78 @@ st.markdown(f"""
 
 st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
 
-# ── MODO OSCURO ───────────────────────────────────────────
-st.markdown("""
-<style>
-/* ── Dark mode variables ── */
-body.dark-mode,
-body.dark-mode [data-testid="stAppViewContainer"],
-body.dark-mode .main {
-  background-color: #141412 !important;
-}
-body.dark-mode .block-container { background-color: #141412 !important; }
+# ── BARRA DE CONTROLES — modo oscuro + actualizar ─────────
+# Session state para modo oscuro
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = False
 
-body.dark-mode .hero-left {
-  background: linear-gradient(135deg,#1E1E1C 60%,#1A2810 100%) !important;
-  border-color: #3A3A38 !important;
-}
-body.dark-mode .hero-right > div {
-  background: #1E1E1C !important;
-  border-color: #3A3A38 !important;
-}
-body.dark-mode .kpi-card {
-  background: #1E1E1C !important;
-  border-color: #3A3A38 !important;
-}
-body.dark-mode .info-card {
-  background: #1E1E1C !important;
-  border-color: #3A3A38 !important;
-  color: #C8C6C0 !important;
-}
-body.dark-mode .section-header {
-  color: #E8E6DF !important;
-  border-color: #2A3A1A !important;
-}
-body.dark-mode .kpi-value,
-body.dark-mode .kpi-value-sm { color: #F0EEE8 !important; }
-body.dark-mode .kpi-label    { color: #888780 !important; }
-body.dark-mode .stat-row {
-  background: #252522 !important;
-  border-color: #3A3A38 !important;
-  color: #C8C6C0 !important;
-}
-body.dark-mode .stat-row b,
-body.dark-mode .stat-row * { color: #E8E6DF !important; }
-body.dark-mode .stTabs [data-baseweb="tab-list"] {
-  background: #1E1E1C !important;
-  border-color: #3A3A38 !important;
-}
-body.dark-mode .stTabs [data-baseweb="tab"] { color: #888780 !important; }
-body.dark-mode p,
-body.dark-mode span,
-body.dark-mode div { color: #C8C6C0; }
-body.dark-mode b   { color: #E8E6DF !important; }
-body.dark-mode .hero-badge {
-  background: #1A2810 !important;
-  color: #97C459 !important;
-  border-color: #3B6D11 !important;
-}
+col_space, col_dm, col_act = st.columns([3.2, 1, 0.6], gap="small")
 
-/* ── Toggle button ── */
-.dark-toggle-bar {
-  display:flex;justify-content:flex-end;align-items:center;
-  gap:10px;padding:6px 0 10px 0;
-}
-.dark-toggle-btn {
-  display:flex;align-items:center;gap:8px;
-  background:#FFFFFF;border:1px solid #D3D1C7;
-  border-radius:30px;padding:6px 16px;cursor:pointer;
-  font-family:Outfit,sans-serif;font-size:0.78rem;font-weight:600;
-  color:#5F5E5A;box-shadow:0 2px 6px rgba(0,0,0,0.06);
-  transition:all 0.2s ease;
-}
-.dark-toggle-btn:hover {
-  background:#F4F2EE;border-color:#3B6D11;color:#3B6D11;
-  transform:translateY(-1px);box-shadow:0 4px 12px rgba(59,109,17,0.15);
-}
-.toggle-track {
-  width:34px;height:18px;background:#D3D1C7;border-radius:20px;
-  position:relative;transition:background 0.2s ease;flex-shrink:0;
-}
-.toggle-track.on { background:#3B6D11; }
-.toggle-thumb {
-  position:absolute;top:2px;left:2px;width:14px;height:14px;
-  background:#FFFFFF;border-radius:50%;
-  transition:transform 0.2s ease;box-shadow:0 1px 3px rgba(0,0,0,0.2);
-}
-.toggle-thumb.on { transform:translateX(16px); }
-</style>
+with col_dm:
+    icono = "☀️ Modo claro" if st.session_state.dark_mode else "🌙 Modo oscuro"
+    if st.button(icono, use_container_width=True):
+        st.session_state.dark_mode = not st.session_state.dark_mode
+        st.rerun()
 
-<div class="dark-toggle-bar">
-  <button class="dark-toggle-btn" id="darkToggleBtn" onclick="toggleDark()">
-    <span id="darkIcon">🌙</span>
-    <span id="darkLabel">Modo oscuro</span>
-    <div class="toggle-track" id="toggleTrack">
-      <div class="toggle-thumb" id="toggleThumb"></div>
-    </div>
-  </button>
-</div>
+with col_act:
+    if st.button("🔄", use_container_width=True, help="Actualizar datos"):
+        st.cache_data.clear()
+        st.rerun()
 
-<script>
-(function() {
-  var dark = localStorage.getItem('biomonitor_dark') === '1';
-  function applyDark(on) {
-    document.body.classList.toggle('dark-mode', on);
-    var icon  = document.getElementById('darkIcon');
-    var label = document.getElementById('darkLabel');
-    var track = document.getElementById('toggleTrack');
-    var thumb = document.getElementById('toggleThumb');
-    if (icon)  icon.textContent  = on ? '☀️' : '🌙';
-    if (label) label.textContent = on ? 'Modo claro' : 'Modo oscuro';
-    if (track) track.classList.toggle('on', on);
-    if (thumb) thumb.classList.toggle('on', on);
-    localStorage.setItem('biomonitor_dark', on ? '1' : '0');
-  }
-  window.toggleDark = function() {
-    dark = !dark;
-    applyDark(dark);
-  };
-  applyDark(dark);
-})();
-</script>
-""", unsafe_allow_html=True)
+# ── Aplicar CSS modo oscuro si está activo ────────────────
+if st.session_state.dark_mode:
+    st.markdown("""
+    <style>
+    html, body, [data-testid="stAppViewContainer"], .main {
+      background-color: #141412 !important;
+    }
+    .block-container { background-color: #141412 !important; }
+    .hero-left {
+      background: linear-gradient(135deg,#1E1E1C 60%,#1A2810 100%) !important;
+      border-color: #3A3A38 !important;
+    }
+    .hero-right > div {
+      background: #1E1E1C !important; border-color: #3A3A38 !important;
+    }
+    .kpi-card {
+      background: #1E1E1C !important; border-color: #3A3A38 !important;
+    }
+    .info-card {
+      background: #1E1E1C !important; border-color: #3A3A38 !important;
+      color: #C8C6C0 !important;
+    }
+    .section-header { color: #E8E6DF !important; border-color: #2A3A1A !important; }
+    .kpi-value, .kpi-value-sm { color: #F0EEE8 !important; }
+    .kpi-label { color: #888780 !important; }
+    .stat-row {
+      background: #252522 !important; border-color: #3A3A38 !important;
+      color: #C8C6C0 !important;
+    }
+    .stat-row b, .stat-row * { color: #E8E6DF !important; }
+    .stTabs [data-baseweb="tab-list"] {
+      background: #1E1E1C !important; border-color: #3A3A38 !important;
+    }
+    .stTabs [data-baseweb="tab"] { color: #888780 !important; }
+    .hero-badge {
+      background: #1A2810 !important; color: #97C459 !important;
+      border-color: #3B6D11 !important;
+    }
+    p, span, label { color: #C8C6C0 !important; }
+    b { color: #E8E6DF !important; }
+    .fuente-tag { color: #666460 !important; }
+    [data-testid="stMarkdownContainer"] p { color: #C8C6C0 !important; }
+    .stDataFrame { background: #1E1E1C !important; }
+    .stDataFrame thead tr th {
+      background: #252522 !important; color: #97C459 !important;
+    }
+    .stDataFrame tbody tr td { color: #C8C6C0 !important; }
+    .streamlit-expanderHeader {
+      background: #252522 !important; border-color: #3A3A38 !important;
+      color: #E8E6DF !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 # ══════════════════════════════════════════════════════════
 tab_inicio, tab_mapa, tab_analisis, tab_bio, tab_alertas = st.tabs([
     "🏠 Inicio", "🗺️ Mapa", "📈 Análisis", "🦜 Biodiversidad", "🔔 Alertas"
