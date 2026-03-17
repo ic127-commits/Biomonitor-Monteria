@@ -705,45 +705,34 @@ def obtener_cauce_sinu():
 
 # Coordenadas verificadas desde OpenStreetMap, sitios oficiales y mapcarta
 # Fuentes: mapcarta.com, sitios web oficiales de cada institución
+# ── Coordenadas verificadas con Google Maps por el usuario ──────────
 UNIVERSIDADES_GLOBAL = [
-    # UniSinú: verificada vymaps.com
-    (8.7454, -75.8888, "🎓 Universidad del Sinú",
+    (8.7678248873423,   -75.88483868572298, "🎓 Universidad del Sinú",
      "Cra. 1W #38-153, Barrio Juan XXIII", "Institución privada · ~8,000 estudiantes"),
-    # UniCórdoba: 8°47'16"N 75°51'28"O — coordenadas verificadas por usuario
-    (8.787778, -75.857778, "🎓 Universidad de Córdoba",
+    (8.791868230231875, -75.86243514566901, "🎓 Universidad de Córdoba",
      "Cra. 6 #77-305, Montería", "Universidad pública · ~15,000 estudiantes"),
-    # UPB: 8°48'N 75°50'O — coordenadas verificadas por usuario
-    (8.800000, -75.833333, "🎓 Universidad Pontificia Bolivariana",
-     "Cra. 6 #97A-99, Montería", "Institución privada · sede Montería"),
-    # Luis Amigó: Cl. 64 #6-108
-    (8.7636, -75.8805, "🎓 Universidad Luis Amigó",
+    (8.80502372813011,  -75.8504521385269,  "🎓 Universidad Pontificia Bolivariana",
+     "Cra. 6 #97A-99, Barrio Mocarí", "Institución privada · sede Montería"),
+    (8.774657079543962, -75.8644811469475,  "🎓 Universidad Luis Amigó",
      "Cl. 64 #6-108, Montería", "Institución privada · sede Montería"),
-    # Cooperativa: 8°45'N 75°53'O — coordenadas verificadas por usuario
-    (8.750000, -75.883333, "🎓 Universidad Cooperativa de Colombia",
+    (8.766214543910708, -75.86885384879858, "🎓 Universidad Cooperativa de Colombia",
      "Cl. 52 #6-79, Montería", "Institución privada · sede Montería"),
-    # CUN: Cra. 4 #30-20
-    (8.7540, -75.8831, "🎓 CUN Montería",
+    (8.756837644153618, -75.88483213345532, "🎓 CUN Montería",
      "Cra. 4 #30-20, Montería", "Corporación Unificada Nacional"),
-    # Politécnico: Cl. 66 #5-70
-    (8.7646, -75.8814, "🎓 Politécnico Gran Colombiano",
+    (8.767419911567938, -75.88224655290996, "🎓 Politécnico Gran Colombiano",
      "Cl. 66 #5-70 Local 103, Montería", "Institución privada · sede Montería"),
-    # Uniremington: Cl. 27 #4-31
-    (8.7513, -75.8831, "🎓 Uniremington",
+    (8.754969967892375, -75.88607423530627, "🎓 Uniremington",
      "Cl. 27 #4-31, Montería", "Corporación Universitaria Remington"),
-    # San Agustín: Cra. 6 #33-02 Centro
-    (8.7567, -75.8805, "🏫 Colegio San Agustín",
-     "Cra. 6 #33-02, Centro, Montería", "Institución educativa San Agustín"),
+    (8.75708789506036,  -75.88234492154572, "🏫 Instituto Tecnológico San Agustín",
+     "Cra. 6 #33-02, Centro, Montería", "Institución educativa"),
 ]
 
 CC_GLOBAL = [
-    # Buenavista: 8°45'36"N 75°53'08"O — coordenadas verificadas por usuario
-    (8.760000, -75.885556, "🛍️ C.C. Buenavista",
+    (8.779113660375875, -75.86157613345505, "🛍️ C.C. Buenavista",
      "Cra. 6 #68-72, Montería", "Centro comercial principal de Montería"),
-    # C.C. Nuestro: Tv. 29 #29-69
-    (8.7531, -75.8814, "🛍️ C.C. Nuestro",
+    (8.743285562064065, -75.8681799622913,  "🛍️ C.C. Nuestro",
      "Tv. 29 #29-69, Montería", "Centro comercial Nuestro"),
-    # Alamedas: Cl. 44 #10-91
-    (8.7576, -75.8696, "🛍️ C.C. Alamedas",
+    (8.76328684876092,  -75.87336956044,    "🛍️ C.C. Alamedas",
      "Cl. 44 #10-91, Montería", "Centro comercial Alamedas del Sinú"),
 ]
 
@@ -773,7 +762,7 @@ with col_mapa:
         tiles, attr = "OpenStreetMap", "© OpenStreetMap contributors"
 
     m = folium.Map(
-        location=[8.7560, -75.8850],
+        location=[8.7700, -75.8750],
         zoom_start=13,
         tiles=tiles, attr=attr,
         prefer_canvas=True
@@ -847,15 +836,16 @@ with col_mapa:
     ]
     for lat,lon,radio,nombre,desc,factor in ZONAS_CONTAM:
         c,estado = color_contam(factor)
-        folium.Circle([lat,lon],radius=radio,
-            color=c,fill=True,fill_color=c,fill_opacity=0.35,weight=3,
+        # CircleMarker = radio en píxeles, siempre clickeable en toda el área
+        folium.CircleMarker([lat,lon],
+            radius=max(18, radio//18),
+            color=c, fill=True, fill_color=c, fill_opacity=0.45, weight=3,
             popup=folium.Popup(
                 f"<b>{nombre}</b><br>"
                 f"📍 {desc}<br>"
                 f"💨 PM2.5 est.: <b>{round(pm25*factor,1)} µg/m³</b><br>"
-                f"📊 Factor zona: {factor}x<br>"
-                f"✅ Estado: {estado}",
-                max_width=260, show=False),
+                f"📊 Factor zona: {factor}x · Estado: {estado}",
+                max_width=260),
             tooltip=folium.Tooltip(
                 f"<b>{nombre}</b><br>{estado} · PM2.5≈{round(pm25*factor,1)}µg/m³",
                 sticky=True)
@@ -875,9 +865,10 @@ with col_mapa:
         elif nivel_actual>=cota:      cz,fo,az="#FF9800",0.24,"⚠️ Alerta"
         elif nivel_actual>=cota-0.5:  cz,fo,az="#FFD600",0.14,"⚡ Precaución"
         else:                         cz,fo,az="#4FC3F7",0.07,"✅ Normal"
-        folium.Circle([lat,lon],radius=radio,
-            color=cz,fill=True,fill_color=cz,fill_opacity=fo,
-            weight=3,dash_array="6",
+        folium.CircleMarker([lat,lon],
+            radius=max(20, radio//16),
+            color=cz, fill=True, fill_color=cz, fill_opacity=fo+0.1,
+            weight=3, dash_array="6",
             popup=folium.Popup(
                 f"<b>🌊 Zona de inundación</b><br>"
                 f"📍 Barrios: {barrios}<br>"
@@ -885,7 +876,7 @@ with col_mapa:
                 f"⚠️ Cota de alerta: {cota}m<br>"
                 f"🔔 Estado: <b>{az}</b><br>"
                 f"📝 {nota}",
-                max_width=270, show=False),
+                max_width=270),
             tooltip=folium.Tooltip(
                 f"<b>🌊 {barrios}</b><br>{az} · Nivel {nivel_actual}m",
                 sticky=True)
