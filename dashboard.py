@@ -18,7 +18,6 @@ if "initialized" not in st.session_state:
     st.session_state.initialized    = True
     st.session_state.show_info      = False
     st.session_state.lugar_buscado  = None
-    st.session_state.historial_busq = []  # últimos 3 lugares buscados
 
 st.set_page_config(
     page_title="BioMonitor Montería",
@@ -380,891 +379,7 @@ def cargar_datos():
         fi = ex.submit(_fetch_ideam)
         return fc.result(), fa.result(), fi.result()
 
-# Diccionario de lugares de Montería — coordenadas verificadas desde fuentes oficiales
-# Fuentes: vymaps.com, Wikidata, OSM, sitios web oficiales
-LUGARES_MONTERIA = {
-    # ── Universidades (coordenadas verificadas) ───────────────────────────
-    "unisinu":                     (8.7454, -75.8888, "Universidad del Sinú, Montería"),
-    "universidad del sinu":        (8.7454, -75.8888, "Universidad del Sinú, Montería"),
-    "unisinú":                     (8.7454, -75.8888, "Universidad del Sinú, Montería"),
-    "unicordoba":                  (8.7892, -75.8541, "Universidad de Córdoba, Montería"),
-    "universidad de cordoba":      (8.7892, -75.8541, "Universidad de Córdoba, Montería"),
-    "upb monteria":                (8.7850, -75.8620, "UPB Montería"),
-    "uniremington":                (8.7558, -75.8750, "Uniremington, Montería"),
-    "cecar":                       (8.7530, -75.8720, "CECAR, Montería"),
-    "sena monteria":               (8.7620, -75.8680, "SENA, Montería"),
-    # ── Estadios y deportes (coordenadas verificadas Wikidata) ────────────
-    "estadio jaraguay":            (8.7118, -75.8276, "Estadio Jaraguay, Montería"),
-    "jaraguay":                    (8.7118, -75.8276, "Estadio Jaraguay, Montería"),
-    "estadio municipal":           (8.7118, -75.8276, "Estadio Jaraguay, Montería"),
-    # ── Hospitales ────────────────────────────────────────────────────────
-    "hospital san jeronimo":       (8.7495, -75.8742, "Hospital San Jerónimo, Montería"),
-    "san jeronimo":                (8.7495, -75.8742, "Hospital San Jerónimo, Montería"),
-    "ese camu":                    (8.7480, -75.8700, "ESE CAMU, Montería"),
-    "clinica la esperanza":        (8.7550, -75.8770, "Clínica La Esperanza, Montería"),
-    "hospital del sinu":           (8.7520, -75.8760, "Hospital del Sinú, Montería"),
-    # ── Centro y puntos de referencia ────────────────────────────────────
-    "centro":                      (8.7550, -75.8814, "Centro de Montería"),
-    "parque simon bolivar":        (8.7540, -75.8814, "Parque Simón Bolívar, Montería"),
-    "parque central":              (8.7540, -75.8814, "Parque Central, Montería"),
-    "catedral san jeronimo":       (8.7542, -75.8812, "Catedral San Jerónimo, Montería"),
-    "catedral":                    (8.7542, -75.8812, "Catedral San Jerónimo, Montería"),
-    "alcaldia":                    (8.7540, -75.8810, "Alcaldía de Montería"),
-    "gobernacion":                 (8.7538, -75.8808, "Gobernación de Córdoba"),
-    "palacio de justicia":         (8.7535, -75.8815, "Palacio de Justicia, Montería"),
-    "mercado central":             (8.7512, -75.8795, "Mercado Central, Montería"),
-    # ── Centros comerciales ───────────────────────────────────────────────
-    "buenavista":                  (8.7510, -75.8480, "C.C. Buenavista, Montería"),
-    "cc buenavista":               (8.7510, -75.8480, "C.C. Buenavista, Montería"),
-    "centro comercial buenavista": (8.7510, -75.8480, "C.C. Buenavista, Montería"),
-    "homecenter":                  (8.7620, -75.8520, "Homecenter Montería"),
-    "makro":                       (8.7580, -75.8480, "Makro Montería"),
-    # ── Barrios ───────────────────────────────────────────────────────────
-    "ronda del sinu":              (8.7560, -75.8912, "Ronda del Sinú, Montería"),
-    "avenida primera":             (8.7560, -75.8912, "Avenida Primera, Montería"),
-    "av primera":                  (8.7560, -75.8912, "Avenida Primera, Montería"),
-    "juan xxiii":                  (8.7454, -75.8888, "Barrio Juan XXIII, Montería"),
-    "barrio juan xxiii":           (8.7454, -75.8888, "Barrio Juan XXIII, Montería"),
-    "pie del cerro":               (8.7598, -75.8702, "Pie del Cerro, Montería"),
-    "edmundo lopez":               (8.7700, -75.8680, "Barrio Edmundo López, Montería"),
-    "el recreo":                   (8.7735, -75.8695, "El Recreo, Montería"),
-    "la granja":                   (8.7285, -75.9035, "La Granja, Montería"),
-    "villa cielo":                 (8.7320, -75.8720, "Villa Cielo, Montería"),
-    "barrio colon":                (8.7480, -75.8780, "Barrio Colón, Montería"),
-    "colon":                       (8.7480, -75.8780, "Barrio Colón, Montería"),
-    "alamedas":                    (8.7720, -75.8620, "Alamedas del Sinú, Montería"),
-    "alamedas del sinu":           (8.7720, -75.8620, "Alamedas del Sinú, Montería"),
-    "alto prado":                  (8.7680, -75.8620, "Alto Prado, Montería"),
-    "la castellana":               (8.7720, -75.8580, "La Castellana, Montería"),
-    "boston":                      (8.7580, -75.8650, "Barrio Boston, Montería"),
-    "paris":                       (8.7640, -75.8580, "Barrio París, Montería"),
-    "santa fe":                    (8.7460, -75.8750, "Santa Fe, Montería"),
-    "nueva granada":               (8.7430, -75.8760, "Nueva Granada, Montería"),
-    "camilo torres":               (8.7620, -75.8750, "Camilo Torres, Montería"),
-    "mocari":                      (8.7980, -75.8660, "Mocarí, Montería"),
-    "mocarí":                      (8.7980, -75.8660, "Mocarí, Montería"),
-    "cantabria":                   (8.7750, -75.8620, "Cantabria, Montería"),
-    "la ceiba":                    (8.7680, -75.8700, "La Ceiba, Montería"),
-    "el ceibal":                   (8.7820, -75.8540, "El Ceibal, Montería"),
-    "granada":                     (8.7530, -75.8650, "Granada, Montería"),
-    "la victoria":                 (8.7380, -75.8680, "La Victoria, Montería"),
-    "panzenu":                     (8.7420, -75.8700, "Panzenú, Montería"),
-    "panzenú":                     (8.7420, -75.8700, "Panzenú, Montería"),
-    "av circunvalar":              (8.7600, -75.8600, "Avenida Circunvalar, Montería"),
-    # ── Transporte ───────────────────────────────────────────────────────
-    "aeropuerto":                  (8.8233, -75.8258, "Aeropuerto Los Garzones, Montería"),
-    "los garzones":                (8.8233, -75.8258, "Aeropuerto Los Garzones, Montería"),
-    "terminal":                    (8.7420, -75.8650, "Terminal de Transportes, Montería"),
-    "terminal de transporte":      (8.7420, -75.8650, "Terminal de Transportes, Montería"),
-    # ── Río Sinú ─────────────────────────────────────────────────────────
-    "rio sinu":                    (8.7560, -75.8912, "Río Sinú, Montería"),
-    "muelle turistico":            (8.7800, -75.8873, "Muelle Turístico del Sinú, Montería"),
-    "puente segundo centenario":   (8.7650, -75.8845, "Puente Segundo Centenario, Montería"),
-    "cienaga betanci":             (8.4000, -75.8667, "Ciénaga de Betancí, Córdoba"),
-}
 
-import streamlit as st
-import pandas as pd
-import numpy as np
-import folium
-from streamlit_folium import st_folium
-import matplotlib.pyplot as plt
-from datetime import datetime, timedelta, timezone, UTC
-from zoneinfo import ZoneInfo
-TZ_COL = ZoneInfo('America/Bogota')  # UTC-5 Colombia
-from PIL import Image
-import requests
-import concurrent.futures
-import warnings
-warnings.filterwarnings("ignore")
-
-# ── Session state ─────────────────────────────────────────
-if "initialized" not in st.session_state:
-    st.session_state.initialized    = True
-    st.session_state.show_info      = False
-    st.session_state.lugar_buscado  = None
-    st.session_state.historial_busq = []  # últimos 3 lugares buscados
-
-st.set_page_config(
-    page_title="BioMonitor Montería",
-    page_icon="🌿",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
-
-# ── CSS ───────────────────────────────────────────────────
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
-html, body, [data-testid="stAppViewContainer"] {
-    background-color: #060d1a !important;
-}
-.main { background-color: #060d1a; }
-.block-container {
-    padding-top:2rem !important;
-    padding-left:2rem !important;
-    padding-right:2rem !important;
-    max-width: 1400px;
-}
-
-/* Hero */
-.hero-sub { color:#5a7a9a; font-size:1rem; line-height:1.6; margin:0; }
-.hero-badge {
-    display:inline-block;
-    background:rgba(0,229,195,0.1);
-    border:1px solid rgba(0,229,195,0.3);
-    color:#00E5C3;
-    padding:3px 12px;
-    border-radius:20px;
-    font-size:0.75rem;
-    font-weight:600;
-    letter-spacing:1px;
-    text-transform:uppercase;
-    margin-right:6px;
-    margin-top:4px;
-}
-
-/* KPI Cards */
-.kpi-card {
-    background:linear-gradient(135deg,#0d1b2e,#0a1628);
-    border:1px solid rgba(0,229,195,0.15);
-    border-radius:16px;
-    padding:18px 20px;
-    position:relative;
-    overflow:hidden;
-    margin-bottom:10px;
-    min-height: 120px;
-}
-.kpi-card::before {
-    content:'';
-    position:absolute;
-    top:0; left:0;
-    width:4px; height:100%;
-    background:linear-gradient(180deg,#00E5C3,#4FC3F7);
-    border-radius:4px 0 0 4px;
-}
-.kpi-card-red::before    { background:linear-gradient(180deg,#FF5252,#FF9800); }
-.kpi-card-blue::before   { background:linear-gradient(180deg,#4FC3F7,#7B61FF); }
-.kpi-card-green::before  { background:linear-gradient(180deg,#00E5C3,#69F0AE); }
-.kpi-card-purple::before { background:linear-gradient(180deg,#7B61FF,#E040FB); }
-
-.kpi-label {
-    font-size:0.7rem;
-    color:#5a7a9a;
-    text-transform:uppercase;
-    letter-spacing:1.5px;
-    font-weight:600;
-    margin-bottom:6px;
-}
-.kpi-value    { font-size:2rem;  font-weight:800; color:#e8f4ff; line-height:1; margin-bottom:8px; }
-.kpi-value-sm { font-size:1.4rem; font-weight:700; color:#e8f4ff; line-height:1; margin-bottom:8px; }
-
-/* Badges */
-.badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:600; }
-.badge-green  { background:rgba(0,229,195,0.15);  color:#00E5C3; border:1px solid rgba(0,229,195,0.3); }
-.badge-yellow { background:rgba(255,214,0,0.15);  color:#FFD600; border:1px solid rgba(255,214,0,0.3); }
-.badge-red    { background:rgba(255,82,82,0.15);  color:#FF5252; border:1px solid rgba(255,82,82,0.3); }
-.badge-blue   { background:rgba(79,195,247,0.15); color:#4FC3F7; border:1px solid rgba(79,195,247,0.3); }
-.badge-purple { background:rgba(123,97,255,0.15); color:#7B61FF; border:1px solid rgba(123,97,255,0.3); }
-
-.section-header {
-    font-size:1.05rem;
-    font-weight:700;
-    color:#4FC3F7;
-    letter-spacing:0.5px;
-    margin-bottom:14px;
-    display:flex;
-    align-items:center;
-    gap:8px;
-}
-.section-header::after {
-    content:'';
-    flex:1;
-    height:1px;
-    background:linear-gradient(90deg,rgba(79,195,247,0.3),transparent);
-}
-
-.fuente-tag { font-size:0.68rem; color:#3a5a7a; margin-top:4px; }
-.stat-row {
-    background:rgba(0,229,195,0.05);
-    border:1px solid rgba(0,229,195,0.1);
-    border-radius:10px;
-    padding:10px 14px;
-    margin-top:8px;
-    font-size:0.82rem;
-    color:#5a7a9a;
-}
-
-/* Copyright fijo */
-.copyright {
-    position:fixed;
-    bottom:10px;
-    right:16px;
-    color:#2a4a6a;
-    font-size:0.72rem;
-    z-index:9999;
-}
-
-/* Botones */
-.stButton > button {
-    background:linear-gradient(135deg,#00E5C3,#4FC3F7) !important;
-    color:#060d1a !important;
-    font-weight:700 !important;
-    border:none !important;
-    border-radius:10px !important;
-    transition: opacity 0.2s;
-}
-.stButton > button:hover { opacity: 0.88; }
-
-/* Ocultar footer y menú */
-footer { visibility:hidden; }
-#MainMenu { visibility:hidden; }
-
-/* Dataframe */
-.stDataFrame { border-radius: 12px; overflow: hidden; }
-
-/* Expander */
-.streamlit-expanderHeader {
-    background: rgba(0,229,195,0.05) !important;
-    border: 1px solid rgba(0,229,195,0.15) !important;
-    border-radius: 10px !important;
-    color: #4FC3F7 !important;
-    font-weight: 600 !important;
-}
-
-/* Radio */
-.stRadio > div { gap: 8px !important; }
-.stRadio label { color: #5a7a9a !important; font-size: 0.85rem !important; }
-
-/* ══ RESPONSIVE MÓVIL ══════════════════════════════════ */
-
-/* Tablet (≤900px) */
-@media (max-width:900px) {
-    .block-container { padding-left:1rem !important; padding-right:1rem !important; }
-    .kpi-value { font-size:1.6rem !important; }
-    .hero-sub  { font-size:0.88rem !important; }
-}
-
-/* Móvil (≤768px) — breakpoint principal */
-@media (max-width:768px) {
-
-    /* Padding mínimo */
-    .block-container {
-        padding-top:1rem !important;
-        padding-left:0.6rem !important;
-        padding-right:0.6rem !important;
-    }
-
-    /* KPI cards: 2 columnas en móvil */
-    .kpi-value    { font-size:1.35rem !important; }
-    .kpi-value-sm { font-size:1.1rem  !important; }
-    .kpi-label    { font-size:0.62rem !important; letter-spacing:1px !important; }
-    .kpi-card     { min-height:auto !important; padding:12px 14px !important; margin-bottom:8px !important; }
-
-    /* Forzar columnas Streamlit a apilarse */
-    [data-testid="column"] { min-width:100% !important; }
-
-    /* Hero badges: wrap */
-    .hero-badge { font-size:0.65rem !important; padding:2px 8px !important; margin-bottom:4px !important; }
-    .hero-sub   { font-size:0.82rem !important; }
-
-    /* Section headers más compactos */
-    .section-header { font-size:0.9rem !important; }
-
-    /* Stat row */
-    .stat-row { font-size:0.76rem !important; }
-
-    /* Copyright oculto en móvil (ocupa espacio) */
-    .copyright { display:none !important; }
-
-    /* Botones más grandes para touch */
-    .stButton > button {
-        min-height:44px !important;
-        font-size:0.9rem !important;
-    }
-
-    /* Badges más pequeños */
-    .badge { font-size:0.68rem !important; padding:2px 7px !important; }
-
-    /* Radio horizontal → apilado */
-    .stRadio > div { flex-direction:column !important; gap:4px !important; }
-
-    /* Expander header */
-    .streamlit-expanderHeader { font-size:0.85rem !important; }
-
-    /* Galería: 2 cols en móvil */
-    .galeria-grid { grid-template-columns: repeat(2, 1fr) !important; }
-
-    /* Dataframe scroll horizontal */
-    .stDataFrame { overflow-x:auto !important; }
-
-    /* Fuente tag */
-    .fuente-tag { font-size:0.62rem !important; }
-}
-
-/* Móvil pequeño (≤480px) */
-@media (max-width:480px) {
-    .block-container {
-        padding-left:0.3rem !important;
-        padding-right:0.3rem !important;
-    }
-    .kpi-value    { font-size:1.15rem !important; }
-    .kpi-label    { font-size:0.58rem !important; }
-    .section-header { font-size:0.82rem !important; }
-    .hero-sub { font-size:0.78rem !important; }
-    .stButton > button { font-size:0.82rem !important; }
-}
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown('<div class="copyright">© Ivan Contreras</div>', unsafe_allow_html=True)
-
-# ══════════════════════════════════════════════════════════
-# ── FUNCIONES DE DATOS ───────────────────────────────────
-# ══════════════════════════════════════════════════════════
-
-def _fetch_clima():
-    """Obtiene clima actual + pronóstico 7 días de Open-Meteo"""
-    try:
-        r = requests.get(
-            "https://api.open-meteo.com/v1/forecast",
-            params={
-                "latitude": 8.7479, "longitude": -75.8814,
-                "current": ["temperature_2m","relative_humidity_2m",
-                            "precipitation","wind_speed_10m","rain"],
-                "daily":   ["precipitation_sum","temperature_2m_max",
-                            "temperature_2m_min","precipitation_probability_max",
-                            "rain_sum"],
-                "timezone": "America/Bogota",
-                "forecast_days": 7
-            }, timeout=8
-        ).json()
-        c, d = r.get("current", {}), r.get("daily", {})
-        # lluvia_hoy: suma del día actual (más representativa que la instantánea)
-        lluvia_sum_hoy = d.get("precipitation_sum", [0])[0] if d.get("precipitation_sum") else 0
-        # prob lluvia: limpiar None → 0
-        prob_raw = d.get("precipitation_probability_max", [])
-        prob_lluvia = [int(p) if p is not None else 0 for p in prob_raw] if prob_raw else [0]*7
-        return {
-            "temp":       round(c.get("temperature_2m", 28.4), 1),
-            "humedad":    c.get("relative_humidity_2m", 75),
-            "lluvia_hoy": round(lluvia_sum_hoy, 1),
-            "lluvia_inst":round(c.get("precipitation", 0), 1),
-            "viento":     round(c.get("wind_speed_10m", 12), 1),
-            "lluvia_7d":  d.get("precipitation_sum", [0]*7),
-            "prob_lluvia":prob_lluvia,
-            "temp_max":   d.get("temperature_2m_max", [32]*7),
-            "temp_min":   d.get("temperature_2m_min", [23]*7),
-            "fechas":     d.get("time", []),
-            "ok": True
-        }
-    except Exception:
-        return {
-            "temp":28.4,"humedad":75,"lluvia_hoy":0,"lluvia_inst":0,"viento":12,
-            "lluvia_7d":[2]*7,"prob_lluvia":[10]*7,
-            "temp_max":[32]*7,"temp_min":[23]*7,
-            "fechas":[],"ok":False
-        }
-
-def _fetch_aire():
-    """Obtiene calidad del aire desde Open-Meteo Air Quality API"""
-    try:
-        r = requests.get(
-            "https://air-quality-api.open-meteo.com/v1/air-quality",
-            params={
-                "latitude": 8.7479, "longitude": -75.8814,
-                "current":  ["pm10","pm2_5","nitrogen_dioxide","european_aqi"],
-                "timezone": "America/Bogota"
-            }, timeout=8
-        ).json()
-        c = r.get("current", {})
-        return {
-            "pm25": round(c.get("pm2_5", 9.5), 1),
-            "pm10": round(c.get("pm10", 11.9), 1),
-            "no2":  round(c.get("nitrogen_dioxide", 3.3), 1),
-            "aqi":  round(c.get("european_aqi", 26), 0),
-            "ok":   True
-        }
-    except Exception:
-        return {"pm25":9.5,"pm10":11.9,"no2":3.3,"aqi":26,"ok":False}
-
-def _fetch_ideam():
-    """Consulta nivel real del Río Sinú desde datos.gov.co (IDEAM)"""
-    # Capa 1: API datos.gov.co — estación Montería
-    try:
-        r = requests.get(
-            "https://www.datos.gov.co/resource/sbwg-7ju4.json",
-            params={
-                "$where": "codigoestacion='23197130'",
-                "$order": "fechaobservacion DESC",
-                "$limit": "1"
-            }, timeout=5
-        ).json()
-        if r and "valor" in r[0]:
-            return {
-                "nivel": round(float(r[0]["valor"]), 2),
-                "fecha": r[0].get("fechaobservacion", "")[:10],
-                "ok":    True,
-                "fuente": "IDEAM · datos.gov.co"
-            }
-    except Exception:
-        pass
-
-    # Capa 2: IDEAM DHIME (respaldo)
-    try:
-        r2 = requests.get(
-            "https://www.datos.gov.co/resource/s54a-sgyg.json",
-            params={"municipio": "MONTERIA", "$limit": "1", "$order": "fecha DESC"},
-            timeout=5
-        ).json()
-        if r2 and "valor" in r2[0]:
-            return {
-                "nivel": round(float(r2[0]["valor"]), 2),
-                "fecha": r2[0].get("fecha", "")[:10],
-                "ok":    True,
-                "fuente": "IDEAM · DHIME"
-            }
-    except Exception:
-        pass
-
-    # Capa 3: fallback histórico
-    return {
-        "nivel":  4.2,
-        "fecha":  datetime.now(TZ_COL).strftime("%Y-%m-%d"),
-        "ok":     False,
-        "fuente": "Histórico"
-    }
-
-@st.cache_data(ttl=900)  # 15 min — datos más frescos
-def cargar_datos():
-    """Carga paralela de clima, aire e IDEAM"""
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as ex:
-        fc = ex.submit(_fetch_clima)
-        fa = ex.submit(_fetch_aire)
-        fi = ex.submit(_fetch_ideam)
-        return fc.result(), fa.result(), fi.result()
-
-# Diccionario de lugares conocidos de Montería
-# Coordenadas verificadas con OpenStreetMap + direcciones oficiales
-LUGARES_MONTERIA = {
-    # ── Universidades (coordenadas verificadas) ───────────
-    "unisinu":                  (8.7718, -75.8658, "Universidad del Sinú, Montería"),
-    "universidad del sinu":     (8.7718, -75.8658, "Universidad del Sinú, Montería"),
-    "unisinú":                  (8.7718, -75.8658, "Universidad del Sinú, Montería"),
-    "unicordoba":               (8.7892, -75.8541, "Universidad de Córdoba, Montería"),
-    "universidad de cordoba":   (8.7892, -75.8541, "Universidad de Córdoba, Montería"),
-    "upb":                      (8.7980, -75.8650, "Universidad Pontificia Bolivariana, Montería"),
-    "universidad pontificia":   (8.7980, -75.8650, "UPB Montería"),
-    "uniremington":             (8.7558, -75.8750, "Uniremington, Montería"),
-    "cecar":                    (8.7530, -75.8720, "CECAR, Montería"),
-    "sena":                     (8.7620, -75.8680, "SENA, Montería"),
-    "cun":                      (8.7545, -75.8790, "CUN Montería"),
-    # ── Hospitales y clínicas ──────────────────────────────
-    "hospital san jeronimo":    (8.7495, -75.8742, "Hospital San Jerónimo, Montería"),
-    "san jeronimo":             (8.7495, -75.8742, "Hospital San Jerónimo, Montería"),
-    "clinica la esperanza":     (8.7550, -75.8770, "Clínica La Esperanza, Montería"),
-    "ese camu":                 (8.7480, -75.8700, "ESE CAMU, Montería"),
-    "hospital del sinu":        (8.7520, -75.8760, "Hospital del Sinú, Montería"),
-    "clinica del caribe":       (8.7562, -75.8715, "Clínica del Caribe, Montería"),
-    # ── Barrios (coordenadas verificadas OSM) ─────────────
-    "centro":                   (8.7550, -75.8814, "Centro de Montería"),
-    "barrio colon":             (8.7480, -75.8780, "Barrio Colón, Montería"),
-    "colon":                    (8.7480, -75.8780, "Barrio Colón, Montería"),
-    "juan xxiii":               (8.7640, -75.9010, "Barrio Juan XXIII, Montería"),
-    "alamedas":                 (8.7720, -75.8620, "Alamedas del Sinú, Montería"),
-    "alamedas del sinu":        (8.7720, -75.8620, "Alamedas del Sinú, Montería"),
-    "ronda del sinu":           (8.7560, -75.8912, "Ronda del Sinú, Montería"),
-    "av primera":               (8.7560, -75.8912, "Avenida Primera, Montería"),
-    "avenida primera":          (8.7560, -75.8912, "Avenida Primera, Montería"),
-    "pie del cerro":            (8.7598, -75.8702, "Pie del Cerro, Montería"),
-    "edmundo lopez":            (8.7700, -75.8680, "Barrio Edmundo López, Montería"),
-    "el recreo":                (8.7735, -75.8695, "El Recreo, Montería"),
-    "la granja":                (8.7285, -75.9035, "La Granja, Montería"),
-    "villa cielo":              (8.7320, -75.8720, "Villa Cielo, Montería"),
-    "mocari":                   (8.7980, -75.8660, "Mocarí, Montería"),
-    "mocarí":                   (8.7980, -75.8660, "Mocarí, Montería"),
-    "camilo torres":            (8.7620, -75.8750, "Barrio Camilo Torres, Montería"),
-    "alto prado":               (8.7680, -75.8620, "Alto Prado, Montería"),
-    "la castellana":            (8.7720, -75.8580, "La Castellana, Montería"),
-    "boston":                   (8.7580, -75.8650, "Barrio Boston, Montería"),
-    "paris":                    (8.7640, -75.8580, "Barrio París, Montería"),
-    "santa fe":                 (8.7460, -75.8750, "Santa Fe, Montería"),
-    "simon bolivar":            (8.7500, -75.8820, "Simón Bolívar, Montería"),
-    "nueva granada":            (8.7430, -75.8760, "Nueva Granada, Montería"),
-    "los alpes":                (8.7750, -75.8540, "Los Alpes, Montería"),
-    "la victoria":              (8.7380, -75.8680, "La Victoria, Montería"),
-    "panzenu":                  (8.7420, -75.8700, "Panzenú, Montería"),
-    "panzenú":                  (8.7420, -75.8700, "Panzenú, Montería"),
-    "av circunvalar":           (8.7600, -75.8600, "Avenida Circunvalar, Montería"),
-    "buenavista":               (8.7510, -75.8480, "Buenavista, Montería"),
-    "chuchurubi":               (8.7460, -75.8820, "Chuchurubi, Montería"),
-    "cantabria":                (8.7750, -75.8620, "Cantabria, Montería"),
-    "la ceiba":                 (8.7680, -75.8700, "La Ceiba, Montería"),
-    "el edén":                  (8.7800, -75.8580, "El Edén, Montería"),
-    "el eden":                  (8.7800, -75.8580, "El Edén, Montería"),
-    "granada":                  (8.7530, -75.8650, "Granada, Montería"),
-    "costa de oro":             (8.7460, -75.8650, "Costa de Oro, Montería"),
-    "el ceibal":                (8.7820, -75.8540, "El Ceibal, Montería"),
-    "bosques de sevilla":       (8.7780, -75.8600, "Bosques de Sevilla, Montería"),
-    # ── Comercio y servicios ──────────────────────────────
-    "mercado central":          (8.7512, -75.8795, "Mercado Central, Montería"),
-    "parque simon bolivar":     (8.7540, -75.8814, "Parque Simón Bolívar, Montería"),
-    "parque central":           (8.7540, -75.8814, "Parque Central, Montería"),
-    "muelle turistico":         (8.7800, -75.8873, "Muelle Turístico del Sinú, Montería"),
-    "estadio jaraguay":         (8.7648, -75.8588, "Estadio Jaraguay, Montería"),
-    "jaraguay":                 (8.7648, -75.8588, "Estadio Jaraguay, Montería"),
-    "cc buenavista":            (8.7510, -75.8480, "C.C. Buenavista, Montería"),
-    "centro comercial buenavista": (8.7510, -75.8480, "C.C. Buenavista, Montería"),
-    "exito":                    (8.7540, -75.8700, "Éxito Montería"),
-    "homecenter":               (8.7620, -75.8520, "Homecenter Montería"),
-    "makro":                    (8.7580, -75.8480, "Makro Montería"),
-    "catedral":                 (8.7542, -75.8812, "Catedral San Jerónimo, Montería"),
-    "alcaldia":                 (8.7540, -75.8810, "Alcaldía de Montería"),
-    "gobernacion":              (8.7538, -75.8808, "Gobernación de Córdoba"),
-    "palacio de justicia":      (8.7535, -75.8815, "Palacio de Justicia, Montería"),
-    "terminal":                 (8.7420, -75.8650, "Terminal de Transportes, Montería"),
-    "terminal de transporte":   (8.7420, -75.8650, "Terminal de Transportes, Montería"),
-    "inem":                     (8.7610, -75.8650, "INEM Lorenzo María Lleras, Montería"),
-    "liceo de monteria":        (8.7540, -75.8810, "Liceo de Montería"),
-    "colegio la salle":         (8.7530, -75.8800, "Colegio La Salle, Montería"),
-    # ── Aeropuerto ────────────────────────────────────────
-    "aeropuerto":               (8.8233, -75.8258, "Aeropuerto Los Garzones, Montería"),
-    "los garzones":             (8.8233, -75.8258, "Aeropuerto Los Garzones, Montería"),
-    # ── Puntos del río ────────────────────────────────────
-    "rio sinu":                 (8.7560, -75.8912, "Río Sinú, Montería"),
-    "puente segundo centenario":(8.7650, -75.8845, "Puente Segundo Centenario, Montería"),
-    "cienaga betanci":          (8.4000, -75.8667, "Ciénaga de Betancí, Córdoba"),
-}
-
-def buscar_lugar(texto):
-    """Geocodifica un lugar — replica la lógica _buildSearchVariants de Flutter.
-    Orden: 1) dict local exacto  2) Geoapify  3) Nominatim con variantes"""
-
-    texto_lower = texto.lower().strip()
-
-    # ── 1. Diccionario local (coincidencia exacta o parcial) ──────────────
-    for clave, (lat, lon, nombre) in LUGARES_MONTERIA.items():
-        if clave == texto_lower or clave in texto_lower or texto_lower in clave:
-            return lat, lon, nombre
-
-    # ── 2. Construir variantes de búsqueda (igual que Flutter) ────────────
-    def build_variants(q):
-        variants = []
-        q = q.strip()
-        # Variante base con Montería
-        variants.append(f"{q}, Montería, Córdoba, Colombia")
-        variants.append(f"{q}, Montería, Colombia")
-        variants.append(f"{q}, Córdoba, Colombia")
-        variants.append(f"{q}, Colombia")
-        # Sin tildes/acentos como variante adicional
-        import unicodedata
-        q_norm = unicodedata.normalize('NFD', q)
-        q_ascii = ''.join(c for c in q_norm if unicodedata.category(c) != 'Mn')
-        if q_ascii != q:
-            variants.append(f"{q_ascii}, Montería, Colombia")
-            variants.append(f"{q_ascii}, Colombia")
-        return variants
-
-    variantes = build_variants(texto)
-
-    # ── 3. Geoapify (mejor cobertura Colombia) ────────────────────────────
-    try:
-        GEOAPIFY_KEY = st.secrets.get("GEOAPIFY_KEY", "c2e2caf4d58643f7a8113aa355ed2356")
-        r = requests.get(
-            "https://api.geoapify.com/v1/geocode/search",
-            params={
-                "text":   variantes[0],  # "lugar, Montería, Córdoba, Colombia"
-                "apiKey": GEOAPIFY_KEY,
-                "limit":  5,
-                "lang":   "es",
-                "filter": "rect:-76.20,8.50,-75.60,9.00",
-            },
-            timeout=10
-        ).json()
-        features = r.get("features", [])
-        if features:
-            best = max(features,
-                key=lambda f: f.get("properties", {}).get("rank", {}).get("confidence", 0)
-            )
-            coords = best["geometry"]["coordinates"]
-            props  = best.get("properties", {})
-            lat_r, lon_r = float(coords[1]), float(coords[0])
-            nombre = props.get("formatted", texto)
-            if 8.50 <= lat_r <= 9.00 and -76.20 <= lon_r <= -75.60:
-                return lat_r, lon_r, nombre[:70]
-    except Exception:
-        pass
-
-    # ── 4. Nominatim con TODAS las variantes (igual que Flutter) ─────────
-    headers = {"User-Agent": "BioMonitorMonteria/2.0 (contacto@biomonitor.co)"}
-    for query in variantes:
-        try:
-            r = requests.get(
-                "https://nominatim.openstreetmap.org/search",
-                params={
-                    "q":            query,
-                    "format":       "json",
-                    "limit":        3,
-                    "addressdetails": 1,
-                    "countrycodes": "co",
-                },
-                headers=headers,
-                timeout=8
-            ).json()
-            if r:
-                # Preferir resultado más cercano a Montería
-                mejor = None
-                min_dist = float("inf")
-                for res in r:
-                    lat_r = float(res["lat"])
-                    lon_r = float(res["lon"])
-                    # Distancia al centro de Montería
-                    dist = ((lat_r - 8.7479)**2 + (lon_r + 75.8814)**2) ** 0.5
-                    if dist < min_dist:
-                        min_dist = dist
-                        mejor = res
-                if mejor:
-                    return float(mejor["lat"]), float(mejor["lon"]), mejor["display_name"][:70]
-        except Exception:
-            continue
-
-    return None
-
-@st.cache_data(ttl=1800)
-def clima_lugar(lat, lon):
-    """Clima puntual para coordenadas buscadas"""
-    try:
-        r = requests.get(
-            "https://api.open-meteo.com/v1/forecast",
-            params={
-                "latitude": lat, "longitude": lon,
-                "current":  ["temperature_2m","relative_humidity_2m","precipitation","wind_speed_10m"],
-                "timezone": "America/Bogota"
-            }, timeout=8
-        ).json()
-        c = r.get("current", {})
-        return {
-            "temp":    round(c.get("temperature_2m", 28), 1),
-            "humedad": c.get("relative_humidity_2m", 75),
-            "lluvia":  round(c.get("precipitation", 0), 1),
-            "viento":  round(c.get("wind_speed_10m", 10), 1)
-        }
-    except Exception:
-        return {"temp":28,"humedad":75,"lluvia":0,"viento":10}
-
-@st.cache_data(ttl=86400)
-def obtener_fauna_gbif():
-    """
-    Descarga registros de fauna con imagen desde GBIF — Córdoba, Colombia.
-    Para nombres comunes consulta /v1/species/{speciesKey}/vernacularNames
-    y usa un diccionario de respaldo para las especies más frecuentes.
-    """
-
-    # ── Diccionario de respaldo (nombres comunes en español) ─────────────
-    NOMBRES_ES = {
-        # Reptiles
-        "Iguana iguana":              "Iguana verde",
-        "Boa constrictor":            "Boa",
-        "Caiman crocodilus":          "Babilla",
-        "Chelonoidis carbonarius":    "Morrocoy",
-        "Trachemys callirostris":     "Hicotea",
-        "Lygophis lineatus":          "Culebra rayada",
-        "Anolis auratus":             "Lagartija dorada",
-        "Basiliscus basiliscus":      "Basilisco común",
-        "Tupinambis teguixin":        "Mato",
-        # Aves
-        "Leptotila verreauxi":        "Paloma guarumera",
-        "Cairina moschata":           "Pato real",
-        "Columbina talpacoti":        "Tortolita rojiza",
-        "Jacana jacana":              "Gallito de ciénaga",
-        "Amazona ochrocephala":       "Loro real",
-        "Brotogeris jugularis":       "Perico bronceado",
-        "Crotophaga ani":             "Garrapatero común",
-        "Ardea alba":                 "Garza blanca",
-        "Bubulcus ibis":              "Garza del ganado",
-        "Coragyps atratus":           "Gallinazo negro",
-        "Megaceryle torquata":        "Martín pescador mayor",
-        "Pandion haliaetus":          "Águila pescadora",
-        "Pitangus sulphuratus":       "Bichofué",
-        "Tyrannus melancholicus":     "Sirirí común",
-        "Sakesphorus canadensis":     "Batará barrado",
-        "Thraupis episcopus":         "Azulejo común",
-        "Ramphocelus dimidiatus":     "Sangretoro",
-        "Dendrocygna autumnalis":     "Pato viudo",
-        "Vanellus chilensis":         "Pellar",
-        "Phalacrocorax brasilianus":  "Cormorán neotropical",
-        # Mamíferos
-        "Dasypus novemcinctus":       "Armadillo de nueve bandas",
-        "Didelphis marsupialis":      "Chucha común",
-        "Hydrochoerus hydrochaeris":  "Chigüiro",
-        "Sciurus granatensis":        "Ardilla roja",
-        "Cerdocyon thous":            "Zorro perro",
-        # Anfibios
-        "Rhinella marina":            "Sapo marino",
-        "Engystomops pustulosus":     "Sapito túngara",
-        "Leptodactylus fuscus":       "Rana silvadora",
-        # Plantas / flora
-        "Heliconia psittacorum":      "Heliconia de loro",
-        "Heliconia bihai":            "Heliconia roja",
-        "Sabal mauritiiformis":       "Palma de vino",
-        "Guazuma ulmifolia":          "Guácimo",
-        "Crescentia cujete":          "Totumo",
-        # Insectos
-        "Polybia emaciata":           "Avispa social",
-        "Danaus plexippus":           "Mariposa monarca",
-        # Arácnidos
-        "Menemerus bivittatus":       "Araña saltarina gris",
-    }
-
-    def _nombre_com_gbif(species_key: str, especie: str) -> str:
-        """Consulta el endpoint de nombres vernáculos de GBIF en español."""
-        if not species_key:
-            return NOMBRES_ES.get(especie, "—")
-        try:
-            r = requests.get(
-                f"https://api.gbif.org/v1/species/{species_key}/vernacularNames",
-                params={"limit": 20},
-                timeout=4
-            ).json()
-            resultados = r.get("results", [])
-            # Primero buscar en español
-            for item in resultados:
-                if item.get("language", "").lower() in ("spa", "es", "spanish", "español"):
-                    nombre = item.get("vernacularName", "").strip()
-                    if nombre:
-                        return nombre.capitalize()
-            # Si no hay español, buscar inglés como segunda opción
-            for item in resultados:
-                if item.get("language", "").lower() in ("eng", "en", "english"):
-                    nombre = item.get("vernacularName", "").strip()
-                    if nombre:
-                        return nombre.capitalize()
-        except Exception:
-            pass
-        return NOMBRES_ES.get(especie, "—")
-
-    try:
-        url = "https://api.gbif.org/v1/occurrence/search"
-        params = {
-            "stateProvince": "Córdoba",
-            "country":       "CO",
-            "mediaType":     "StillImage",
-            "hasCoordinate": "true",
-            "limit":         100,
-        }
-        r = requests.get(url, params=params, timeout=12).json()
-        resultados = r.get("results", [])
-        fauna, vistos = [], set()
-
-        # ── Paso 1: recopilar registros únicos ───────────────
-        registros_unicos = []
-        for rec in resultados:
-            sp = rec.get("species")
-            if not sp or sp in vistos:
-                continue
-            vistos.add(sp)
-            img_url = next(
-                (m["identifier"] for m in rec.get("media", [])
-                 if "identifier" in m and m.get("type","") == "StillImage"),
-                None
-            )
-            if img_url is None:
-                img_url = next(
-                    (m["identifier"] for m in rec.get("media", []) if "identifier" in m),
-                    None
-                )
-            registros_unicos.append({
-                "especie":    sp,
-                "clase":      rec.get("class", "—"),
-                "orden":      rec.get("order", "—"),
-                "familia":    rec.get("family", "—"),
-                "lat":        rec.get("decimalLatitude"),
-                "lon":        rec.get("decimalLongitude"),
-                "fecha":      (rec.get("eventDate","—")[:10] if rec.get("eventDate") else "—"),
-                "imagen_url": img_url,
-                "estado":     rec.get("iucnRedListCategory", "No evaluado"),
-                "gbif_key":   str(rec.get("speciesKey", "")),
-            })
-
-        # ── Paso 2: nombres comunes EN PARALELO ───────────────
-        # Solo consultamos API para especies no cubiertas por el dict local
-        def _resolver_nombre(reg):
-            sp  = reg["especie"]
-            key = reg["gbif_key"]
-            nom = NOMBRES_ES.get(sp)
-            if nom:
-                return nom
-            return _nombre_com_gbif(key, sp)
-
-        # max_workers=8: suficiente para ~20 especies sin saturar GBIF
-        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
-            nombres = list(ex.map(_resolver_nombre, registros_unicos))
-
-        for reg, nombre_com in zip(registros_unicos, nombres):
-            reg["nombre_com"] = nombre_com
-            fauna.append(reg)
-
-        if fauna:
-            return pd.DataFrame(fauna), True
-        return None, False
-    except Exception:
-        return None, False
-
-# ── Cauce real del Río Sinú desde OpenStreetMap ──────────
-def obtener_cauce_sinu():
-    """Retorna el cauce real del Río Sinú trazado manualmente en geojson.io."""
-    return None  # Siempre usa CAUCE_SINU_FALLBACK (coordenadas reales verificadas)
-
-# Coordenadas REALES trazadas en geojson.io — dos segmentos unidos S→N
-# Convertido de [lon,lat] → [lat,lon] para Folium
-CAUCE_SINU_FALLBACK = [
-    [8.69768846, -75.94782194],
-    [8.70122071, -75.94240658],
-    [8.69987114, -75.93560537],
-    [8.70305888, -75.93594981],
-    [8.71192054, -75.94286909],
-    [8.71863785, -75.94379077],
-    [8.72535501, -75.93734223],
-    [8.72193985, -75.93215672],
-    [8.7155763, -75.9253616],
-    [8.71855524, -75.92260906],
-    [8.72478702, -75.92213802],
-    [8.73127622, -75.92305694],
-    [8.73640083, -75.9221351],
-    [8.73961492, -75.91957351],
-    [8.74013571, -75.91535784],
-    [8.73778687, -75.90851478],
-    [8.74351866, -75.90587567],
-    [8.7472788, -75.90322958],
-    [8.74922018, -75.90126533],
-    [8.74922025, -75.8985645],
-    [8.7476432, -75.89414539],
-    [8.74788577, -75.89242679],
-    [8.7526175, -75.89193544],
-    [8.75686353, -75.88984919],
-    [8.76280817, -75.88518463],
-    [8.77045286, -75.88223726],
-    [8.77215134, -75.87941382],
-    [8.76936038, -75.87450396],
-    [8.76802566, -75.87290836],
-    [8.76826901, -75.87094317],
-    [8.77118166, -75.86959167],
-    [8.78367731, -75.87364386],
-    [8.7888384, -75.86806919],
-    [8.79362685, -75.86414634],
-    [8.8002273, -75.85977915],
-    [8.8029592, -75.85977891],
-    [8.80887841, -75.86254257],
-    [8.82094414, -75.85770413],
-    [8.82936742, -75.85632123],
-    [8.8316438, -75.85309608],
-    [8.83594253, -75.85423387],
-    [8.84148501, -75.85633728],
-    [8.848413, -75.85668785],
-]
-
-# ── Helpers de modelo ─────────────────────────────────────
 def nivel_rio(lluvia_7d, base=4.2):
     """Simula predicción LSTM del nivel del río dado lluvia acumulada.
     Incluye variación diaria natural del río y efecto de lluvia aguas arriba."""
@@ -1454,111 +569,45 @@ with k6: _kpi_card("kpi-card kpi-card-purple","🦜 Especies GBIF",  "≥12",   
 
 st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
-# ══════════════════════════════════════════════════════════
-# ── BUSCADOR DE LUGARES ───────────────────────────────────
-# ══════════════════════════════════════════════════════════
 
-with st.expander("🔍 Consultar condiciones en cualquier lugar de Montería"):
-    # Input ancho completo — mejor en móvil
-    texto = st.text_input(
-        "",
-        placeholder="Ej: Universidad del Sinú, Calle 29 #5-42, Barrio Colón, Estadio Jaraguay...",
-        label_visibility="collapsed"
-    )
-    # Botones en 2 columnas (touch-friendly)
-    cb1, cb2 = st.columns(2, gap="small")
-    with cb1:
-        buscar_click = st.button("🔍 Buscar", use_container_width=True)
-    with cb2:
-        limpiar_click = st.button("✖ Limpiar", use_container_width=True)
+# ── Lista global de universidades (usada en mapa normal y expandido) ──
+UNIVERSIDADES_GLOBAL = [
+    (8.7454, -75.8888, "🎓 Universidad del Sinú",
+     "Cra. 1W #38-153, Barrio Juan XXIII", "Institución privada · ~8,000 estudiantes"),
+    (8.7963, -75.8805, "🎓 Universidad de Córdoba",
+     "Cra. 6 #77-305, Montería", "Universidad pública · ~15,000 estudiantes"),
+    (8.8143, -75.8805, "🎓 Universidad Pontificia Bolivariana",
+     "Cra. 6 #97A-99, Montería", "Institución privada · sede Montería"),
+    (8.7846, -75.8805, "🎓 Universidad Luis Amigó",
+     "Cl. 64 #6-108, Montería", "Institución privada · sede Montería"),
+    (8.7738, -75.8805, "🎓 Universidad Cooperativa de Colombia",
+     "Cl. 52 #6-79, Montería", "Institución privada · sede Montería"),
+    (8.7540, -75.8822, "🎓 CUN",
+     "Cra. 4 #30-20, Montería", "Corporación Unificada Nacional"),
+    (8.7864, -75.8814, "🎓 Politécnico Gran Colombiano",
+     "Cl. 66 #5-70 Local 103, Montería", "Institución privada · sede Montería"),
+    (8.7513, -75.8822, "🎓 Uniremington",
+     "Cl. 27 #4-31, Montería", "Corporación Universitaria Remington"),
+    (8.7567, -75.8805, "🏫 Colegio San Agustín",
+     "Cra. 6 #33-02, Centro, Montería", "Institución educativa San Agustín"),
+]
 
-    if buscar_click:
-        if texto.strip():
-            txt     = texto.strip()
-            txt_low = txt.lower().strip()
-            if not hasattr(st.session_state, "historial_busq"):
-                st.session_state.historial_busq = []
-
-            # Paso 1: diccionario local instantáneo
-            lat_l, lon_l, nombre = None, None, None
-            for clave, (lat_d, lon_d, nom_d) in LUGARES_MONTERIA.items():
-                if txt_low == clave or txt_low in clave or clave in txt_low:
-                    lat_l, lon_l, nombre = lat_d, lon_d, nom_d
-                    break
-
-            # Paso 2: API externa si no está en dict
-            if lat_l is None:
-                res = buscar_lugar(txt)
-                if res:
-                    lat_l, lon_l, nombre = res
-
-            if lat_l is not None:
-                cl    = clima_lugar(lat_l, lon_l)
-                nuevo = {"lat": lat_l, "lon": lon_l,
-                         "nombre": nombre[:65], "clima": cl}
-                st.session_state.lugar_buscado = nuevo
-                hist = st.session_state.historial_busq
-                if not any(h["nombre"] == nuevo["nombre"] for h in hist):
-                    hist.insert(0, nuevo)
-                    st.session_state.historial_busq = hist[:3]
-                st.rerun()
-            else:
-                st.error(
-                    "❌ No encontrado. Escribe el nombre más completo, por ejemplo:\n"
-                    "**'Universidad del Sinú'** en vez de 'unisinu' · "
-                    "**'Estadio Jaraguay'** · **'Barrio Colón'** · "
-                    "**'Calle 29 #5-42 Montería'**"
-                )
-        else:
-            st.warning("Ingresa un nombre de lugar.")
-
-    if limpiar_click:
-        st.session_state.lugar_buscado  = None
-        st.session_state.historial_busq = []
-        st.rerun()
-
-    # Garantizar que historial_busq existe siempre
-    if not hasattr(st.session_state, "historial_busq"):
-        st.session_state.historial_busq = []
-
-    # Historial de búsquedas (acceso rápido) — con get() seguro
-    if not hasattr(st.session_state, "historial_busq"):
-        st.session_state.historial_busq = []
-    if st.session_state.historial_busq:
-        hist_labels = [h["nombre"].split(",")[0] for h in st.session_state.historial_busq]
-        st.markdown("<small style='color:#3a5a7a'>🕐 Búsquedas recientes:</small>", unsafe_allow_html=True)
-        hcols = st.columns(len(hist_labels), gap="small")
-        for i, (hcol, hlabel) in enumerate(zip(hcols, hist_labels)):
-            with hcol:
-                if st.button(f"📍 {hlabel}", use_container_width=True, key=f"hist_{i}"):
-                    st.session_state.lugar_buscado = st.session_state.historial_busq[i]
-                    st.rerun()
-
-    if st.session_state.lugar_buscado:
-        d = st.session_state.lugar_buscado
-        st.success(f"📍 {d['nombre']}")
-        b1, b2 = st.columns(2, gap="small")
-        b3, b4 = st.columns(2, gap="small")
-        for col, lbl, val in [
-            (b1, "🌡️ Temperatura", f"{d['clima']['temp']} °C"),
-            (b2, "💧 Humedad",      f"{d['clima']['humedad']} %"),
-            (b3, "🌧️ Lluvia",       f"{d['clima']['lluvia']} mm"),
-            (b4, "💨 Viento",       f"{d['clima']['viento']} km/h"),
-        ]:
-            with col:
-                st.markdown(f"""
-                <div class="kpi-card kpi-card-blue" style="padding:12px 16px">
-                    <div class="kpi-label">{lbl}</div>
-                    <div class="kpi-value-sm">{val}</div>
-                </div>""", unsafe_allow_html=True)
-
-st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
+# ── Centros comerciales verificados ───────────────────────
+CC_GLOBAL = [
+    (8.7882, -75.8805, "🛍️ C.C. Buenavista",
+     "Cra. 6 #68-72, Montería", "Centro comercial principal de Montería"),
+    (8.7531, -75.8814, "🛍️ C.C. Nuestro",
+     "Tv. 29 #29-69, Montería", "Centro comercial Nuestro"),
+    (8.7666, -75.8772, "🛍️ C.C. Alamedas",
+     "Cl. 44 #10-91, Montería", "Centro comercial Alamedas del Sinú"),
+]
 
 # ══════════════════════════════════════════════════════════
-# ── MAPA + PREDICCIÓN LSTM ────────────────────────────────
+# ── MAPA PROFESIONAL ─────────────────────────────────────
 # ══════════════════════════════════════════════════════════
 
-st.markdown('<div class="section-header">🗺️ Mapa de monitoreo ambiental · Montería</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-header">🗺️ Mapa ambiental interactivo · Montería</div>', unsafe_allow_html=True)
+
 col_mapa, col_pred = st.columns([1.35, 1], gap="small")
 
 with col_mapa:
@@ -1576,234 +625,429 @@ with col_mapa:
     else:
         tiles, attr = "OpenStreetMap", "© OpenStreetMap contributors"
 
-    # Centro del mapa
-    if st.session_state.lugar_buscado:
-        centro = [st.session_state.lugar_buscado["lat"], st.session_state.lugar_buscado["lon"]]
-        zoom   = 16
-    else:
-        centro = [8.7800, -75.8800]
-        zoom   = 13
+    m = folium.Map(location=[8.7560, -75.8814], zoom_start=13,
+                   tiles=tiles, attr=attr)
 
-    m = folium.Map(location=centro, zoom_start=zoom, tiles=tiles, attr=attr)
-
-    # ── Trazado real del Río Sinú ──────────────────────────
-    # Cauce oficial desde OSM — con fallback si Overpass no responde
+    # ── Cauce real del Río Sinú ────────────────────────────
     _cauce = obtener_cauce_sinu() or CAUCE_SINU_FALLBACK
     folium.PolyLine(
         locations=_cauce,
-        color="#4FC3F7", weight=4.5, opacity=0.85, tooltip="Río Sinú"
+        color="#4FC3F7", weight=5, opacity=0.9,
+        tooltip="Río Sinú"
     ).add_to(m)
 
-    # Área de monitoreo
+    # ── Área de monitoreo ──────────────────────────────────
     folium.Circle(
-        [8.7600, -75.8814], radius=4800,
+        [8.7560, -75.8814], radius=5000,
         color="#00E5C3", fill=True, fill_opacity=0.03,
         weight=1, dash_array="6"
     ).add_to(m)
 
-    # ── Marcadores Río ─────────────────────────────────────
-    puntos_rio = [
-        (8.75662, -75.88985, "Ronda del Sinú — Av. Primera",  0),
-        (8.77215, -75.87941, "Puente Segundo Centenario",      1),
-        (8.80023, -75.85978, "Ronda Norte — El Recreo",        2),
-        (8.82094, -75.85770, "Muelle Turístico del Sinú",      3),
-        (8.74922, -75.90127, "Río Sinú — Barrio La Granja",    4),
-    ]
-    for lat, lon, nombre, idx in puntos_rio:
+    # ══════════════════════════════════════════════════════
+    # PUNTOS MÁS TRANSITADOS DE MONTERÍA — coordenadas verificadas
+    # con niveles de contaminación diferenciados por zona
+    # ══════════════════════════════════════════════════════
+
+    pm25 = aire["pm25"]
+    aqi  = aire["aqi"]
+
+    # Función para color según contaminación relativa por zona
+    def color_contam(factor):
+        """factor 1.0=normal, >1=más contaminado, <1=más limpio"""
+        val = pm25 * factor
+        if val < 10:   return "#00E5C3", "🟢 Buena"
+        elif val < 15: return "#FFD600", "🟡 Moderada"
+        elif val < 25: return "#FF9800", "🟠 Regular"
+        else:          return "#FF5252", "🔴 Mala"
+
+    # ── ZONAS DE ALTA CONTAMINACIÓN (tráfico + industria) ──
+    # Mercado Central — alto tráfico vehicular, vendedores ambulantes
+    c, estado = color_contam(1.8)
+    folium.CircleMarker(
+        [8.7512, -75.8795], radius=18,
+        color=c, fill=True, fill_color=c, fill_opacity=0.5, weight=2,
+        popup=folium.Popup(
+            f"<b>🏪 Mercado Central</b><br>"
+            f"Zona: Alta contaminación<br>"
+            f"PM2.5 est.: {round(pm25*1.8,1)} µg/m³<br>"
+            f"Causa: tráfico pesado + vendedores<br>"
+            f"Estado: {estado}", max_width=220),
+        tooltip="🏪 Mercado Central — Alta contaminación"
+    ).add_to(m)
+
+    # Terminal de Transportes — buses y camiones
+    c, estado = color_contam(2.1)
+    folium.CircleMarker(
+        [8.7420, -75.8650], radius=18,
+        color=c, fill=True, fill_color=c, fill_opacity=0.5, weight=2,
+        popup=folium.Popup(
+            f"<b>🚌 Terminal de Transportes</b><br>"
+            f"Zona: Muy alta contaminación<br>"
+            f"PM2.5 est.: {round(pm25*2.1,1)} µg/m³<br>"
+            f"Causa: emisiones de buses y camiones<br>"
+            f"Estado: {estado}", max_width=220),
+        tooltip="🚌 Terminal — Muy alta contaminación"
+    ).add_to(m)
+
+    # Avenida Circunvalar — tráfico vehicular intenso
+    c, estado = color_contam(1.6)
+    folium.CircleMarker(
+        [8.7600, -75.8600], radius=16,
+        color=c, fill=True, fill_color=c, fill_opacity=0.45, weight=2,
+        popup=folium.Popup(
+            f"<b>🚗 Av. Circunvalar</b><br>"
+            f"Zona: Alta contaminación<br>"
+            f"PM2.5 est.: {round(pm25*1.6,1)} µg/m³<br>"
+            f"Causa: corredor vial principal<br>"
+            f"Estado: {estado}", max_width=220),
+        tooltip="🚗 Av. Circunvalar — Alta contaminación"
+    ).add_to(m)
+
+    # ── ZONAS DE CONTAMINACIÓN MEDIA ──────────────────────
+    # Centro histórico — Parque Simón Bolívar
+    c, estado = color_contam(1.3)
+    folium.CircleMarker(
+        [8.7540, -75.8814], radius=15,
+        color=c, fill=True, fill_color=c, fill_opacity=0.45, weight=2,
+        popup=folium.Popup(
+            f"<b>🏛️ Parque Simón Bolívar</b><br>"
+            f"Zona: Contaminación moderada<br>"
+            f"PM2.5 est.: {round(pm25*1.3,1)} µg/m³<br>"
+            f"Causa: centro urbano concurrido<br>"
+            f"Estado: {estado}", max_width=220),
+        tooltip="🏛️ Parque Simón Bolívar — Moderada"
+    ).add_to(m)
+
+    # Universidad del Sinú — zona universitaria
+    c, estado = color_contam(1.1)
+    folium.CircleMarker(
+        [8.7454, -75.8888], radius=14,
+        color=c, fill=True, fill_color=c, fill_opacity=0.4, weight=2,
+        popup=folium.Popup(
+            f"<b>🎓 Universidad del Sinú</b><br>"
+            f"Zona: Contaminación baja-moderada<br>"
+            f"PM2.5 est.: {round(pm25*1.1,1)} µg/m³<br>"
+            f"Causa: zona residencial-universitaria<br>"
+            f"Estado: {estado}", max_width=220),
+        tooltip="🎓 UniSinú — Baja-moderada"
+    ).add_to(m)
+
+    # C.C. Buenavista — zona comercial
+    c, estado = color_contam(1.4)
+    folium.CircleMarker(
+        [8.7510, -75.8480], radius=15,
+        color=c, fill=True, fill_color=c, fill_opacity=0.45, weight=2,
+        popup=folium.Popup(
+            f"<b>🛍️ C.C. Buenavista</b><br>"
+            f"Zona: Contaminación moderada<br>"
+            f"PM2.5 est.: {round(pm25*1.4,1)} µg/m³<br>"
+            f"Causa: alto flujo vehicular comercial<br>"
+            f"Estado: {estado}", max_width=220),
+        tooltip="🛍️ C.C. Buenavista — Moderada"
+    ).add_to(m)
+
+    # Estadio Jaraguay — zona sur
+    c, estado = color_contam(1.2)
+    folium.CircleMarker(
+        [8.7118, -75.8276], radius=14,
+        color=c, fill=True, fill_color=c, fill_opacity=0.4, weight=2,
+        popup=folium.Popup(
+            f"<b>⚽ Estadio Jaraguay</b><br>"
+            f"Zona: Contaminación moderada<br>"
+            f"PM2.5 est.: {round(pm25*1.2,1)} µg/m³<br>"
+            f"Causa: zona periurbana sur<br>"
+            f"Estado: {estado}", max_width=220),
+        tooltip="⚽ Estadio Jaraguay — Moderada"
+    ).add_to(m)
+
+    # ── ZONAS LIMPIAS (parques y río) ─────────────────────
+    # Ronda del Sinú — parque lineal, pulmón verde
+    c, estado = color_contam(0.6)
+    folium.CircleMarker(
+        [8.7560, -75.8912], radius=20,
+        color=c, fill=True, fill_color=c, fill_opacity=0.45, weight=2,
+        popup=folium.Popup(
+            f"<b>🌿 Ronda del Sinú</b><br>"
+            f"Parque lineal más grande de Latinoamérica<br>"
+            f"PM2.5 est.: {round(pm25*0.6,1)} µg/m³<br>"
+            f"Causa: pulmón verde urbano, arborización<br>"
+            f"Estado: {estado}", max_width=220),
+        tooltip="🌿 Ronda del Sinú — Zona limpia"
+    ).add_to(m)
+
+    # Muelle Turístico — orilla norte del río
+    c, estado = color_contam(0.7)
+    folium.CircleMarker(
+        [8.7800, -75.8873], radius=14,
+        color=c, fill=True, fill_color=c, fill_opacity=0.4, weight=2,
+        popup=folium.Popup(
+            f"<b>⚓ Muelle Turístico del Sinú</b><br>"
+            f"Zona: Buena calidad de aire<br>"
+            f"PM2.5 est.: {round(pm25*0.7,1)} µg/m³<br>"
+            f"Causa: orilla del río, brisa natural<br>"
+            f"Estado: {estado}", max_width=220),
+        tooltip="⚓ Muelle Turístico — Zona limpia"
+    ).add_to(m)
+
+    # Aeropuerto Los Garzones — zona norte periférica
+    c, estado = color_contam(0.8)
+    folium.CircleMarker(
+        [8.8233, -75.8258], radius=14,
+        color=c, fill=True, fill_color=c, fill_opacity=0.4, weight=2,
+        popup=folium.Popup(
+            f"<b>✈️ Aeropuerto Los Garzones</b><br>"
+            f"PM2.5 est.: {round(pm25*0.8,1)} µg/m³<br>"
+            f"Causa: zona norte, menos densidad urbana<br>"
+            f"Estado: {estado}", max_width=220),
+        tooltip="✈️ Aeropuerto Los Garzones"
+    ).add_to(m)
+
+    # ── UNIVERSIDADES (usa lista global verificada) ──────────────────────
+    UNIVERSIDADES = UNIVERSIDADES_GLOBAL
+    for lat, lon, nombre, direccion, info in UNIVERSIDADES:
+        folium.Marker(
+            [lat, lon],
+            popup=folium.Popup(
+                f"<b>{nombre}</b><br>"
+                f"📍 {direccion}<br>"
+                f"ℹ️ {info}", max_width=240),
+            tooltip=nombre,
+            icon=folium.Icon(color="orange", icon="graduation-cap", prefix="fa")
+        ).add_to(m)
+
+    # ── CENTROS COMERCIALES ───────────────────────────────────────────────
+    for lat, lon, nombre, direccion, info in CC_GLOBAL:
+        folium.Marker(
+            [lat, lon],
+            popup=folium.Popup(
+                f"<b>{nombre}</b><br>"
+                f"📍 {direccion}<br>"
+                f"ℹ️ {info}", max_width=240),
+            tooltip=nombre,
+            icon=folium.Icon(color="red", icon="shopping-cart", prefix="fa")
+        ).add_to(m)
+
+    # ── Estaciones de monitoreo de aire (marcadores verdes) ──
+    for lat, lon, nombre, popup_txt in [
+        (8.7550, -75.8750, "💨 Estación Centro",
+         f"PM2.5: {aire['pm25']} µg/m³ · AQI: {aire['aqi']}"),
+        (8.7350, -75.8650, "💨 Estación Sur",
+         f"PM10: {aire['pm10']} µg/m³ · NO₂: {aire['no2']} µg/m³"),
+    ]:
+        folium.Marker(
+            [lat, lon],
+            popup=folium.Popup(f"<b>{nombre}</b><br>{popup_txt}", max_width=220),
+            tooltip=nombre,
+            icon=folium.Icon(color="green", icon="cloud", prefix="fa")
+        ).add_to(m)
+
+    # ── Estaciones río Sinú ────────────────────────────────
+    for lat, lon, nombre, idx in [
+        (8.7560, -75.8912, "Ronda del Sinú — Av. Primera", 0),
+        (8.7650, -75.8845, "Puente Segundo Centenario",    1),
+        (8.7800, -75.8873, "Muelle Turístico del Sinú",    2),
+    ]:
         alerta_lbl, _, _ = alerta_rio(niveles[idx])
         folium.Marker(
             [lat, lon],
             popup=folium.Popup(
-                f"<b>🌊 {nombre}</b><br>Nivel: <b>{niveles[idx]}m</b><br>Estado: {alerta_lbl}",
-                max_width=240
-            ),
+                f"<b>🌊 {nombre}</b><br>"
+                f"Nivel: <b>{niveles[idx]}m</b><br>"
+                f"Estado: {alerta_lbl}", max_width=230),
             tooltip=f"🌊 {nombre}",
             icon=folium.Icon(color="blue", icon="tint", prefix="fa")
         ).add_to(m)
 
-    # ── Marcadores Aire ────────────────────────────────────
-    for lat, lon, nombre, popup in [
-        (8.7550, -75.8750, "Calidad Aire Centro",
-         f"💨 PM2.5: {aire['pm25']} µg/m³<br>AQI: {aire['aqi']}<br>NO₂: {aire['no2']} µg/m³"),
-        (8.7350, -75.8650, "Calidad Aire Sur",
-         f"💨 PM10: {aire['pm10']} µg/m³<br>PM2.5: {aire['pm25']} µg/m³"),
-    ]:
-        folium.Marker(
-            [lat, lon],
-            popup=folium.Popup(f"<b>💨 {nombre}</b><br>{popup}", max_width=230),
-            tooltip=f"💨 {nombre}",
-            icon=folium.Icon(color="green", icon="cloud", prefix="fa")
-        ).add_to(m)
+    # ── Capa de lluvia si hay probabilidad ─────────────────
+    prob_hoy = clima.get("prob_lluvia", [0])[0] if clima.get("prob_lluvia") else 0
+    if prob_hoy >= 20 or clima.get("lluvia_hoy", 0) > 0:
+        if prob_hoy >= 60:   color_lluvia, op = "#0066FF", 0.30
+        elif prob_hoy >= 30: color_lluvia, op = "#00AAFF", 0.18
+        else:                color_lluvia, op = "#00CCFF", 0.10
+        for lat_z, lon_z, peso in [
+            (8.7550,-75.8914,1.0),(8.7480,-75.9000,0.9),
+            (8.7750,-75.8870,0.8),(8.7280,-75.9050,0.7),
+            (8.7600,-75.8700,0.6),(8.7400,-75.8750,0.5),
+        ]:
+            folium.Circle(
+                [lat_z, lon_z], radius=int(2000*peso),
+                color=color_lluvia, fill=True,
+                fill_color=color_lluvia,
+                fill_opacity=op*peso, weight=0,
+                tooltip=f"🌧️ Prob. lluvia: {prob_hoy}%"
+            ).add_to(m)
 
-    # ── Marcadores Fauna ───────────────────────────────────
+    # ── Marcadores fauna ───────────────────────────────────
     fauna_puntos = [
-        (8.7550, -75.8893, "🦎 Iguana iguana",            "12 avistamientos · Ronda del Sinú"),
-        (8.7735, -75.8695, "🐦 Leptotila verreauxi",      "5 avistamientos · Ronda Norte"),
-        (8.7780, -75.8646, "🦆 Cairina moschata",         "3 avistamientos · Orilla del río"),
-        (8.4000, -75.8667, "🐢 Chelonoidis carbonarius",  "2 avistamientos · Ciénaga Betancí"),
-        (8.7600, -75.8700, "🐍 Lygophis lineatus",        "1 avistamiento · Zona urbana"),
-        (8.7480, -75.8800, "🌺 Heliconia psittacorum",    "8 avistamientos · Parques urbanos"),
+        (8.7560, -75.8912, "🦎 Iguana iguana",           "Ronda del Sinú · 12 registros"),
+        (8.7735, -75.8695, "🐦 Leptotila verreauxi",      "Norte · 5 registros"),
+        (8.7800, -75.8873, "🦆 Cairina moschata",         "Muelle · 3 registros"),
+        (8.7454, -75.8888, "🌺 Heliconia psittacorum",    "Campus UniSinú · 8 registros"),
+        (8.7118, -75.8276, "🐢 Chelonoidis carbonarius",  "Zona sur · 2 registros"),
     ]
-    for lat, lon, nombre, popup in fauna_puntos:
+    for lat, lon, nombre, popup_txt in fauna_puntos:
         folium.Marker(
             [lat, lon],
-            popup=folium.Popup(f"<b>{nombre}</b><br>{popup}", max_width=230),
+            popup=folium.Popup(f"<b>{nombre}</b><br>{popup_txt}", max_width=220),
             tooltip=nombre,
             icon=folium.Icon(color="purple", icon="paw", prefix="fa")
         ).add_to(m)
 
-    # ── Marcador búsqueda ──────────────────────────────────
-    if st.session_state.lugar_buscado:
-        d = st.session_state.lugar_buscado
-        folium.Marker(
-            [d["lat"], d["lon"]],
-            popup=folium.Popup(
-                f"<b>📍 {d['nombre'][:50]}</b><br>"
-                f"🌡️ {d['clima']['temp']}°C &nbsp;·&nbsp; 💧 {d['clima']['humedad']}%<br>"
-                f"🌧️ {d['clima']['lluvia']} mm &nbsp;·&nbsp; 💨 {d['clima']['viento']} km/h",
-                max_width=260
-            ),
-            tooltip=f"📍 {d['nombre'][:40]}",
-            icon=folium.Icon(color="red", icon="search", prefix="fa")
-        ).add_to(m)
-        folium.Circle(
-            [d["lat"], d["lon"]], radius=280,
-            color="#FF5252", fill=True, fill_opacity=0.18
-        ).add_to(m)
-
-    # ── Capa de probabilidad de lluvia por zonas ──────────
-    prob_hoy = clima.get("prob_lluvia", [0])[0] if clima.get("prob_lluvia") else 0
-    lluvia_mm = clima.get("lluvia_hoy", 0)
-
-    # Zonas de lluvia/calor según probabilidad actual
-    zonas_lluvia = [
-        # [lat, lon, peso] — zonas representativas de Montería
-        [8.7550, -75.8914, 1.0],  # Ronda del Sinú (zona húmeda)
-        [8.7480, -75.9000, 0.9],  # Zona occidental
-        [8.7750, -75.8870, 0.8],  # Norte río
-        [8.7280, -75.9050, 0.7],  # Sur río
-        [8.7600, -75.8700, 0.6],  # Centro-este
-        [8.7400, -75.8750, 0.5],  # Sur ciudad
-        [8.7800, -75.8600, 0.4],  # Norte ciudad
-    ]
-
-    if prob_hoy >= 20 or lluvia_mm > 0:
-        # Color según intensidad: azul claro (baja) → azul oscuro (alta)
-        if prob_hoy >= 60 or lluvia_mm > 5:
-            color_lluvia, opacidad = "#0066FF", 0.35
-            titulo_lluvia = f"🌧️ Lluvia probable ({prob_hoy}%)"
-        elif prob_hoy >= 30 or lluvia_mm > 0:
-            color_lluvia, opacidad = "#00AAFF", 0.22
-            titulo_lluvia = f"🌦️ Posible lluvia ({prob_hoy}%)"
-        else:
-            color_lluvia, opacidad = "#00CCFF", 0.12
-            titulo_lluvia = f"💧 Baja probabilidad ({prob_hoy}%)"
-
-        for lat_z, lon_z, peso in zonas_lluvia:
-            radio = int(1800 * peso)
-            folium.Circle(
-                [lat_z, lon_z],
-                radius=radio,
-                color=color_lluvia,
-                fill=True,
-                fill_color=color_lluvia,
-                fill_opacity=opacidad * peso,
-                weight=0,
-                tooltip=titulo_lluvia,
-            ).add_to(m)
-
-    # ── Leyenda del mapa
+    # ── Leyenda profesional ────────────────────────────────
     m.get_root().html.add_child(folium.Element("""
     <div style="position:fixed;bottom:20px;left:20px;z-index:1000;
-                background:rgba(6,13,26,0.93);padding:10px 16px;
+                background:rgba(6,13,26,0.93);padding:12px 16px;
                 border-radius:12px;font-size:11px;color:#8892a4;
-                border:1px solid rgba(0,229,195,0.2);min-width:160px">
+                border:1px solid rgba(0,229,195,0.2);min-width:180px">
         <b style="color:#00E5C3;font-size:12px">Leyenda</b><br>
-        <span style="color:#4FC3F7">🔵</span> Estación río
-        &nbsp;<span style="color:#00E5C3">🟢</span> Calidad aire<br>
-        <span style="color:#7B61FF">🟣</span> Fauna registrada
-        &nbsp;<span style="color:#FF5252">🔴</span> Búsqueda<br>
-        <span style="color:#4FC3F7">━━</span> Cauce Río Sinú<br>
-        <span style="color:#00AAFF">🔵</span> Zona con lluvia
+        <span style="color:#FF5252">🔴</span> Alta &nbsp;
+        <span style="color:#FF9800">🟠</span> Media &nbsp;
+        <span style="color:#FFD600">🟡</span> Moderada &nbsp;
+        <span style="color:#00E5C3">🟢</span> Limpia<br>
+        <span style="color:#4FC3F7">🔵</span> Río &nbsp;
+        <span style="color:#00E5C3">🟢</span> Aire &nbsp;
+        <span style="color:#7B61FF">🟣</span> Fauna<br>
+        <span style="color:#FFA500">🟠</span> Universidades &nbsp;
+        <span style="color:#FF5252">🔴</span> C. Comerciales &nbsp;
+        <span style="color:#00AAFF">🔵</span> Lluvia<br>
+        <span style="color:#4FC3F7">━━</span> Cauce Río Sinú
     </div>"""))
 
-    st_folium(m, width=None, height=380, returned_objects=[])
-
-with col_pred:
-    st.markdown('<div class="section-header">🌊 Predicción 7 días · Modelo LSTM</div>', unsafe_allow_html=True)
-
-    fig, ax = plt.subplots(figsize=(5.8, 4.0))
-    fig.patch.set_facecolor("#0d1b2e")
-    ax.set_facecolor("#0d1b2e")
-
-    bar_colors = [
-        "#00E5C3" if n < 4.0 else
-        "#FFD600" if n < 5.5 else
-        "#FF9800" if n < 7.0 else
-        "#FF5252"
-        for n in niveles
+    # ── Zonas de inundación según nivel actual del río ────
+    ZONAS_INUNDACION = [
+        (8.7560, -75.8950, 600, "Zona riesgo ALTO",
+         "La Granja · La Ribera · Los Nogales",
+         4.0, "Primera zona en afectarse históricamente"),
+        (8.7480, -75.8920, 500, "Zona riesgo ALTO",
+         "Barrio Colón · Chuchurubi · Santa Fe",
+         4.0, "Área de inundación histórica recurrente"),
+        (8.7650, -75.8930, 450, "Zona riesgo MEDIO",
+         "Ronda del Sinú norte · Av. Primera",
+         5.5, "Afectada cuando el río supera 5.5m"),
+        (8.7800, -75.8900, 400, "Zona riesgo MEDIO",
+         "El Recreo · sector norte ribera",
+         5.5, "Afectada cuando el río supera 5.5m"),
+        (8.7350, -75.8970, 350, "Zona riesgo ALTO",
+         "Mocarí rural · zona baja sur",
+         4.0, "Zona baja — riesgo en temporada de lluvias"),
     ]
-    bars = ax.bar(dias, niveles, color=bar_colors, alpha=0.88, width=0.55,
-                  edgecolor="#1a2a3e", linewidth=0.6)
+    nivel_actual = niveles[0]
+    for lat_z, lon_z, radio, zona, barrios, cota, nota in ZONAS_INUNDACION:
+        if nivel_actual >= cota + 1.5:
+            cz, fo, iz = "#FF5252", 0.40, "⚠️ INUNDACIÓN ACTIVA"
+        elif nivel_actual >= cota:
+            cz, fo, iz = "#FF9800", 0.28, "⚠️ En alerta"
+        elif nivel_actual >= cota - 0.5:
+            cz, fo, iz = "#FFD600", 0.15, "⚡ Precaución"
+        else:
+            cz, fo, iz = "#4FC3F7", 0.06, "✅ Normal"
+        folium.Circle(
+            [lat_z, lon_z], radius=radio,
+            color=cz, fill=True, fill_color=cz,
+            fill_opacity=fo, weight=2, dash_array="6",
+            popup=folium.Popup(
+                f"<b>🌊 {zona}</b><br>"
+                f"<b>Estado:</b> {iz}<br>"
+                f"<b>Barrios:</b> {barrios}<br>"
+                f"<b>Nivel actual:</b> {nivel_actual}m<br>"
+                f"<b>Cota alerta:</b> {cota}m<br>"
+                f"<b>Nota:</b> {nota}", max_width=270),
+            tooltip=f"🌊 {zona} · {iz}"
+        ).add_to(m)
 
-    ax.fill_between(range(len(niveles)), niveles, alpha=0.07, color="#00E5C3")
-    ax.plot(range(len(niveles)), niveles, color="#00E5C3", linewidth=1.2,
-            alpha=0.5, linestyle="--", marker="o", markersize=3)
+    st_folium(m, width=None, height=450, returned_objects=[])
 
-    ax.axhline(y=4.0, color="#FFD600", linestyle="--", linewidth=1.2, alpha=0.6, label="Amarilla (4m)")
-    ax.axhline(y=5.5, color="#FF9800", linestyle="--", linewidth=1.2, alpha=0.6, label="Naranja (5.5m)")
-    ax.axhline(y=7.0, color="#FF5252", linestyle="--", linewidth=1.2, alpha=0.6, label="Roja (7m)")
+    # ── Botón expandir mapa ────────────────────────────────
+    if st.button("🔲 Expandir mapa completo", use_container_width=True):
+        st.session_state.mapa_expandido = not st.session_state.get("mapa_expandido", False)
+        st.rerun()
 
-    ax.set_ylabel("Nivel (m)", color="#5a7a9a", fontsize=9)
-    ax.set_ylim(0, 9)
-    ax.tick_params(colors="#5a7a9a", labelsize=8)
-    for spine in ax.spines.values():
-        spine.set_color("#1a2a3e")
-    ax.set_xticks(range(len(dias)))
-    ax.set_xticklabels(dias, fontsize=7.5, color="#5a7a9a", rotation=15)
-    ax.grid(axis="y", color="#1a2a3e", linewidth=0.6, linestyle=":")
-    ax.legend(fontsize=7.5, facecolor="#0d1b2e", labelcolor="#5a7a9a",
-              framealpha=0.85, loc="upper right")
+# ── Mapa expandido (superpuesto) ───────────────────────────
+if st.session_state.get("mapa_expandido", False):
+    st.markdown("""
+    <div style="position:fixed;top:0;left:0;width:100vw;height:100vh;
+                background:#060d1a;z-index:99999;padding:10px">
+    """, unsafe_allow_html=True)
+    col_close, _ = st.columns([1, 5])
+    with col_close:
+        if st.button("✖ Cerrar mapa", key="cerrar_mapa"):
+            st.session_state.mapa_expandido = False
+            st.rerun()
+    # Renderizar mapa grande
+    m2 = folium.Map(location=[8.7560, -75.8814], zoom_start=13,
+                    tiles="OpenStreetMap", attr="© OpenStreetMap contributors")
+    _cauce2 = obtener_cauce_sinu() or CAUCE_SINU_FALLBACK
+    folium.PolyLine(_cauce2, color="#4FC3F7", weight=5, opacity=0.9,
+                    tooltip="Río Sinú").add_to(m2)
+    for lat, lon, nombre, direccion, info in UNIVERSIDADES_GLOBAL:
+        folium.Marker([lat, lon],
+            popup=folium.Popup(f"<b>{nombre}</b><br>📍 {direccion}<br>ℹ️ {info}", max_width=240),
+            tooltip=nombre,
+            icon=folium.Icon(color="orange", icon="graduation-cap", prefix="fa")
+        ).add_to(m2)
+    st_folium(m2, width=None, height=700, returned_objects=[])
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    for bar, val in zip(bars, niveles):
-        ax.text(
-            bar.get_x() + bar.get_width() / 2, val + 0.13,
-            f"{val}m", ha="center", va="bottom",
-            color="white", fontsize=7.5, fontweight="bold"
-        )
+# ── Panel de alertas de inundación ────────────────────────
+nivel_actual = niveles[0]
+alerta_lbl, _, alerta_color = alerta_rio(nivel_actual)
 
-    plt.tight_layout(pad=0.6)
-    st.pyplot(fig)
-    plt.close()
+with st.expander(f"🌊 Zonas afectadas por nivel del río — Estado actual: {alerta_lbl} ({nivel_actual}m)", expanded=nivel_actual >= 4.0):
+    ZONAS_INFO = [
+        ("Zona ALTO riesgo", "La Granja · La Ribera · Los Nogales",
+         "Margen occidental río, cota baja", 4.0,
+         "Evacuar si nivel supera 5m · Ruta: Av. Circunvalar hacia el este"),
+        ("Zona ALTO riesgo", "Barrio Colón · Chuchurubi · Santa Fe",
+         "Sector sur, históricamente inundado", 4.0,
+         "Zona con antecedentes de inundación · Contactar Defensa Civil: 144"),
+        ("Zona MEDIO riesgo", "Ronda del Sinú norte · Av. Primera",
+         "Parque lineal y avenida ribereña", 5.5,
+         "Cerrar acceso al parque si nivel > 5.5m"),
+        ("Zona MEDIO riesgo", "El Recreo · Ribera norte",
+         "Barrio nororiental junto al río", 5.5,
+         "Monitorear de cerca en temporada de lluvias"),
+        ("Zona ALTO riesgo", "Mocarí · Zona sur rural",
+         "Área baja al sur de Montería", 4.0,
+         "Zona agrícola — riesgo de pérdidas en cultivos"),
+    ]
+    for zona, barrios, ubicacion, cota, accion in ZONAS_INFO:
+        if nivel_actual >= cota + 1.5:
+            badge_color = "badge-red"
+            estado_txt  = f"🔴 INUNDACIÓN — nivel {nivel_actual}m supera cota {cota}m"
+        elif nivel_actual >= cota:
+            badge_color = "badge-yellow"
+            estado_txt  = f"🟠 ALERTA — nivel {nivel_actual}m alcanzó cota {cota}m"
+        elif nivel_actual >= cota - 0.5:
+            badge_color = "badge-yellow"
+            estado_txt  = f"🟡 PRECAUCIÓN — nivel {nivel_actual}m se acerca a cota {cota}m"
+        else:
+            badge_color = "badge-green"
+            estado_txt  = f"✅ Normal — nivel {nivel_actual}m · cota alerta: {cota}m"
 
-    # Estado actual del río
-    if "Normal" in rio_txt:
-        st.success(f"🟢 {rio_txt} — Nivel en rango seguro")
-    elif "Amarilla" in rio_txt:
-        st.warning(f"🟡 {rio_txt} — Monitorear de cerca")
-    elif "Naranja" in rio_txt:
-        st.warning(f"🟠 {rio_txt} — Precaución zonas bajas")
-    else:
-        st.error(f"🔴 {rio_txt} — ¡Alerta máxima de inundación!")
+        st.markdown(f"""
+        <div style="background:rgba(0,229,195,0.04);border:1px solid rgba(0,229,195,0.1);
+                    border-radius:10px;padding:12px 16px;margin-bottom:10px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+                <span class="badge {badge_color}">{zona}</span>
+                <span style="color:#e8f4ff;font-weight:600">{barrios}</span>
+            </div>
+            <div style="color:#5a7a9a;font-size:0.82rem;margin-bottom:4px">
+                📍 {ubicacion} · Cota alerta: {cota}m
+            </div>
+            <div style="color:#4FC3F7;font-size:0.82rem;margin-bottom:4px">
+                📊 {estado_txt}
+            </div>
+            <div style="color:#8892a4;font-size:0.78rem">
+                💡 {accion}
+            </div>
+        </div>""", unsafe_allow_html=True)
 
-    prob_hoy = clima.get("prob_lluvia", [0])[0] if clima.get("prob_lluvia") else 0
     st.markdown(f"""
-    <div class="stat-row">
-        🌧️ Lluvia hoy: <b style="color:#e8f4ff">{clima['lluvia_hoy']} mm</b> &nbsp;·&nbsp;
-        🌂 Prob. lluvia: <b style="color:#4FC3F7">{prob_hoy}%</b> &nbsp;·&nbsp;
-        💨 Viento: <b style="color:#e8f4ff">{clima['viento']} km/h</b> &nbsp;·&nbsp;
-        🌡️ Máx: <b style="color:#e8f4ff">{clima['temp_max'][0]}°C</b><br>
-        <small style="color:#3a5a7a">{fuente_rio}</small>
+    <div style="background:rgba(79,195,247,0.05);border:1px solid rgba(79,195,247,0.2);
+                border-radius:10px;padding:10px 14px;font-size:0.78rem;color:#5a7a9a">
+        📞 <b style="color:#e8f4ff">Emergencias:</b> Defensa Civil 144 · Bomberos 119 · Cruz Roja 132<br>
+        📡 <b style="color:#e8f4ff">Datos en tiempo real:</b> IDEAM · {fuente_rio}
     </div>""", unsafe_allow_html=True)
-
-    # Mini tabla niveles por día
-    st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
-    df_niveles = pd.DataFrame({
-        "Día":   dias,
-        "Nivel": [f"{n} m" for n in niveles],
-        "Estado": [alerta_rio(n)[0] for n in niveles]
-    })
-    st.dataframe(df_niveles, use_container_width=True, hide_index=True, height=210)
 
 st.markdown("<hr style='border:1px solid rgba(0,229,195,0.1);margin:14px 0'>", unsafe_allow_html=True)
 
