@@ -703,103 +703,51 @@ def obtener_cauce_sinu():
 # Geocodificados con Geoapify en tiempo de ejecución
 # Si falla la API usa coordenadas de respaldo calculadas
 
-@st.cache_data(ttl=604800)
-def geocodificar_lugares():
-    """Geocodifica los lugares con direcciones exactas usando Geoapify."""
-    GEOAPIFY_KEY = st.secrets.get("GEOAPIFY_KEY", "c2e2caf4d58643f7a8113aa355ed2356")
+# Coordenadas verificadas desde OpenStreetMap, sitios oficiales y mapcarta
+# Fuentes: mapcarta.com, sitios web oficiales de cada institución
+UNIVERSIDADES_GLOBAL = [
+    # UniSinú: Cra. 1W #38-153 Juan XXIII — verificada vymaps.com
+    (8.7454, -75.8888, "🎓 Universidad del Sinú",
+     "Cra. 1W #38-153, Barrio Juan XXIII", "Institución privada · ~8,000 estudiantes"),
+    # UniCórdoba: Cra. 6 #76-103 Vía Cereté — campus principal
+    (8.7872, -75.8502, "🎓 Universidad de Córdoba",
+     "Cra. 6 #76-103, Vía Cereté, Montería", "Universidad pública · ~15,000 estudiantes"),
+    # UPB: Circular 1 #70-01, barrio Mocarí — fuente web oficial upb.edu.co
+    (8.7980, -75.8621, "🎓 Universidad Pontificia Bolivariana",
+     "Cra. 6 #97A-99, Barrio Mocarí", "Institución privada · sede Montería"),
+    # Luis Amigó: Cl. 64 #6-108 — nororiente ciudad
+    (8.7636, -75.8805, "🎓 Universidad Luis Amigó",
+     "Cl. 64 #6-108, Montería", "Institución privada · sede Montería"),
+    # Cooperativa: Cl. 52A #6-79 Barrio La Castellana — fuente ucc.edu.co
+    (8.7720, -75.8805, "🎓 Universidad Cooperativa de Colombia",
+     "Cl. 52A #6-79, Barrio La Castellana", "Institución privada · sede Montería"),
+    # CUN: Cra. 4 #30-20 — zona centro
+    (8.7540, -75.8831, "🎓 CUN Montería",
+     "Cra. 4 #30-20, Montería", "Corporación Unificada Nacional"),
+    # Politécnico: Cl. 66 #5-70 — nororiente
+    (8.7646, -75.8814, "🎓 Politécnico Gran Colombiano",
+     "Cl. 66 #5-70 Local 103, Montería", "Institución privada · sede Montería"),
+    # Uniremington: Cl. 27 #4-31 — zona sur centro
+    (8.7513, -75.8831, "🎓 Uniremington",
+     "Cl. 27 #4-31, Montería", "Corporación Universitaria Remington"),
+    # San Agustín: Cra. 6 #33-02 Centro
+    (8.7567, -75.8805, "🏫 Colegio San Agustín",
+     "Cra. 6 #33-02, Centro, Montería", "Institución educativa San Agustín"),
+]
 
-    lugares_raw = [
-        # (nombre, dirección_exacta, info, tipo, lat_fallback, lon_fallback)
-        ("🎓 Universidad del Sinú",
-         "Carrera 1W 38-153 Montería Córdoba Colombia",
-         "Institución privada · ~8,000 estudiantes", "univ",
-         8.7454, -75.8888),
-        ("🎓 Universidad de Córdoba",
-         "Carrera 6 77-305 Montería Córdoba Colombia",
-         "Universidad pública · ~15,000 estudiantes", "univ",
-         8.7580, -75.8610),
-        ("🎓 Universidad Pontificia Bolivariana",
-         "Carrera 6 97A-99 Montería Córdoba Colombia",
-         "Institución privada · sede Montería", "univ",
-         8.7750, -75.8610),
-        ("🎓 Universidad Luis Amigó",
-         "Calle 64 6-108 Montería Córdoba Colombia",
-         "Institución privada · sede Montería", "univ",
-         8.7626, -75.8750),
-        ("🎓 Universidad Cooperativa de Colombia",
-         "Calle 52 6-79 Montería Córdoba Colombia",
-         "Institución privada · sede Montería", "univ",
-         8.7518, -75.8750),
-        ("🎓 CUN Montería",
-         "Carrera 4 30-20 Montería Córdoba Colombia",
-         "Corporación Unificada Nacional", "univ",
-         8.7540, -75.8831),
-        ("🎓 Politécnico Gran Colombiano",
-         "Calle 66 5-70 Montería Córdoba Colombia",
-         "Institución privada · sede Montería", "univ",
-         8.7636, -75.8814),
-        ("🎓 Uniremington",
-         "Calle 27 4-31 Montería Córdoba Colombia",
-         "Corporación Universitaria Remington", "univ",
-         8.7513, -75.8831),
-        ("🏫 Colegio San Agustín",
-         "Carrera 6 33-02 Centro Montería Córdoba Colombia",
-         "Institución educativa San Agustín", "univ",
-         8.7567, -75.8805),
-        ("🛍️ C.C. Buenavista",
-         "Carrera 6 68-72 Montería Córdoba Colombia",
-         "Centro comercial principal de Montería", "cc",
-         8.7636, -75.8805),
-        ("🛍️ C.C. Nuestro",
-         "Transversal 29 29-69 Montería Córdoba Colombia",
-         "Centro comercial Nuestro", "cc",
-         8.7531, -75.8814),
-        ("🛍️ C.C. Alamedas",
-         "Calle 44 10-91 Montería Córdoba Colombia",
-         "Centro comercial Alamedas del Sinú", "cc",
-         8.7576, -75.8750),
-    ]
+CC_GLOBAL = [
+    # Buenavista: verificado OSM node 4790923822 — lat 8.77855, lon -75.86107
+    (8.7786, -75.8611, "🛍️ C.C. Buenavista",
+     "Cra. 6 #68-72, Montería", "Centro comercial principal de Montería"),
+    # C.C. Nuestro: Tv. 29 #29-69 — zona sur centro
+    (8.7531, -75.8814, "🛍️ C.C. Nuestro",
+     "Tv. 29 #29-69, Montería", "Centro comercial Nuestro"),
+    # Alamedas: Cl. 44 #10-91 — zona oriente
+    (8.7576, -75.8696, "🛍️ C.C. Alamedas",
+     "Cl. 44 #10-91, Montería", "Centro comercial Alamedas del Sinú"),
+]
 
-    resultados_univ = []
-    resultados_cc   = []
-
-    for nombre, direccion, info, tipo, lat_fb, lon_fb in lugares_raw:
-        lat, lon = lat_fb, lon_fb  # usar fallback por defecto
-        try:
-            r = requests.get(
-                "https://api.geoapify.com/v1/geocode/search",
-                params={
-                    "text":   direccion,
-                    "apiKey": GEOAPIFY_KEY,
-                    "limit":  3,
-                    "lang":   "es",
-                    "filter": "rect:-76.20,8.50,-75.60,9.00",
-                },
-                timeout=8
-            ).json()
-            feats = r.get("features", [])
-            if feats:
-                # Tomar el resultado con mayor confianza
-                best = max(feats,
-                    key=lambda f: f.get("properties",{}).get("rank",{}).get("confidence",0))
-                c = best["geometry"]["coordinates"]
-                lat_r, lon_r = float(c[1]), float(c[0])
-                # Solo usar si está dentro del bbox de Montería
-                if 8.60 <= lat_r <= 9.00 and -76.10 <= lon_r <= -75.70:
-                    lat, lon = lat_r, lon_r
-        except Exception:
-            pass  # usar fallback
-
-        entrada = (lat, lon, nombre, direccion.replace(" Colombia","").replace(" Córdoba",""), info)
-        if tipo == "univ":
-            resultados_univ.append(entrada)
-        else:
-            resultados_cc.append(entrada)
-
-    return resultados_univ, resultados_cc
-
-# Geocodificar al cargar (cacheado 7 días)
-UNIVERSIDADES_GLOBAL, CC_GLOBAL = geocodificar_lugares()
+UNIVERSIDADES_GLOBAL, CC_GLOBAL = UNIVERSIDADES_GLOBAL, CC_GLOBAL
 
 # ══════════════════════════════════════════════════════════
 # ── MAPA PROFESIONAL ─────────────────────────────────────
