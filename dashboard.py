@@ -797,81 +797,66 @@ except Exception:
     pass
 
 if logo_b64:
-    logo_html = f'<img src="data:image/png;base64,{logo_b64}" style="width:220px;height:220px;object-fit:contain;border-radius:12px;flex-shrink:0">'
+    logo_html = f'<img src="data:image/png;base64,{logo_b64}" style="width:160px;height:160px;object-fit:contain;border-radius:12px;flex-shrink:0">'
 else:
-    logo_html = '<div style="width:220px;height:220px;background:linear-gradient(135deg,#EAF3DE,#E0EFCE);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:5rem;flex-shrink:0">🌿</div>'
+    logo_html = '<div style="width:160px;height:160px;background:linear-gradient(135deg,#EAF3DE,#E0EFCE);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:4rem;flex-shrink:0">🌿</div>'
 
 # ── TODO el header en un solo div HTML — sin columnas Streamlit ──
-st.markdown(f"""
+st.markdown("""
 <style>
-.header-wrapper {{
+.header-wrapper {
   display:flex;gap:16px;align-items:stretch;
   margin-bottom:10px;animation:fadeInUp 0.35s ease both;
-}}
-.hero-left {{
+}
+.hero-left {
   flex:3;display:flex;align-items:center;gap:22px;
   background:linear-gradient(135deg,#FFFFFF 60%,#F0F7E8 100%);
   border:1px solid #E8E6DF;border-left:4px solid #3B6D11;
-  border-radius:0 14px 14px 0;padding:24px 28px;
+  border-radius:0 14px 14px 0;padding:20px 26px;
   box-shadow:0 2px 8px rgba(0,0,0,0.06);
-}}
-.hero-right {{
+}
+.hero-right {
   flex:1;display:flex;flex-direction:column;gap:10px;
   min-width:200px;max-width:280px;
-}}
-.estado-card {{
-  flex:1;background:#FFFFFF;border:1px solid #E8E6DF;
-  border-left:4px solid {borde_color};border-radius:0 14px 14px 0;
-  padding:18px 16px;text-align:center;
-  box-shadow:0 2px 8px rgba(0,0,0,0.06);
-  display:flex;flex-direction:column;justify-content:center;
-}}
-.color-card {{
-  background:linear-gradient(135deg,#F4F2EE,#EEECEA);
-  border:1px solid #D3D1C7;border-radius:10px;
-  padding:11px 14px;font-size:0.74rem;color:#444441;
-  line-height:1.9;font-weight:500;
-}}
-.btn-actualizar {{
+}
+.btn-actualizar {
   display:block;width:100%;
   background:linear-gradient(135deg,#3B6D11 0%,#4A8A16 100%);
   color:#FFFFFF;font-family:Outfit,sans-serif;font-weight:700;
-  font-size:0.88rem;letter-spacing:0.3px;border:none;
-  border-radius:10px;padding:12px 20px;cursor:pointer;
+  font-size:0.88rem;border:none;border-radius:10px;
+  padding:12px 20px;cursor:pointer;
   box-shadow:0 2px 10px rgba(59,109,17,0.25);
   transition:all 0.22s cubic-bezier(0.34,1.56,0.64,1);
-  text-align:center;
-}}
-.btn-actualizar:hover {{
-  background:linear-gradient(135deg,#4A8A16 0%,#316012 100%);
+}
+.btn-actualizar:hover {
   transform:translateY(-2px) scale(1.02);
   box-shadow:0 6px 20px rgba(59,109,17,0.38);
-}}
-@media (max-width:768px) {{
-  .header-wrapper {{ flex-direction:column !important; }}
-  .hero-left {{ flex-direction:column !important;align-items:flex-start !important;padding:16px !important; }}
-  .hero-left img {{ width:120px !important;height:120px !important; }}
-  .hero-right {{ min-width:100% !important;max-width:100% !important; }}
-}}
-@media (max-width:480px) {{
-  .hero-left img {{ width:90px !important;height:90px !important; }}
-  .hero-left {{ padding:12px !important;gap:12px !important; }}
-}}
+}
+@media (max-width:768px) {
+  .header-wrapper { flex-direction:column !important; }
+  .hero-left { flex-direction:column !important;align-items:flex-start !important;padding:14px !important; }
+  .hero-left img { width:100px !important;height:100px !important; }
+  .hero-right { min-width:100% !important;max-width:100% !important; }
+}
+@media (max-width:480px) {
+  .hero-left img { width:80px !important;height:80px !important; }
+}
 </style>
+""", unsafe_allow_html=True)
 
+st.markdown(f"""
 <div class="header-wrapper">
 
   <div class="hero-left">
     {logo_html}
     <div style="flex:1;min-width:0">
-      <div style="font-size:0.88rem;color:#5F5E5A;line-height:1.65;
-                  margin-bottom:12px;font-weight:400">
+      <div style="font-size:0.88rem;color:#5F5E5A;line-height:1.65;margin-bottom:10px;font-weight:400">
         Plataforma de monitoreo ambiental en tiempo real para
         <b style="color:#1E1E1C">Montería, Córdoba, Colombia</b>.
         Integra datos oficiales de <b style="color:#3B6D11">IDEAM</b>,
         <b style="color:#3B6D11">Open-Meteo</b> y <b style="color:#3B6D11">GBIF</b>
-        para monitorear la calidad del aire, el nivel del río Sinú y la
-        biodiversidad local. Actualización automática cada 15 minutos.
+        para monitorear la calidad del aire, el nivel del río Sinú y la biodiversidad local.
+        Actualización automática cada 15 minutos.
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:6px">
         <span class="hero-badge">🌡️ Clima en tiempo real</span>
@@ -884,7 +869,11 @@ st.markdown(f"""
   </div>
 
   <div class="hero-right">
-    <div class="estado-card">
+    <div style="flex:1;background:#FFFFFF;border:1px solid #E8E6DF;
+                border-left:4px solid {borde_color};border-radius:0 14px 14px 0;
+                padding:18px 16px;text-align:center;
+                box-shadow:0 2px 8px rgba(0,0,0,0.06);
+                display:flex;flex-direction:column;justify-content:center">
       <div style="font-family:Outfit,sans-serif;font-size:0.62rem;text-transform:uppercase;
                   letter-spacing:1.2px;color:#888780;margin-bottom:8px;font-weight:700">
         ¿Cómo está Montería ahora?
@@ -902,15 +891,16 @@ st.markdown(f"""
         Actualizado {hora_actual} hora Colombia
       </div>
     </div>
-
-    <div class="color-card">
+    <div style="background:linear-gradient(135deg,#F4F2EE,#EEECEA);
+                border:1px solid #D3D1C7;border-radius:10px;
+                padding:11px 14px;font-size:0.74rem;color:#444441;
+                line-height:1.9;font-weight:500">
       <b style="color:#1E1E1C;display:block;margin-bottom:5px;
                 font-family:Outfit,sans-serif;font-size:0.76rem">¿Qué significa el color?</b>
       <span style="color:#27500A;font-weight:700">🟢 Verde</span> — Sin alertas<br>
       <span style="color:#633806;font-weight:700">🟡 Amarillo</span> — Requiere atención<br>
       <span style="color:#791F1F;font-weight:700">🔴 Rojo</span> — Riesgo activo
     </div>
-
     <button class="btn-actualizar" onclick="window.location.reload()">🔄 Actualizar datos</button>
   </div>
 
