@@ -907,9 +907,8 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ── Botón actualizar alineado con card derecho del HTML ───
-# flex:3 izquierda + flex:1 derecha + gap ≈ proporciones 3.2 / 1
-_, col_act = st.columns([3.35, 1], gap="small")
+# ── Botón actualizar debajo del card izquierdo ────────────
+col_act, _ = st.columns([3.35, 1], gap="small")
 with col_act:
     if st.button("🔄 Actualizar datos", use_container_width=True):
         st.cache_data.clear()
