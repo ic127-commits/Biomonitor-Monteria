@@ -348,46 +348,66 @@ iframe { max-width:100% !important;border-radius:12px !important; }
   50%     { box-shadow:0 0 0 8px rgba(59,109,17,0); }
 }
 
-/* ══ RESPONSIVE ══ */
+/* ══ RESPONSIVE COMPLETO ══ */
+
+/* Hero card responsive */
+.hero-card-inner {
+  display:flex;
+  align-items:center;
+  gap:24px;
+}
 @media (max-width:1100px) {
   .block-container { padding-left:1.5rem !important;padding-right:1.5rem !important; }
 }
 @media (max-width:900px) {
   .block-container { padding-left:1rem !important;padding-right:1rem !important;padding-top:2rem !important; }
-  .kpi-value { font-size:1.6rem !important; }
-  .kpi-value-sm { font-size:1.25rem !important; }
+  .kpi-value    { font-size:1.5rem !important; }
+  .kpi-value-sm { font-size:1.2rem !important; }
+  .hero-card-inner { gap:16px !important; }
 }
 @media (max-width:768px) {
-  .block-container { padding-top:1.5rem !important;padding-left:0.75rem !important;padding-right:0.75rem !important; }
-  .kpi-value    { font-size:1.35rem !important; }
-  .kpi-value-sm { font-size:1.1rem !important; }
-  .kpi-label    { font-size:0.62rem !important; }
-  .kpi-card     { min-height:auto !important;padding:13px 15px !important; }
+  .block-container { padding-top:1.2rem !important;padding-left:0.75rem !important;padding-right:0.75rem !important; }
+  .kpi-value    { font-size:1.3rem !important; }
+  .kpi-value-sm { font-size:1.05rem !important; }
+  .kpi-label    { font-size:0.6rem !important; }
+  .kpi-card     { min-height:auto !important;padding:12px 14px !important; }
+  /* columnas Streamlit se apilan */
   [data-testid="column"] { min-width:100% !important; }
-  .hero-title   { font-size:1.15rem !important; }
-  .hero-sub     { font-size:0.82rem !important; }
-  .section-header { font-size:0.9rem !important; }
-  .stat-row     { font-size:0.78rem !important;line-height:1.9 !important; }
-  .copyright    { display:none !important; }
-  .stButton > button { min-height:46px !important;font-size:0.85rem !important; }
-  .badge        { font-size:0.68rem !important; }
-  .stRadio > div { flex-direction:column !important;gap:6px !important; }
-  .stDataFrame  { overflow-x:auto !important; }
-  .stTabs [data-baseweb="tab-list"] { overflow-x:auto !important;flex-wrap:nowrap !important;padding:4px !important; }
-  .stTabs [data-baseweb="tab"] { padding:8px 12px !important;font-size:0.80rem !important; }
-  .logo-title-main { font-size:1.3rem !important; }
+  /* hero card: logo arriba, texto abajo en móvil */
+  .hero-card-inner { flex-direction:column !important;align-items:flex-start !important;gap:12px !important; }
+  .hero-card-inner img { width:110px !important;height:110px !important; }
+  .section-header { font-size:0.88rem !important; }
+  .stat-row       { font-size:0.76rem !important;line-height:1.8 !important; }
+  .copyright      { display:none !important; }
+  .stButton > button { min-height:46px !important;font-size:0.84rem !important; }
+  .badge          { font-size:0.67rem !important; }
+  .stRadio > div  { flex-direction:column !important;gap:6px !important; }
+  .stDataFrame    { overflow-x:auto !important; }
+  .stTabs [data-baseweb="tab-list"] {
+    overflow-x:auto !important;flex-wrap:nowrap !important;padding:4px !important;
+    -webkit-overflow-scrolling:touch !important;
+  }
+  .stTabs [data-baseweb="tab"] { padding:8px 11px !important;font-size:0.78rem !important;white-space:nowrap !important; }
+  /* título hero más pequeño en móvil */
+  .biomonitor-title { font-size:1.3rem !important; }
+  .biomonitor-sub   { font-size:0.68rem !important; }
+  /* hero badge más compacto */
+  .hero-badge { font-size:0.67rem !important;padding:3px 8px !important; }
 }
 @media (max-width:480px) {
-  .block-container { padding-left:0.5rem !important;padding-right:0.5rem !important;padding-top:1.2rem !important; }
-  .kpi-value    { font-size:1.2rem !important; }
-  .kpi-label    { font-size:0.58rem !important; }
-  .section-header { font-size:0.85rem !important; }
-  .hero-title   { font-size:1rem !important; }
-  .hero-badge   { font-size:0.68rem !important;padding:3px 8px !important; }
+  .block-container { padding-left:0.4rem !important;padding-right:0.4rem !important;padding-top:1rem !important; }
+  .kpi-value    { font-size:1.15rem !important; }
+  .kpi-label    { font-size:0.57rem !important; }
+  .section-header { font-size:0.82rem !important; }
+  .hero-badge   { font-size:0.64rem !important;padding:3px 7px !important; }
   [data-testid="column"] { min-width:100% !important; }
-  .stTabs [data-baseweb="tab"] { padding:7px 10px !important;font-size:0.76rem !important; }
-  .logo-title-main { font-size:1.1rem !important; }
-  .logo-wrapper { padding:12px 14px !important;gap:10px !important; }
+  .stTabs [data-baseweb="tab"] { padding:6px 9px !important;font-size:0.73rem !important; }
+  .hero-card-inner img { width:90px !important;height:90px !important; }
+  .biomonitor-title { font-size:1.15rem !important; }
+  /* stat row en columna */
+  .stat-row { font-size:0.72rem !important; }
+  /* info card */
+  .info-card { padding:12px 14px !important;font-size:0.8rem !important; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -726,22 +746,17 @@ st.markdown("""
   50%      { box-shadow: 0 0 0 5px rgba(59,179,17,0), 0 0 10px 4px rgba(59,179,17,0.2); }
 }
 .led-dot {
-  display:inline-block;
-  width:9px; height:9px;
-  background:#3BD411;
-  border-radius:50%;
-  margin-right:7px;
-  vertical-align:middle;
-  animation: ledPulse 1.8s ease-in-out infinite;
-  position:relative; top:-1px;
+  display:inline-block;width:9px;height:9px;background:#3BD411;
+  border-radius:50%;margin-right:7px;vertical-align:middle;
+  animation:ledPulse 1.8s ease-in-out infinite;position:relative;top:-1px;
 }
 </style>
-<div style="padding:26px 0 12px 0;animation:fadeInUp 0.3s ease both">
-  <div style="font-family:'Outfit',sans-serif;font-size:1.65rem;font-weight:900;
-              color:#3B6D11;letter-spacing:-0.5px;line-height:1;margin-bottom:5px">
+<div style="padding:42px 0 14px 0;animation:fadeInUp 0.3s ease both">
+  <div class="biomonitor-title" style="font-family:'Outfit',sans-serif;font-size:1.65rem;
+              font-weight:900;color:#3B6D11;letter-spacing:-0.5px;line-height:1;margin-bottom:5px">
     🌿 BioMonitor Montería
   </div>
-  <div style="font-size:0.75rem;color:#888780;font-weight:600;
+  <div class="biomonitor-sub" style="font-size:0.75rem;color:#888780;font-weight:600;
               letter-spacing:1.2px;text-transform:uppercase;
               display:flex;align-items:center">
     <span class="led-dot"></span>
@@ -770,7 +785,7 @@ with col_hero:
         logo_html = '<div style="width:200px;height:200px;background:linear-gradient(135deg,#EAF3DE,#E0EFCE);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:4.5rem;flex-shrink:0">🌿</div>'
 
     st.markdown(f"""
-    <div style="display:flex;align-items:center;gap:24px;
+    <div class="hero-card-inner" style="display:flex;align-items:center;gap:24px;
                 background:linear-gradient(135deg,#FFFFFF 60%,#F0F7E8 100%);
                 border:1px solid #E8E6DF;border-left:4px solid #3B6D11;
                 border-radius:0 14px 14px 0;padding:22px 28px;
