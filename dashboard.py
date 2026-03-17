@@ -1209,7 +1209,7 @@ _loading.empty()  # Ocultar spinner una vez cargado
 # Definir fuente y nivel base del río (3 capas)
 if ideam["ok"]:
     nivel_base = ideam["nivel"]
-    fuente_rio = f"🟢 {ideam['fuente']} · {ideam['fecha']}"
+    fuente_rio = f"🟢 {ideam.get('fuente','—')} · {ideam.get('fecha','—')}"
 elif clima["ok"]:
     nivel_base = 4.2
     fuente_rio = "🟡 Simulado · lluvia real Open-Meteo"
@@ -1276,13 +1276,19 @@ with col_estado:
     hi_hero, _, _, _  = calcular_heat_index(clima.get("temp",30), clima.get("humedad",75))
 
     if nivel_actual_hero >= 5.5 or pm_actual_hero >= 25:
-        estado_ico, estado_txt, estado_color, estado_bg = "🔴", "Atención requerida", "#791F1F", "#FCEBEB"
+        estado_ico  = "🔴"
+        estado_txt  = "Atención requerida"
+        estado_color= "#791F1F"
         estado_desc = "Hay condiciones de riesgo activas"
     elif nivel_actual_hero >= 4.0 or pm_actual_hero >= 15 or hi_hero >= 32:
-        estado_ico, estado_txt, estado_color, estado_bg = "🟡", "Monitorear de cerca", "#633806", "#FAEEDA"
+        estado_ico  = "🟡"
+        estado_txt  = "Monitorear de cerca"
+        estado_color= "#633806"
         estado_desc = "Algunas variables requieren atención"
     else:
-        estado_ico, estado_txt, estado_color, estado_bg = "🟢", "Todo en orden", "#27500A", "#EAF3DE"
+        estado_ico  = "🟢"
+        estado_txt  = "Todo en orden"
+        estado_color= "#27500A"
         estado_desc = "Todas las variables dentro del rango normal"
 
     hora_actual = datetime.now(TZ_COL).strftime("%H:%M")
@@ -1354,19 +1360,19 @@ with tab_inicio:
     # Fila 1 — 3 KPIs (se apilan en móvil automáticamente)
     k1, k2, k3 = st.columns(3, gap="small")
     with k1: _kpi_card("kpi-card",                "🌊 Nivel Río Sinú",  f"{niveles[0]} m",       rio_txt,                        rio_badge,     fuente_rio)
-    with k2: _kpi_card("kpi-card kpi-card-blue",  "🌡️ Temperatura",     f"{clima['temp']} °C",   f"Humedad {clima['humedad']}%", "badge-blue",  "Open-Meteo · ahora")
+    with k2: _kpi_card("kpi-card kpi-card-blue",  "🌡️ Temperatura",     str(clima.get('temp','—')) + ' °C',   f"Humedad {clima['humedad']}%", "badge-blue",  "Open-Meteo · ahora")
     with k3:
         prob = clima.get("prob_lluvia", [0])[0] if clima.get("prob_lluvia") else 0
         _kpi_card("kpi-card kpi-card-blue", "🌧️ Lluvia hoy",
-                  f"{clima['lluvia_hoy']} mm",
+                  str(clima.get('lluvia_hoy','—')) + ' mm',
                   f"☔ Prob. {prob}%",
                   "badge-blue" if prob < 30 else "badge-yellow" if prob < 60 else "badge-red",
                   "Open-Meteo · ahora")
     
     # Fila 2 — 3 KPIs
     k4, k5, k6 = st.columns(3, gap="small")
-    with k4: _kpi_card("kpi-card kpi-card-green", "💨 PM2.5",           f"{aire['pm25']} µg/m³", "✅ OMS < 15",   "badge-green",  "Open-Meteo · ahora")
-    with k5: _kpi_card("kpi-card",                "🌬️ AQI Europeo",    f"{aire['aqi']}",          aqi_txt,        aqi_badge,     "Índice europeo")
+    with k4: _kpi_card("kpi-card kpi-card-green", "💨 PM2.5",           str(aire.get('pm25','—')) + ' µg/m³', "✅ OMS < 15",   "badge-green",  "Open-Meteo · ahora")
+    with k5: _kpi_card("kpi-card",                "🌬️ AQI Europeo",    str(aire.get('aqi','—')),          aqi_txt,        aqi_badge,     "Índice europeo")
     with k6: _kpi_card("kpi-card kpi-card-purple","🦜 Especies GBIF",  "≥12",                    "Córdoba 2026", "badge-purple", "GBIF · Córdoba, CO")
     
     st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
@@ -1821,9 +1827,9 @@ with tab_mapa:
         # ── Estaciones aire ────────────────────────────────────
         for lat,lon,nombre,txt in [
             (8.7550,-75.8750,"💨 Estación Centro",
-             f"PM2.5: {aire['pm25']} µg/m³<br>AQI: {aire['aqi']}<br>NO₂: {aire['no2']} µg/m³"),
+             "PM2.5: " + str(aire.get("pm25","—")) + " µg/m³<br>AQI: " + str(aire.get("aqi","—")) + "<br>NO₂: " + str(aire.get("no2","—")) + " µg/m³"),
             (8.7350,-75.8650,"💨 Estación Sur",
-             f"PM10: {aire['pm10']} µg/m³<br>PM2.5: {aire['pm25']} µg/m³<br>Viento: {clima['viento']} km/h"),
+             "PM10: " + str(aire.get("pm10","—")) + " µg/m³<br>PM2.5: " + str(aire.get("pm25","—")) + " µg/m³<br>Viento: " + str(clima.get("viento","—")) + " km/h"),
         ]:
             folium.Marker([lat,lon],
                 popup=folium.Popup(
@@ -2507,10 +2513,11 @@ with tab_alertas:
         st.success(f"✅ **Temperatura confortable** — Calor aparente: {hi_t}°C")
 
     # Calidad aire
-    if aire.get("pm25", 0) >= 15:
-        st.warning(f"💨 **PM2.5 sobre límite OMS** — {aire['pm25']} µg/m³. Límite OMS: 15 µg/m³")
+    pm25_val = aire.get("pm25", 0)
+    if pm25_val >= 15:
+        st.warning(f"💨 **PM2.5 sobre límite OMS** — {pm25_val} µg/m³. Límite OMS: 15 µg/m³")
     else:
-        st.success(f"✅ **Calidad del aire buena** — PM2.5: {aire.get('pm25','—')} µg/m³")
+        st.success(f"✅ **Calidad del aire buena** — PM2.5: {pm25_val} µg/m³")
 
     st.markdown("<hr style='border:none;border-top:0.5px solid #D3D1C7;margin:14px 0'>", unsafe_allow_html=True)
 
