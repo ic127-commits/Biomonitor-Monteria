@@ -310,6 +310,22 @@ iframe { max-width:100% !important; }
 .stDownloadButton > button:hover { background:#27500A !important; }
 /* ── st.warning / success / info colores suaves ──────── */
 .stAlert { border-radius:10px !important; font-size:0.88rem !important; }
+/* Forzar texto oscuro en alertas para que sea legible */
+div[data-testid="stAlert"] p,
+div[data-testid="stAlert"] span,
+div[data-testid="stAlert"] div {
+    color:#2C2C2A !important;
+}
+/* Warning amarillo */
+div[data-baseweb="notification"][kind="warning"] {
+    background:#FAEEDA !important;
+    border-left:4px solid #854F0B !important;
+}
+/* Texto río amarillo (st.warning fuera de alertas) */
+.element-container .stAlert [data-testid="stMarkdownContainer"] p {
+    color:#2C2C2A !important;
+    font-weight:500 !important;
+}
 
 </style>
 """, unsafe_allow_html=True)
@@ -2076,13 +2092,17 @@ with tab_analisis:
     # Tabla de referencia heat index
     st.markdown("""
     <div style="background:#F1EFE8;border:0.5px solid #D3D1C7;
-                border-radius:10px;padding:12px 16px;margin-top:8px;font-size:0.8rem">
-        <b style="color:#3B6D11">Escala de riesgo por calor · OMS / NWS:</b><br>
-        <span style="color:#3B6D11">✅ &lt;27°C</span> Confortable &nbsp;·&nbsp;
-        <span style="color:#854F0B">🟡 27-32°C</span> Precaución — fatiga posible &nbsp;·&nbsp;
-        <span style="color:#854F0B">🟠 32-41°C</span> Precaución extrema — golpe de calor posible &nbsp;·&nbsp;
-        <span style="color:#A32D2D">🔴 41-54°C</span> Peligro — golpe de calor probable &nbsp;·&nbsp;
-        <span style="color:#FF0000">☠️ &gt;54°C</span> Peligro extremo
+                border-radius:10px;padding:12px 16px;margin-top:8px">
+        <b style="color:#2C2C2A;font-size:0.82rem;display:block;margin-bottom:8px">
+            Escala de riesgo por calor · OMS / NWS:
+        </b>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <span style="background:#EAF3DE;color:#27500A;padding:4px 10px;border-radius:6px;font-size:0.78rem;font-weight:600">✅ &lt;27°C · Confortable</span>
+            <span style="background:#FAEEDA;color:#633806;padding:4px 10px;border-radius:6px;font-size:0.78rem;font-weight:600">🟡 27–32°C · Precaución</span>
+            <span style="background:#F5C4B3;color:#712B13;padding:4px 10px;border-radius:6px;font-size:0.78rem;font-weight:600">🟠 32–41°C · Precaución extrema</span>
+            <span style="background:#F7C1C1;color:#791F1F;padding:4px 10px;border-radius:6px;font-size:0.78rem;font-weight:600">🔴 41–54°C · Peligro</span>
+            <span style="background:#F09595;color:#501313;padding:4px 10px;border-radius:6px;font-size:0.78rem;font-weight:600">☠️ &gt;54°C · Peligro extremo</span>
+        </div>
     </div>""", unsafe_allow_html=True)
     
     st.markdown("<hr style='border:none;border-top:0.5px solid #D3D1C7;margin:16px 0'>", unsafe_allow_html=True)
