@@ -243,11 +243,24 @@ footer { visibility:hidden; }
         padding-left:0.3rem !important;
         padding-right:0.3rem !important;
     }
-    .kpi-value    { font-size:1.15rem !important; }
+    .kpi-value    { font-size:1.1rem !important; }
     .kpi-label    { font-size:0.58rem !important; }
     .section-header { font-size:0.82rem !important; }
-    .hero-sub { font-size:0.78rem !important; }
+    .hero-sub { font-size:0.75rem !important; }
     .stButton > button { font-size:0.82rem !important; }
+    /* Mapa y predicción apilados en móvil pequeño */
+    [data-testid="column"] { min-width:100% !important; }
+}
+
+/* Folium mapa: asegurar 100% ancho */
+.folium-map { width:100% !important; }
+iframe { max-width:100% !important; }
+
+/* LayerControl folium: no salirse de pantalla en móvil */
+.leaflet-control-layers {
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 11px !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -906,7 +919,7 @@ with col_mapa:
         g.add_to(m)
     folium.LayerControl(collapsed=False,position="topright").add_to(m)
 
-    st_folium(m, width=None, height=480, returned_objects=[])
+    st_folium(m, width=None, height=420, returned_objects=[])
 
 with col_pred:
     st.markdown('<div class="section-header">🌊 Predicción 7 días · LSTM</div>', unsafe_allow_html=True)
@@ -1039,22 +1052,38 @@ st.markdown("<hr style='border:1px solid rgba(0,229,195,0.1);margin:14px 0'>", u
 
 st.markdown('<div class="section-header">💨 Calidad del aire · Open-Meteo Air Quality API</div>', unsafe_allow_html=True)
 
-a1, a2, a3, a4 = st.columns(4, gap="small")
-aire_kpis = [
-    (a1, "PM2.5",  f"{aire['pm25']} µg/m³", "✅ OMS < 15",    "badge-green",  "#00E5C3"),
-    (a2, "PM10",   f"{aire['pm10']} µg/m³", "✅ OMS < 45",    "badge-green",  "#69F0AE"),
-    (a3, "NO₂",    f"{aire['no2']} µg/m³",  "✅ Normal",       "badge-green",  "#4FC3F7"),
-    (a4, "AQI",    f"{aire['aqi']}",          aqi_txt,          aqi_badge,      "#7B61FF"),
-]
-for col, lbl, val, badge_txt, badge_cls, _ in aire_kpis:
-    with col:
-        st.markdown(f"""
-        <div class="kpi-card kpi-card-green">
-            <div class="kpi-label">{lbl}</div>
-            <div class="kpi-value">{val}</div>
-            <span class="badge {badge_cls}">{badge_txt}</span>
-            <div class="fuente-tag">Open-Meteo · tiempo real</div>
-        </div>""", unsafe_allow_html=True)
+# Fila 1 aire — 2 cols
+_a1, _a2 = st.columns(2, gap="small")
+with _a1:
+    st.markdown(f"""<div class="kpi-card kpi-card-green">
+        <div class="kpi-label">PM2.5</div>
+        <div class="kpi-value">{aire['pm25']} µg/m³</div>
+        <span class="badge badge-green">✅ OMS &lt; 15</span>
+        <div class="fuente-tag">Open-Meteo · tiempo real</div>
+    </div>""", unsafe_allow_html=True)
+with _a2:
+    st.markdown(f"""<div class="kpi-card kpi-card-green">
+        <div class="kpi-label">PM10</div>
+        <div class="kpi-value">{aire['pm10']} µg/m³</div>
+        <span class="badge badge-green">✅ OMS &lt; 45</span>
+        <div class="fuente-tag">Open-Meteo · tiempo real</div>
+    </div>""", unsafe_allow_html=True)
+# Fila 2 aire — 2 cols
+_a3, _a4 = st.columns(2, gap="small")
+with _a3:
+    st.markdown(f"""<div class="kpi-card kpi-card-green">
+        <div class="kpi-label">NO₂</div>
+        <div class="kpi-value">{aire['no2']} µg/m³</div>
+        <span class="badge badge-green">✅ Normal</span>
+        <div class="fuente-tag">Open-Meteo · tiempo real</div>
+    </div>""", unsafe_allow_html=True)
+with _a4:
+    st.markdown(f"""<div class="kpi-card kpi-card-green">
+        <div class="kpi-label">AQI Europeo</div>
+        <div class="kpi-value">{aire['aqi']}</div>
+        <span class="badge {aqi_badge}">{aqi_txt}</span>
+        <div class="fuente-tag">Open-Meteo · tiempo real</div>
+    </div>""", unsafe_allow_html=True)
 
 st.markdown("<hr style='border:1px solid rgba(0,229,195,0.1);margin:14px 0'>", unsafe_allow_html=True)
 
@@ -1089,12 +1118,13 @@ else:
     })
 
 # KPIs biodiversidad
-f1, f2, f3, f4 = st.columns(4, gap="small")
+_f1, _f2 = st.columns(2, gap="small")
+_f3, _f4 = st.columns(2, gap="small")
 for col, lbl, val, sub, badge_cls in [
-    (f1, "Especies registradas", str(n_especies), fuente_fauna,       "badge-purple"),
-    (f2, "Con imagen",           str(n_imagen),   "Fotos verificadas", "badge-green"),
-    (f3, "Clases taxonómicas",   str(n_clases),   "Taxones distintos", "badge-blue"),
-    (f4, "Clasificación CNN",    "MobileNetV2",   "Precisión validada","badge-green"),
+    (_f1, "Especies registradas", str(n_especies), fuente_fauna,       "badge-purple"),
+    (_f2, "Con imagen",           str(n_imagen),   "Fotos verificadas", "badge-green"),
+    (_f3, "Clases taxonómicas",   str(n_clases),   "Taxones distintos", "badge-blue"),
+    (_f4, "Clasificación CNN",    "MobileNetV2",   "Precisión validada","badge-green"),
 ]:
     with col:
         st.markdown(f"""
