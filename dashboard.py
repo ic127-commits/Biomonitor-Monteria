@@ -724,39 +724,42 @@ st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 col_hero, col_estado = st.columns([3, 1], gap="medium")
 
 with col_hero:
-    # Logo + título en card modernizada
-    try:
-        logo_img = Image.open("Biomotorlogo.png")
-        _, col_logo_img, _ = st.columns([0.15, 1, 2.5], gap="small")
-        with col_logo_img:
-            st.image(logo_img, width=260)
-    except Exception:
+    # ── Hero unificado: logo izquierda + texto derecha ──────
+    col_logo_h, col_texto_h = st.columns([1, 2.6], gap="small")
+
+    with col_logo_h:
+        try:
+            logo_img = Image.open("Biomotorlogo.png")
+            st.image(logo_img, use_container_width=True)
+        except Exception:
+            st.markdown("""
+            <div style="display:flex;align-items:center;justify-content:center;
+                        height:100%;min-height:120px;
+                        background:linear-gradient(135deg,#EAF3DE,#E0EFCE);
+                        border-radius:14px;font-size:3.5rem;text-align:center">
+              🌿
+            </div>""", unsafe_allow_html=True)
+
+    with col_texto_h:
         st.markdown("""
-        <div class="logo-wrapper">
-          <div style="font-size:2.8rem;line-height:1">🌿</div>
+        <div class="hero-banner" style="height:100%;margin-bottom:0;
+             display:flex;flex-direction:column;justify-content:center">
+          <div class="hero-sub" style="margin-bottom:12px">
+            Plataforma de monitoreo ambiental en tiempo real para
+            <b style="color:#1E1E1C">Montería, Córdoba, Colombia</b>.
+            Integra datos oficiales de <b style="color:#3B6D11">IDEAM</b>,
+            <b style="color:#3B6D11">Open-Meteo</b> y <b style="color:#3B6D11">GBIF</b>
+            para monitorear la calidad del aire, el nivel del río Sinú y la
+            biodiversidad local. Actualización automática cada 15 minutos.
+          </div>
           <div>
-            <div class="logo-title-main">BioMonitor</div>
-            <div class="logo-title-sub">Montería · Córdoba · Colombia</div>
+            <span class="hero-badge">🌡️ Clima en tiempo real</span>
+            <span class="hero-badge">💨 Calidad del aire</span>
+            <span class="hero-badge">🌊 Nivel Río Sinú</span>
+            <span class="hero-badge">🦜 Biodiversidad GBIF</span>
+            <span class="hero-badge">🗺️ Mapa interactivo</span>
           </div>
         </div>""", unsafe_allow_html=True)
-
-    st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
-    st.markdown("""
-    <div class="hero-banner">
-      <div class="hero-sub" style="margin-bottom:12px">
-        Plataforma de monitoreo ambiental en tiempo real para <b style="color:#1E1E1C">Montería, Córdoba, Colombia</b>.
-        Integra datos oficiales de <b style="color:#3B6D11">IDEAM</b>, <b style="color:#3B6D11">Open-Meteo</b> y
-        <b style="color:#3B6D11">GBIF</b> para monitorear la calidad del aire, el nivel del río Sinú y la
-        biodiversidad local. Los datos se actualizan automáticamente cada 15 minutos.
-      </div>
-      <div>
-        <span class="hero-badge">🌡️ Clima en tiempo real</span>
-        <span class="hero-badge">💨 Calidad del aire</span>
-        <span class="hero-badge">🌊 Nivel Río Sinú</span>
-        <span class="hero-badge">🦜 Biodiversidad GBIF</span>
-        <span class="hero-badge">🗺️ Mapa interactivo</span>
-      </div>
-    </div>""", unsafe_allow_html=True)
 
 with col_estado:
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
