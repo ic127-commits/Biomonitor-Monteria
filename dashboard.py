@@ -806,7 +806,7 @@ st.markdown("""
 <style>
 .header-wrapper {
   display:flex;gap:16px;align-items:flex-start;
-  margin-bottom:10px;animation:fadeInUp 0.35s ease both;
+  margin-bottom:4px;animation:fadeInUp 0.35s ease both;
 }
 .hero-left {
   flex:3;display:flex;align-items:center;gap:20px;
@@ -907,14 +907,14 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ── Botón actualizar debajo del card izquierdo ────────────
+# ── Botón actualizar pegado debajo del card izquierdo ─────
 col_act, _ = st.columns([3.35, 1], gap="small")
 with col_act:
     if st.button("🔄 Actualizar datos", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
 
-st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:2px'></div>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════
 tab_inicio, tab_mapa, tab_analisis, tab_bio, tab_alertas = st.tabs([
