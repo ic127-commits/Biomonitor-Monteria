@@ -575,6 +575,569 @@ def calcular_heat_index(temp_c, humedad):
     elif hi_c < 41: return hi_c, "🟠 Precaución extrema","badge-yellow","#FF9800"
     elif hi_c < 54: return hi_c, "🔴 Peligro",        "badge-red",    "#FF5252"
     else:           return hi_c, "🔴 Peligro extremo","badge-red",    "#FF0000"
+
+# ── Session state ─────────────────────────────────────────
+if "initialized" not in st.session_state:
+    st.session_state.initialized    = True
+    st.session_state.show_info      = False
+    st.session_state.lugar_buscado  = None
+
+st.set_page_config(
+    page_title="BioMonitor Montería",
+    page_icon="🌿",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+# ── CSS ───────────────────────────────────────────────────
+st.markdown("""
+<style>
+/* ── Paleta base: gris cálido, verde natural, sin neón ── */
+/* Fondo:   #EDECEA (gris cálido)                         */
+/* Cards:   #FFFFFF                                        */
+/* Texto:   #2C2C2A (casi negro)                          */
+/* Muted:   #5F5E5A                                        */
+/* Verde:   #3B6D11 (color principal)                     */
+/* Azul:    #185FA5 (secundario informativo)               */
+/* Ámbar:   #854F0B (advertencia)                         */
+/* Rojo:    #A32D2D (peligro)                             */
+
+html, body, [data-testid="stAppViewContainer"] {
+    background-color: #EDECEA !important;
+    font-family: 'Inter', sans-serif;
+}
+.main { background-color: #EDECEA; }
+.block-container {
+    padding-top:1.5rem !important;
+    padding-left:2rem !important;
+    padding-right:2rem !important;
+    max-width:1400px;
+}
+
+/* ── Hero ────────────────────────────────────────────── */
+.hero-banner {
+    background:#FFFFFF;
+    border:0.5px solid #D3D1C7;
+    border-radius:14px;
+    padding:20px 24px;
+    margin-bottom:18px;
+    border-left:4px solid #3B6D11;
+    border-radius: 0 14px 14px 0;
+}
+.hero-title {
+    font-size:1.3rem;
+    font-weight:700;
+    color:#2C2C2A;
+    margin:0 0 4px 0;
+}
+.hero-sub {
+    font-size:0.88rem;
+    color:#5F5E5A;
+    line-height:1.55;
+    margin:0;
+}
+.hero-badge {
+    display:inline-block;
+    background:#EAF3DE;
+    border:0.5px solid #97C459;
+    color:#3B6D11;
+    padding:3px 10px;
+    border-radius:20px;
+    font-size:0.72rem;
+    font-weight:600;
+    letter-spacing:0.5px;
+    margin-right:6px;
+    margin-top:6px;
+}
+
+/* ── Estado general (pill top) ───────────────────────── */
+.estado-ok   { background:#EAF3DE; color:#3B6D11; border:0.5px solid #97C459; }
+.estado-warn { background:#FAEEDA; color:#633806; border:0.5px solid #EF9F27; }
+.estado-alert{ background:#FCEBEB; color:#791F1F; border:0.5px solid #F09595; }
+
+/* ── KPI Cards ───────────────────────────────────────── */
+.kpi-card {
+    background:#FFFFFF;
+    border:0.5px solid #D3D1C7;
+    border-radius:12px;
+    padding:16px 18px;
+    position:relative;
+    overflow:hidden;
+    margin-bottom:10px;
+    min-height:110px;
+}
+.kpi-card::before {
+    content:'';
+    position:absolute;
+    top:0; left:0;
+    width:4px; height:100%;
+    background:#3B6D11;
+    border-radius:2px 0 0 2px;
+}
+.kpi-card-red::before    { background:#A32D2D; }
+.kpi-card-blue::before   { background:#185FA5; }
+.kpi-card-green::before  { background:#3B6D11; }
+.kpi-card-purple::before { background:#534AB7; }
+.kpi-card-warn::before   { background:#854F0B; }
+
+.kpi-label {
+    font-size:0.68rem;
+    color:#888780;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    font-weight:600;
+    margin-bottom:5px;
+}
+.kpi-value    { font-size:1.85rem; font-weight:700; color:#2C2C2A; line-height:1; margin-bottom:7px; }
+.kpi-value-sm { font-size:1.35rem; font-weight:600; color:#2C2C2A; line-height:1; margin-bottom:7px; }
+
+/* ── Badges ──────────────────────────────────────────── */
+.badge { display:inline-block; padding:3px 9px; border-radius:20px; font-size:0.72rem; font-weight:600; }
+.badge-green  { background:#EAF3DE; color:#27500A; border:0.5px solid #97C459; }
+.badge-yellow { background:#FAEEDA; color:#633806; border:0.5px solid #EF9F27; }
+.badge-red    { background:#FCEBEB; color:#791F1F; border:0.5px solid #F09595; }
+.badge-blue   { background:#E6F1FB; color:#0C447C; border:0.5px solid #85B7EB; }
+.badge-purple { background:#EEEDFE; color:#3C3489; border:0.5px solid #AFA9EC; }
+
+/* ── Section headers ─────────────────────────────────── */
+.section-header {
+    font-size:0.95rem;
+    font-weight:700;
+    color:#2C2C2A;
+    margin-bottom:12px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding-bottom:8px;
+    border-bottom:1.5px solid #EAF3DE;
+}
+
+/* ── Cards genéricas ─────────────────────────────────── */
+.info-card {
+    background:#FFFFFF;
+    border:0.5px solid #D3D1C7;
+    border-radius:12px;
+    padding:14px 18px;
+    margin-bottom:10px;
+    font-size:0.82rem;
+    color:#444441;
+    line-height:1.55;
+}
+.info-card b { color:#2C2C2A; }
+
+/* ── Stat row ────────────────────────────────────────── */
+.stat-row {
+    background:#F1EFE8;
+    border:0.5px solid #D3D1C7;
+    border-radius:10px;
+    padding:10px 14px;
+    margin-top:8px;
+    font-size:0.81rem;
+    color:#5F5E5A;
+}
+
+/* ── Fuente tag ──────────────────────────────────────── */
+.fuente-tag { font-size:0.67rem; color:#888780; margin-top:4px; }
+
+/* ── Copyright ───────────────────────────────────────── */
+.copyright {
+    position:fixed;
+    bottom:10px; right:16px;
+    color:#B4B2A9;
+    font-size:0.7rem;
+    z-index:9999;
+}
+
+/* ── Botones ─────────────────────────────────────────── */
+.stButton > button {
+    background:#3B6D11 !important;
+    color:#FFFFFF !important;
+    font-weight:600 !important;
+    border:none !important;
+    border-radius:9px !important;
+    transition:background 0.2s;
+}
+.stButton > button:hover { background:#27500A !important; }
+
+/* ── Ocultar footer ──────────────────────────────────── */
+footer { visibility:hidden; }
+#MainMenu { visibility:hidden; }
+
+/* ── Dataframe ───────────────────────────────────────── */
+.stDataFrame { border-radius:10px; overflow:hidden; }
+
+/* ── Expander ────────────────────────────────────────── */
+.streamlit-expanderHeader {
+    background:#F1EFE8 !important;
+    border:0.5px solid #D3D1C7 !important;
+    border-radius:10px !important;
+    color:#2C2C2A !important;
+    font-weight:600 !important;
+}
+
+/* ── Radio / selectbox ───────────────────────────────── */
+.stRadio > div { gap:8px !important; }
+.stRadio label { color:#444441 !important; font-size:0.85rem !important; }
+
+/* ── Matplotlib fondo ────────────────────────────────── */
+/* Los gráficos matplotlib se adaptan al nuevo tema */
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width:900px) {
+    .block-container { padding-left:1rem !important; padding-right:1rem !important; }
+    .kpi-value { font-size:1.5rem !important; }
+}
+@media (max-width:768px) {
+    .block-container {
+        padding-top:0.8rem !important;
+        padding-left:0.6rem !important;
+        padding-right:0.6rem !important;
+    }
+    .kpi-value    { font-size:1.25rem !important; }
+    .kpi-value-sm { font-size:1.05rem !important; }
+    .kpi-label    { font-size:0.6rem  !important; }
+    .kpi-card     { min-height:auto   !important; padding:11px 13px !important; }
+    [data-testid="column"] { min-width:100% !important; }
+    .hero-title   { font-size:1.1rem  !important; }
+    .hero-sub     { font-size:0.8rem  !important; }
+    .section-header { font-size:0.85rem !important; }
+    .stat-row     { font-size:0.74rem !important; }
+    .copyright    { display:none !important; }
+    .stButton > button { min-height:44px !important; }
+    .badge        { font-size:0.66rem !important; }
+    .stRadio > div { flex-direction:column !important; gap:4px !important; }
+    .galeria-grid { grid-template-columns:repeat(2,1fr) !important; }
+    .stDataFrame  { overflow-x:auto !important; }
+}
+@media (max-width:480px) {
+    .block-container { padding-left:0.3rem !important; padding-right:0.3rem !important; }
+    .kpi-value    { font-size:1.05rem !important; }
+    .kpi-label    { font-size:0.56rem !important; }
+    .section-header { font-size:0.8rem !important; }
+    [data-testid="column"] { min-width:100% !important; }
+}
+.folium-map { width:100% !important; }
+iframe { max-width:100% !important; }
+.leaflet-control-layers { max-height:200px; overflow-y:auto; font-size:11px !important; }
+
+/* ── Streamlit tabs ─────────────────────────────────── */
+.stTabs [data-baseweb="tab-list"] {
+    background:#FFFFFF;
+    border-radius:10px;
+    padding:6px 8px;
+    border:0.5px solid #D3D1C7;
+    gap:4px;
+    margin-bottom:8px;
+}
+.stTabs [data-baseweb="tab"] {
+    background:transparent;
+    border-radius:8px;
+    color:#5F5E5A !important;
+    font-weight:500;
+    font-size:0.88rem;
+    padding:8px 18px;
+    border:none;
+}
+.stTabs [data-baseweb="tab"]:hover {
+    background:#F1EFE8;
+    color:#2C2C2A !important;
+}
+.stTabs [aria-selected="true"] {
+    background:#3B6D11 !important;
+    color:#FFFFFF !important;
+    font-weight:600 !important;
+}
+.stTabs [aria-selected="true"] p,
+.stTabs [aria-selected="true"] span,
+.stTabs [aria-selected="true"] div {
+    color:#FFFFFF !important;
+}
+.stTabs [data-baseweb="tab-panel"] {
+    padding-top:12px;
+}
+/* ── Dataframe tema claro ────────────────────────────── */
+.stDataFrame { background:#FFFFFF !important; }
+.stDataFrame thead tr th {
+    background:#F1EFE8 !important;
+    color:#2C2C2A !important;
+}
+.stDataFrame tbody tr td { color:#2C2C2A !important; }
+/* ── Download button ─────────────────────────────────── */
+.stDownloadButton > button {
+    background:#3B6D11 !important;
+    color:#FFFFFF !important;
+    font-weight:600 !important;
+    border:none !important;
+    border-radius:9px !important;
+}
+.stDownloadButton > button:hover { background:#27500A !important; }
+/* ── st.warning / success / info colores suaves ──────── */
+.stAlert { border-radius:10px !important; font-size:0.88rem !important; }
+
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown('<div class="copyright">© Ivan Contreras</div>', unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════
+# ── FUNCIONES DE DATOS ───────────────────────────────────
+# ══════════════════════════════════════════════════════════
+
+def _fetch_clima():
+    """Obtiene clima actual + pronóstico 7 días de Open-Meteo"""
+    try:
+        r = requests.get(
+            "https://api.open-meteo.com/v1/forecast",
+            params={
+                "latitude": 8.7479, "longitude": -75.8814,
+                "current": ["temperature_2m","relative_humidity_2m",
+                            "precipitation","wind_speed_10m","rain"],
+                "daily":   ["precipitation_sum","temperature_2m_max",
+                            "temperature_2m_min","precipitation_probability_max",
+                            "rain_sum"],
+                "timezone": "America/Bogota",
+                "forecast_days": 7
+            }, timeout=8
+        ).json()
+        c, d = r.get("current", {}), r.get("daily", {})
+        # lluvia_hoy: suma del día actual (más representativa que la instantánea)
+        lluvia_sum_hoy = d.get("precipitation_sum", [0])[0] if d.get("precipitation_sum") else 0
+        # prob lluvia: limpiar None → 0
+        prob_raw = d.get("precipitation_probability_max", [])
+        prob_lluvia = [int(p) if p is not None else 0 for p in prob_raw] if prob_raw else [0]*7
+        return {
+            "temp":       round(c.get("temperature_2m", 28.4), 1),
+            "humedad":    c.get("relative_humidity_2m", 75),
+            "lluvia_hoy": round(lluvia_sum_hoy, 1),
+            "lluvia_inst":round(c.get("precipitation", 0), 1),
+            "viento":     round(c.get("wind_speed_10m", 12), 1),
+            "lluvia_7d":  d.get("precipitation_sum", [0]*7),
+            "prob_lluvia":prob_lluvia,
+            "temp_max":   d.get("temperature_2m_max", [32]*7),
+            "temp_min":   d.get("temperature_2m_min", [23]*7),
+            "fechas":     d.get("time", []),
+            "ok": True
+        }
+    except Exception:
+        return {
+            "temp":28.4,"humedad":75,"lluvia_hoy":0,"lluvia_inst":0,"viento":12,
+            "lluvia_7d":[2]*7,"prob_lluvia":[10]*7,
+            "temp_max":[32]*7,"temp_min":[23]*7,
+            "fechas":[],"ok":False
+        }
+
+def _fetch_aire():
+    """Obtiene calidad del aire desde Open-Meteo Air Quality API"""
+    try:
+        r = requests.get(
+            "https://air-quality-api.open-meteo.com/v1/air-quality",
+            params={
+                "latitude": 8.7479, "longitude": -75.8814,
+                "current":  ["pm10","pm2_5","nitrogen_dioxide","european_aqi"],
+                "timezone": "America/Bogota"
+            }, timeout=8
+        ).json()
+        c = r.get("current", {})
+        return {
+            "pm25": round(c.get("pm2_5", 9.5), 1),
+            "pm10": round(c.get("pm10", 11.9), 1),
+            "no2":  round(c.get("nitrogen_dioxide", 3.3), 1),
+            "aqi":  round(c.get("european_aqi", 26), 0),
+            "ok":   True
+        }
+    except Exception:
+        return {"pm25":9.5,"pm10":11.9,"no2":3.3,"aqi":26,"ok":False}
+
+def _fetch_ideam():
+    """Consulta nivel real del Río Sinú desde datos.gov.co (IDEAM)"""
+    # Capa 1: API datos.gov.co — estación Montería
+    try:
+        r = requests.get(
+            "https://www.datos.gov.co/resource/sbwg-7ju4.json",
+            params={
+                "$where": "codigoestacion='23197130'",
+                "$order": "fechaobservacion DESC",
+                "$limit": "1"
+            }, timeout=5
+        ).json()
+        if r and "valor" in r[0]:
+            return {
+                "nivel": round(float(r[0]["valor"]), 2),
+                "fecha": r[0].get("fechaobservacion", "")[:10],
+                "ok":    True,
+                "fuente": "IDEAM · datos.gov.co"
+            }
+    except Exception:
+        pass
+
+    # Capa 2: IDEAM DHIME (respaldo)
+    try:
+        r2 = requests.get(
+            "https://www.datos.gov.co/resource/s54a-sgyg.json",
+            params={"municipio": "MONTERIA", "$limit": "1", "$order": "fecha DESC"},
+            timeout=5
+        ).json()
+        if r2 and "valor" in r2[0]:
+            return {
+                "nivel": round(float(r2[0]["valor"]), 2),
+                "fecha": r2[0].get("fecha", "")[:10],
+                "ok":    True,
+                "fuente": "IDEAM · DHIME"
+            }
+    except Exception:
+        pass
+
+    # Capa 3: fallback histórico
+    return {
+        "nivel":  4.2,
+        "fecha":  datetime.now(TZ_COL).strftime("%Y-%m-%d"),
+        "ok":     False,
+        "fuente": "Histórico"
+    }
+
+@st.cache_data(ttl=900)  # 15 min — datos más frescos
+def cargar_datos():
+    """Carga paralela de clima, aire e IDEAM"""
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as ex:
+        fc = ex.submit(_fetch_clima)
+        fa = ex.submit(_fetch_aire)
+        fi = ex.submit(_fetch_ideam)
+        return fc.result(), fa.result(), fi.result()
+
+@st.cache_data(ttl=86400)
+def obtener_fauna_gbif():
+    """Descarga fauna desde GBIF con nombres comunes en paralelo."""
+    NOMBRES_ES = {
+        "Iguana iguana":"Iguana verde","Boa constrictor":"Boa",
+        "Caiman crocodilus":"Babilla","Chelonoidis carbonarius":"Morrocoy",
+        "Trachemys callirostris":"Hicotea","Lygophis lineatus":"Culebra rayada",
+        "Leptotila verreauxi":"Paloma guarumera","Cairina moschata":"Pato real",
+        "Columbina talpacoti":"Tortolita rojiza","Jacana jacana":"Gallito de ciénaga",
+        "Ardea alba":"Garza blanca","Bubulcus ibis":"Garza del ganado",
+        "Coragyps atratus":"Gallinazo negro","Pitangus sulphuratus":"Bichofué",
+        "Thraupis episcopus":"Azulejo común","Ramphocelus dimidiatus":"Sangretoro",
+        "Dendrocygna autumnalis":"Pato viudo","Vanellus chilensis":"Pellar",
+        "Dasypus novemcinctus":"Armadillo de nueve bandas",
+        "Hydrochoerus hydrochaeris":"Chigüiro","Sciurus granatensis":"Ardilla roja",
+        "Rhinella marina":"Sapo marino","Heliconia psittacorum":"Heliconia de loro",
+        "Heliconia bihai":"Heliconia roja","Guazuma ulmifolia":"Guácimo",
+        "Polybia emaciata":"Avispa social","Menemerus bivittatus":"Araña saltarina gris",
+        "Sakesphorus canadensis":"Batará barrado","Phalacrocorax brasilianus":"Cormorán neotropical",
+    }
+
+    def _nombre_com_gbif(sp_key, especie):
+        if not sp_key:
+            return NOMBRES_ES.get(especie, "—")
+        try:
+            r = requests.get(
+                f"https://api.gbif.org/v1/species/{sp_key}/vernacularNames",
+                params={"limit": 20}, timeout=4
+            ).json()
+            for item in r.get("results", []):
+                if item.get("language","").lower() in ("spa","es","spanish"):
+                    n = item.get("vernacularName","").strip()
+                    if n: return n.capitalize()
+            for item in r.get("results", []):
+                if item.get("language","").lower() in ("eng","en","english"):
+                    n = item.get("vernacularName","").strip()
+                    if n: return n.capitalize()
+        except Exception:
+            pass
+        return NOMBRES_ES.get(especie, "—")
+
+    try:
+        r = requests.get(
+            "https://api.gbif.org/v1/occurrence/search",
+            params={"stateProvince":"Córdoba","country":"CO",
+                    "mediaType":"StillImage","hasCoordinate":"true","limit":100},
+            timeout=12
+        ).json()
+        registros, vistos = [], set()
+        for rec in r.get("results", []):
+            sp = rec.get("species")
+            if not sp or sp in vistos: continue
+            vistos.add(sp)
+            img = next((m["identifier"] for m in rec.get("media",[])
+                       if "identifier" in m and m.get("type","")=="StillImage"), None)
+            if img is None:
+                img = next((m["identifier"] for m in rec.get("media",[])
+                           if "identifier" in m), None)
+            registros.append({
+                "especie":sp,"clase":rec.get("class","—"),"orden":rec.get("order","—"),
+                "familia":rec.get("family","—"),"lat":rec.get("decimalLatitude"),
+                "lon":rec.get("decimalLongitude"),
+                "fecha":(rec.get("eventDate","—")[:10] if rec.get("eventDate") else "—"),
+                "imagen_url":img,"estado":rec.get("iucnRedListCategory","No evaluado"),
+                "gbif_key":str(rec.get("speciesKey","")),
+            })
+
+        def _resolver(reg):
+            sp = reg["especie"]
+            n = NOMBRES_ES.get(sp)
+            return n if n else _nombre_com_gbif(reg["gbif_key"], sp)
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
+            nombres = list(ex.map(_resolver, registros))
+
+        fauna = []
+        for reg, nom in zip(registros, nombres):
+            reg["nombre_com"] = nom
+            fauna.append(reg)
+
+        if fauna:
+            return pd.DataFrame(fauna), True
+        return None, False
+    except Exception:
+        return None, False
+
+
+def nivel_rio(lluvia_7d, base=4.2):
+    """Simula predicción LSTM del nivel del río dado lluvia acumulada.
+    Incluye variación diaria natural del río y efecto de lluvia aguas arriba."""
+    niveles, ant = [], base
+    # Factor de variación natural diaria (mareas/escorrentía base)
+    variacion_base = [0.0, 0.05, -0.03, 0.08, -0.02, 0.06, -0.04]
+    for i, ll in enumerate(lluvia_7d):
+        var = variacion_base[i % len(variacion_base)]
+        # La lluvia tiene efecto rezagado (llega al río 1-2 días después)
+        lluvia_efecto = ll * 0.08 + (lluvia_7d[i-1] * 0.04 if i > 0 else 0)
+        n = round(np.clip(ant * 0.85 + base * 0.15 + lluvia_efecto + var, 0.5, 9.5), 2)
+        niveles.append(n)
+        ant = n
+    return niveles
+
+def alerta_rio(n):
+    if n < 4.0:   return "Normal",    "badge-green",  "#00E5C3"
+    elif n < 5.5: return "Amarilla",  "badge-yellow", "#FFD600"
+    elif n < 7.0: return "Naranja",   "badge-yellow", "#FF9800"
+    else:         return "ROJA 🚨",   "badge-red",    "#FF5252"
+
+def cat_aqi(aqi):
+    if aqi <= 20:   return "Bueno",      "badge-green"
+    elif aqi <= 40: return "Aceptable",  "badge-yellow"
+    elif aqi <= 60: return "Moderado",   "badge-yellow"
+    else:           return "Malo",       "badge-red"
+
+# ══════════════════════════════════════════════════════════
+# ── CARGA DE DATOS ────────────────────────────────────────
+# ══════════════════════════════════════════════════════════
+
+
+def calcular_heat_index(temp_c, humedad):
+    """Calcula el índice de calor aparente (Heat Index) en °C."""
+    t = temp_c * 9/5 + 32  # convertir a Fahrenheit
+    rh = humedad
+    hi = (-42.379 + 2.04901523*t + 10.14333127*rh
+          - 0.22475541*t*rh - 6.83783e-3*t**2
+          - 5.481717e-2*rh**2 + 1.22874e-3*t**2*rh
+          + 8.5282e-4*t*rh**2 - 1.99e-6*t**2*rh**2)
+    hi_c = round((hi - 32) * 5/9, 1)
+    # Categorías de alerta
+    if hi_c < 27:   return hi_c, "✅ Confortable",    "badge-green",  "#00E5C3"
+    elif hi_c < 32: return hi_c, "🟡 Precaución",     "badge-yellow", "#FFD600"
+    elif hi_c < 41: return hi_c, "🟠 Precaución extrema","badge-yellow","#FF9800"
+    elif hi_c < 54: return hi_c, "🔴 Peligro",        "badge-red",    "#FF5252"
+    else:           return hi_c, "🔴 Peligro extremo","badge-red",    "#FF0000"
     
     # ── Cauce real del Río Sinú — coordenadas trazadas en geojson.io ──────
     CAUCE_SINU_FALLBACK = [
@@ -665,7 +1228,7 @@ with col_hero:
         logo_img = Image.open("Biomotorlogo.png")
         col_logo_img, col_hero_txt = st.columns([0.18, 1], gap="small")
         with col_logo_img:
-            st.image(logo_img, width=110)
+            st.image(logo_img, width=130)
         with col_hero_txt:
             st.markdown("""
             <div style="padding:4px 0 0 4px">
@@ -735,6 +1298,14 @@ with col_estado:
                     border-top:0.5px solid #D3D1C7;padding-top:6px">
             Actualizado {hora_actual} hora Colombia
         </div>
+    </div>
+    <div style="margin-top:10px;font-size:0.72rem;color:#5F5E5A;
+                background:#F1EFE8;border-radius:8px;padding:10px 12px;
+                border:0.5px solid #D3D1C7">
+        <b style="color:#2C2C2A;display:block;margin-bottom:5px">¿Qué significa el color?</b>
+        <span style="color:#27500A">🟢 Verde</span> — Todo en orden, sin alertas<br>
+        <span style="color:#633806">🟡 Amarillo</span> — Algo requiere atención<br>
+        <span style="color:#791F1F">🔴 Rojo</span> — Condición de riesgo activa
     </div>""", unsafe_allow_html=True)
 
     st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
@@ -972,6 +1543,32 @@ def obtener_historico_aire_30dias():
         return {"ok": False, "fechas": [], "pm25": []}
     
 
+
+# ── Cauce real del Río Sinú — coordenadas trazadas en geojson.io ──────
+CAUCE_SINU_FALLBACK = [
+    [8.69768846, -75.94782194], [8.70122071, -75.94240658],
+    [8.69987114, -75.93560537], [8.70305888, -75.93594981],
+    [8.71192054, -75.94286909], [8.71863785, -75.94379077],
+    [8.72535501, -75.93734223], [8.72193985, -75.93215672],
+    [8.71557630, -75.92536160], [8.71855524, -75.92260906],
+    [8.72478702, -75.92213802], [8.73127622, -75.92305694],
+    [8.73640083, -75.92213510], [8.73961492, -75.91957351],
+    [8.74013571, -75.91535784], [8.73778687, -75.90851478],
+    [8.74351866, -75.90587567], [8.74727880, -75.90322958],
+    [8.74922018, -75.90126533], [8.74922025, -75.89856450],
+    [8.74764320, -75.89414539], [8.74788577, -75.89242679],
+    [8.75261750, -75.89193544], [8.75686353, -75.88984919],
+    [8.76280817, -75.88518463], [8.77045286, -75.88223726],
+    [8.77215134, -75.87941382], [8.76936038, -75.87450396],
+    [8.76802566, -75.87290836], [8.76826901, -75.87094317],
+    [8.77118166, -75.86959167], [8.78367731, -75.87364386],
+    [8.78883840, -75.86806919], [8.79362685, -75.86414634],
+    [8.80022730, -75.85977915], [8.80295920, -75.85977891],
+    [8.80887841, -75.86254257], [8.82094414, -75.85770413],
+    [8.82936742, -75.85632123], [8.83164380, -75.85309608],
+    [8.83594253, -75.85423387], [8.84148501, -75.85633728],
+    [8.84841300, -75.85668785],
+]
 def obtener_cauce_sinu():
     """Retorna el cauce real del Río Sinú trazado en geojson.io."""
     return None  # Siempre usa CAUCE_SINU_FALLBACK (coordenadas reales verificadas)
