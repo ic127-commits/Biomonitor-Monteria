@@ -806,7 +806,6 @@ st.markdown(f"""
 <div style="display:flex;gap:16px;align-items:stretch;
             margin-bottom:10px;animation:fadeInUp 0.35s ease both">
 
-  <!-- IZQUIERDA: hero card -->
   <div style="flex:3;display:flex;align-items:center;gap:22px;
               background:linear-gradient(135deg,#FFFFFF 60%,#F0F7E8 100%);
               border:1px solid #E8E6DF;border-left:4px solid #3B6D11;
@@ -833,22 +832,18 @@ st.markdown(f"""
     </div>
   </div>
 
-  <!-- DERECHA: estado card -->
-  <div style="flex:1;display:flex;flex-direction:column;gap:10px;min-width:220px">
-
-    <!-- Card estado -->
+  <div style="flex:1;display:flex;flex-direction:column;gap:10px;min-width:200px;max-width:280px">
     <div style="flex:1;background:#FFFFFF;border:1px solid #E8E6DF;
                 border-left:4px solid {borde_color};border-radius:0 14px 14px 0;
                 padding:18px 16px;text-align:center;
                 box-shadow:0 2px 8px rgba(0,0,0,0.06);
                 display:flex;flex-direction:column;justify-content:center">
-      <div style="font-family:'Outfit',sans-serif;font-size:0.62rem;text-transform:uppercase;
+      <div style="font-family:Outfit,sans-serif;font-size:0.62rem;text-transform:uppercase;
                   letter-spacing:1.2px;color:#888780;margin-bottom:8px;font-weight:700">
         ¿Cómo está Montería ahora?
       </div>
-      <div style="font-size:2.4rem;line-height:1;
-                  filter:drop-shadow(0 2px 6px rgba(0,0,0,0.15))">{estado_ico}</div>
-      <div style="font-family:'Outfit',sans-serif;font-size:0.95rem;font-weight:800;
+      <div style="font-size:2.4rem;line-height:1">{estado_ico}</div>
+      <div style="font-family:Outfit,sans-serif;font-size:0.95rem;font-weight:800;
                   color:{estado_color};margin-top:8px">
         {estado_txt}
       </div>
@@ -858,28 +853,25 @@ st.markdown(f"""
       <div style="font-size:0.67rem;color:#888780;margin-top:8px;
                   border-top:1px solid #E8E6DF;padding-top:7px;font-weight:500">
         <span style="display:inline-block;width:6px;height:6px;background:{borde_color};
-                     border-radius:50%;margin-right:4px;vertical-align:middle;
-                     box-shadow:0 0 0 3px rgba(59,109,17,0.15)"></span>
+                     border-radius:50%;margin-right:4px;vertical-align:middle"></span>
         Actualizado {hora_actual} hora Colombia
       </div>
     </div>
-
-    <!-- Card colores -->
     <div style="background:linear-gradient(135deg,#F4F2EE,#EEECEA);
                 border:1px solid #D3D1C7;border-radius:10px;
-                padding:11px 14px;font-size:0.74rem;color:#444441;line-height:1.9;font-weight:500">
+                padding:11px 14px;font-size:0.74rem;color:#444441;
+                line-height:1.9;font-weight:500">
       <b style="color:#1E1E1C;display:block;margin-bottom:5px;
-                font-family:'Outfit',sans-serif;font-size:0.76rem">¿Qué significa el color?</b>
+                font-family:Outfit,sans-serif;font-size:0.76rem">¿Qué significa el color?</b>
       <span style="color:#27500A;font-weight:700">🟢 Verde</span> — Sin alertas<br>
       <span style="color:#633806;font-weight:700">🟡 Amarillo</span> — Requiere atención<br>
       <span style="color:#791F1F;font-weight:700">🔴 Rojo</span> — Riesgo activo
     </div>
-
   </div>
+
 </div>
 """, unsafe_allow_html=True)
 
-# Botón actualizar — columna derecha alineada
 _, col_btn = st.columns([3.15, 1])
 with col_btn:
     if st.button("🔄 Actualizar datos", use_container_width=True):
