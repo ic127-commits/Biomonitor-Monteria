@@ -848,29 +848,41 @@ st.markdown("""
 st.markdown(f"""
 <div class="header-wrapper">
 
-  <div class="hero-left">
-    {logo_html}
-    <div style="flex:1;min-width:0">
-      <div style="font-size:0.88rem;color:#5F5E5A;line-height:1.65;margin-bottom:10px;font-weight:400">
-        Plataforma de monitoreo ambiental en tiempo real para
-        <b style="color:#1E1E1C">Montería, Córdoba, Colombia</b>.
-        Integra datos oficiales de <b style="color:#3B6D11">IDEAM</b>,
-        <b style="color:#3B6D11">Open-Meteo</b> y <b style="color:#3B6D11">GBIF</b>
-        para monitorear la calidad del aire, el nivel del río Sinú y la biodiversidad local.
-        Actualización automática cada 15 minutos.
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px">
-        <span class="hero-badge">🌡️ Clima en tiempo real</span>
-        <span class="hero-badge">💨 Calidad del aire</span>
-        <span class="hero-badge">🌊 Nivel Río Sinú</span>
-        <span class="hero-badge">🦜 Biodiversidad GBIF</span>
-        <span class="hero-badge">🗺️ Mapa interactivo</span>
+  <div style="flex:3;display:flex;flex-direction:column;gap:8px">
+    <div class="hero-left">
+      {logo_html}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:0.88rem;color:#5F5E5A;line-height:1.65;margin-bottom:10px;font-weight:400">
+          Plataforma de monitoreo ambiental en tiempo real para
+          <b style="color:#1E1E1C">Montería, Córdoba, Colombia</b>.
+          Integra datos oficiales de <b style="color:#3B6D11">IDEAM</b>,
+          <b style="color:#3B6D11">Open-Meteo</b> y <b style="color:#3B6D11">GBIF</b>
+          para monitorear la calidad del aire, el nivel del río Sinú y la biodiversidad local.
+          Actualización automática cada 15 minutos.
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <span class="hero-badge">🌡️ Clima en tiempo real</span>
+          <span class="hero-badge">💨 Calidad del aire</span>
+          <span class="hero-badge">🌊 Nivel Río Sinú</span>
+          <span class="hero-badge">🦜 Biodiversidad GBIF</span>
+          <span class="hero-badge">🗺️ Mapa interactivo</span>
+        </div>
       </div>
     </div>
+    <a href="?refresh=1" target="_self" style="text-decoration:none">
+      <div style="background:linear-gradient(135deg,#3B6D11 0%,#4A8A16 100%);
+                  color:#FFFFFF;font-family:Outfit,sans-serif;font-weight:700;
+                  font-size:0.9rem;border-radius:10px;padding:12px 20px;
+                  text-align:center;cursor:pointer;
+                  box-shadow:0 2px 10px rgba(59,109,17,0.25);
+                  transition:all 0.22s ease;letter-spacing:0.3px">
+        🔄 Actualizar datos
+      </div>
+    </a>
   </div>
 
   <div class="hero-right">
-    <div style="flex:1;background:#FFFFFF;border:1px solid #E8E6DF;
+    <div style="background:#FFFFFF;border:1px solid #E8E6DF;
                 border-left:4px solid {borde_color};border-radius:0 14px 14px 0;
                 padding:18px 16px;text-align:center;
                 box-shadow:0 2px 8px rgba(0,0,0,0.06);
@@ -907,26 +919,13 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ── Botón pegado al card izquierdo ────────────────────────
-st.markdown("""
-<style>
-/* Eliminar margen automático de Streamlit entre elementos */
-.btn-row { margin-top:-12px !important; }
-.btn-row .stButton > button {
-  margin-top:0 !important;
-}
-</style>
-""", unsafe_allow_html=True)
+# Detectar clic en botón actualizar via query params
+if st.query_params.get("refresh") == "1":
+    st.query_params.clear()
+    st.cache_data.clear()
+    st.rerun()
 
-col_act, _ = st.columns([3.35, 1], gap="small")
-with col_act:
-    st.markdown('<div class="btn-row">', unsafe_allow_html=True)
-    if st.button("🔄 Actualizar datos", use_container_width=True):
-        st.cache_data.clear()
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-
-st.markdown("<div style='height:2px'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════
 tab_inicio, tab_mapa, tab_analisis, tab_bio, tab_alertas = st.tabs([
