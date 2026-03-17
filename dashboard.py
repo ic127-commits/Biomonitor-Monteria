@@ -379,6 +379,92 @@ def cargar_datos():
         fi = ex.submit(_fetch_ideam)
         return fc.result(), fa.result(), fi.result()
 
+@st.cache_data(ttl=86400)
+def obtener_fauna_gbif():
+    """Descarga fauna desde GBIF con nombres comunes en paralelo."""
+    NOMBRES_ES = {
+        "Iguana iguana":"Iguana verde","Boa constrictor":"Boa",
+        "Caiman crocodilus":"Babilla","Chelonoidis carbonarius":"Morrocoy",
+        "Trachemys callirostris":"Hicotea","Lygophis lineatus":"Culebra rayada",
+        "Leptotila verreauxi":"Paloma guarumera","Cairina moschata":"Pato real",
+        "Columbina talpacoti":"Tortolita rojiza","Jacana jacana":"Gallito de ciénaga",
+        "Ardea alba":"Garza blanca","Bubulcus ibis":"Garza del ganado",
+        "Coragyps atratus":"Gallinazo negro","Pitangus sulphuratus":"Bichofué",
+        "Thraupis episcopus":"Azulejo común","Ramphocelus dimidiatus":"Sangretoro",
+        "Dendrocygna autumnalis":"Pato viudo","Vanellus chilensis":"Pellar",
+        "Dasypus novemcinctus":"Armadillo de nueve bandas",
+        "Hydrochoerus hydrochaeris":"Chigüiro","Sciurus granatensis":"Ardilla roja",
+        "Rhinella marina":"Sapo marino","Heliconia psittacorum":"Heliconia de loro",
+        "Heliconia bihai":"Heliconia roja","Guazuma ulmifolia":"Guácimo",
+        "Polybia emaciata":"Avispa social","Menemerus bivittatus":"Araña saltarina gris",
+        "Sakesphorus canadensis":"Batará barrado","Phalacrocorax brasilianus":"Cormorán neotropical",
+    }
+
+    def _nombre_com_gbif(sp_key, especie):
+        if not sp_key:
+            return NOMBRES_ES.get(especie, "—")
+        try:
+            r = requests.get(
+                f"https://api.gbif.org/v1/species/{sp_key}/vernacularNames",
+                params={"limit": 20}, timeout=4
+            ).json()
+            for item in r.get("results", []):
+                if item.get("language","").lower() in ("spa","es","spanish"):
+                    n = item.get("vernacularName","").strip()
+                    if n: return n.capitalize()
+            for item in r.get("results", []):
+                if item.get("language","").lower() in ("eng","en","english"):
+                    n = item.get("vernacularName","").strip()
+                    if n: return n.capitalize()
+        except Exception:
+            pass
+        return NOMBRES_ES.get(especie, "—")
+
+    try:
+        r = requests.get(
+            "https://api.gbif.org/v1/occurrence/search",
+            params={"stateProvince":"Córdoba","country":"CO",
+                    "mediaType":"StillImage","hasCoordinate":"true","limit":100},
+            timeout=12
+        ).json()
+        registros, vistos = [], set()
+        for rec in r.get("results", []):
+            sp = rec.get("species")
+            if not sp or sp in vistos: continue
+            vistos.add(sp)
+            img = next((m["identifier"] for m in rec.get("media",[])
+                       if "identifier" in m and m.get("type","")=="StillImage"), None)
+            if img is None:
+                img = next((m["identifier"] for m in rec.get("media",[])
+                           if "identifier" in m), None)
+            registros.append({
+                "especie":sp,"clase":rec.get("class","—"),"orden":rec.get("order","—"),
+                "familia":rec.get("family","—"),"lat":rec.get("decimalLatitude"),
+                "lon":rec.get("decimalLongitude"),
+                "fecha":(rec.get("eventDate","—")[:10] if rec.get("eventDate") else "—"),
+                "imagen_url":img,"estado":rec.get("iucnRedListCategory","No evaluado"),
+                "gbif_key":str(rec.get("speciesKey","")),
+            })
+
+        def _resolver(reg):
+            sp = reg["especie"]
+            n = NOMBRES_ES.get(sp)
+            return n if n else _nombre_com_gbif(reg["gbif_key"], sp)
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
+            nombres = list(ex.map(_resolver, registros))
+
+        fauna = []
+        for reg, nom in zip(registros, nombres):
+            reg["nombre_com"] = nom
+            fauna.append(reg)
+
+        if fauna:
+            return pd.DataFrame(fauna), True
+        return None, False
+    except Exception:
+        return None, False
+
 
 def nivel_rio(lluvia_7d, base=4.2):
     """Simula predicción LSTM del nivel del río dado lluvia acumulada.
