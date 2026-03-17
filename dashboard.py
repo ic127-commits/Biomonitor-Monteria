@@ -699,37 +699,107 @@ def obtener_cauce_sinu():
     """Retorna el cauce real del Río Sinú trazado en geojson.io."""
     return None  # Siempre usa CAUCE_SINU_FALLBACK (coordenadas reales verificadas)
 
-# ── Lista global de universidades (usada en mapa normal y expandido) ──
-UNIVERSIDADES_GLOBAL = [
-    (8.7454, -75.8888, "🎓 Universidad del Sinú",
-     "Cra. 1W #38-153, Barrio Juan XXIII", "Institución privada · ~8,000 estudiantes"),
-    (8.7963, -75.8805, "🎓 Universidad de Córdoba",
-     "Cra. 6 #77-305, Montería", "Universidad pública · ~15,000 estudiantes"),
-    (8.8143, -75.8805, "🎓 Universidad Pontificia Bolivariana",
-     "Cra. 6 #97A-99, Montería", "Institución privada · sede Montería"),
-    (8.7846, -75.8805, "🎓 Universidad Luis Amigó",
-     "Cl. 64 #6-108, Montería", "Institución privada · sede Montería"),
-    (8.7738, -75.8805, "🎓 Universidad Cooperativa de Colombia",
-     "Cl. 52 #6-79, Montería", "Institución privada · sede Montería"),
-    (8.7540, -75.8822, "🎓 CUN",
-     "Cra. 4 #30-20, Montería", "Corporación Unificada Nacional"),
-    (8.7864, -75.8814, "🎓 Politécnico Gran Colombiano",
-     "Cl. 66 #5-70 Local 103, Montería", "Institución privada · sede Montería"),
-    (8.7513, -75.8822, "🎓 Uniremington",
-     "Cl. 27 #4-31, Montería", "Corporación Universitaria Remington"),
-    (8.7567, -75.8805, "🏫 Colegio San Agustín",
-     "Cra. 6 #33-02, Centro, Montería", "Institución educativa San Agustín"),
-]
+# ── Lugares con dirección exacta verificada ──────────────
+# Geocodificados con Geoapify en tiempo de ejecución
+# Si falla la API usa coordenadas de respaldo calculadas
 
-# ── Centros comerciales verificados ───────────────────────
-CC_GLOBAL = [
-    (8.7882, -75.8805, "🛍️ C.C. Buenavista",
-     "Cra. 6 #68-72, Montería", "Centro comercial principal de Montería"),
-    (8.7531, -75.8814, "🛍️ C.C. Nuestro",
-     "Tv. 29 #29-69, Montería", "Centro comercial Nuestro"),
-    (8.7666, -75.8772, "🛍️ C.C. Alamedas",
-     "Cl. 44 #10-91, Montería", "Centro comercial Alamedas del Sinú"),
-]
+@st.cache_data(ttl=604800)
+def geocodificar_lugares():
+    """Geocodifica los lugares con direcciones exactas usando Geoapify."""
+    GEOAPIFY_KEY = st.secrets.get("GEOAPIFY_KEY", "c2e2caf4d58643f7a8113aa355ed2356")
+
+    lugares_raw = [
+        # (nombre, dirección_exacta, info, tipo, lat_fallback, lon_fallback)
+        ("🎓 Universidad del Sinú",
+         "Carrera 1W 38-153 Montería Córdoba Colombia",
+         "Institución privada · ~8,000 estudiantes", "univ",
+         8.7454, -75.8888),
+        ("🎓 Universidad de Córdoba",
+         "Carrera 6 77-305 Montería Córdoba Colombia",
+         "Universidad pública · ~15,000 estudiantes", "univ",
+         8.7580, -75.8610),
+        ("🎓 Universidad Pontificia Bolivariana",
+         "Carrera 6 97A-99 Montería Córdoba Colombia",
+         "Institución privada · sede Montería", "univ",
+         8.7750, -75.8610),
+        ("🎓 Universidad Luis Amigó",
+         "Calle 64 6-108 Montería Córdoba Colombia",
+         "Institución privada · sede Montería", "univ",
+         8.7626, -75.8750),
+        ("🎓 Universidad Cooperativa de Colombia",
+         "Calle 52 6-79 Montería Córdoba Colombia",
+         "Institución privada · sede Montería", "univ",
+         8.7518, -75.8750),
+        ("🎓 CUN Montería",
+         "Carrera 4 30-20 Montería Córdoba Colombia",
+         "Corporación Unificada Nacional", "univ",
+         8.7540, -75.8831),
+        ("🎓 Politécnico Gran Colombiano",
+         "Calle 66 5-70 Montería Córdoba Colombia",
+         "Institución privada · sede Montería", "univ",
+         8.7636, -75.8814),
+        ("🎓 Uniremington",
+         "Calle 27 4-31 Montería Córdoba Colombia",
+         "Corporación Universitaria Remington", "univ",
+         8.7513, -75.8831),
+        ("🏫 Colegio San Agustín",
+         "Carrera 6 33-02 Centro Montería Córdoba Colombia",
+         "Institución educativa San Agustín", "univ",
+         8.7567, -75.8805),
+        ("🛍️ C.C. Buenavista",
+         "Carrera 6 68-72 Montería Córdoba Colombia",
+         "Centro comercial principal de Montería", "cc",
+         8.7636, -75.8805),
+        ("🛍️ C.C. Nuestro",
+         "Transversal 29 29-69 Montería Córdoba Colombia",
+         "Centro comercial Nuestro", "cc",
+         8.7531, -75.8814),
+        ("🛍️ C.C. Alamedas",
+         "Calle 44 10-91 Montería Córdoba Colombia",
+         "Centro comercial Alamedas del Sinú", "cc",
+         8.7576, -75.8750),
+    ]
+
+    resultados_univ = []
+    resultados_cc   = []
+
+    for nombre, direccion, info, tipo, lat_fb, lon_fb in lugares_raw:
+        lat, lon = lat_fb, lon_fb  # usar fallback por defecto
+        try:
+            r = requests.get(
+                "https://api.geoapify.com/v1/geocode/search",
+                params={
+                    "text":   direccion,
+                    "apiKey": GEOAPIFY_KEY,
+                    "limit":  3,
+                    "lang":   "es",
+                    "filter": "rect:-76.20,8.50,-75.60,9.00",
+                },
+                timeout=8
+            ).json()
+            feats = r.get("features", [])
+            if feats:
+                # Tomar el resultado con mayor confianza
+                best = max(feats,
+                    key=lambda f: f.get("properties",{}).get("rank",{}).get("confidence",0))
+                c = best["geometry"]["coordinates"]
+                lat_r, lon_r = float(c[1]), float(c[0])
+                # Solo usar si está dentro del bbox de Montería
+                if 8.60 <= lat_r <= 9.00 and -76.10 <= lon_r <= -75.70:
+                    lat, lon = lat_r, lon_r
+        except Exception:
+            pass  # usar fallback
+
+        entrada = (lat, lon, nombre, direccion.replace(" Colombia","").replace(" Córdoba",""), info)
+        if tipo == "univ":
+            resultados_univ.append(entrada)
+        else:
+            resultados_cc.append(entrada)
+
+    return resultados_univ, resultados_cc
+
+# Geocodificar al cargar (cacheado 7 días)
+UNIVERSIDADES_GLOBAL, CC_GLOBAL = geocodificar_lugares()
 
 # ══════════════════════════════════════════════════════════
 # ── MAPA PROFESIONAL ─────────────────────────────────────
