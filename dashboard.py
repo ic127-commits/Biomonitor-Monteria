@@ -719,7 +719,18 @@ aqi_txt, aqi_badge = cat_aqi(aire["aqi"])
 # ══════════════════════════════════════════════════════════
 # ── HEADER ────────────────────────────────────────────────
 # ══════════════════════════════════════════════════════════
-st.markdown("<div style='height:2px'></div>", unsafe_allow_html=True)
+st.markdown("""
+<div style="padding:14px 0 10px 0;animation:fadeInUp 0.3s ease both">
+  <div style="font-family:'Outfit',sans-serif;font-size:1.65rem;font-weight:900;
+              color:#3B6D11;letter-spacing:-0.5px;line-height:1;margin-bottom:3px">
+    🌿 BioMonitor Montería
+  </div>
+  <div style="font-size:0.75rem;color:#888780;font-weight:600;
+              letter-spacing:1.2px;text-transform:uppercase">
+    Monitoreo Ambiental en Tiempo Real &nbsp;·&nbsp; Córdoba, Colombia
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
 col_hero, col_estado = st.columns([3, 1], gap="medium")
 
@@ -736,9 +747,9 @@ with col_hero:
         pass
 
     if logo_b64:
-        logo_html = f'<img src="data:image/png;base64,{logo_b64}" style="width:180px;height:180px;object-fit:contain;flex-shrink:0;border-radius:12px">'
+        logo_html = f'<img src="data:image/png;base64,{logo_b64}" style="width:200px;height:200px;object-fit:contain;flex-shrink:0;border-radius:12px">'
     else:
-        logo_html = '<div style="width:180px;height:180px;background:linear-gradient(135deg,#EAF3DE,#E0EFCE);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:4rem;flex-shrink:0">🌿</div>'
+        logo_html = '<div style="width:200px;height:200px;background:linear-gradient(135deg,#EAF3DE,#E0EFCE);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:4.5rem;flex-shrink:0">🌿</div>'
 
     st.markdown(f"""
     <div style="display:flex;align-items:center;gap:24px;
