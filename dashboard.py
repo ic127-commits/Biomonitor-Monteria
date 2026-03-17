@@ -1239,19 +1239,21 @@ st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
 col_hero, col_estado = st.columns([3, 1], gap="medium")
 
 with col_hero:
-    # Cargar logo
+    # ── Card título con logo ──────────────────────────────
     try:
         logo_img = Image.open("Biomotorlogo.png")
-        col_logo_img, col_hero_txt = st.columns([0.18, 1], gap="small")
+        col_logo_img, col_hero_txt = st.columns([0.22, 1], gap="small")
         with col_logo_img:
-            st.image(logo_img, width=130)
+            st.image(logo_img, width=155)
         with col_hero_txt:
             st.markdown("""
-            <div style="padding:4px 0 0 4px">
-                <div style="font-size:1.4rem;font-weight:700;color:#2C2C2A;line-height:1.2">
+            <div style="background:#FFFFFF;border:0.5px solid #D3D1C7;
+                        border-radius:12px;padding:16px 20px;height:100%;
+                        display:flex;flex-direction:column;justify-content:center">
+                <div style="font-size:1.55rem;font-weight:700;color:#2C2C2A;line-height:1.2">
                     BioMonitor Montería
                 </div>
-                <div style="font-size:0.82rem;color:#888780;margin-top:2px">
+                <div style="font-size:0.85rem;color:#5F5E5A;margin-top:4px">
                     Plataforma de monitoreo ambiental · Córdoba, Colombia
                 </div>
             </div>""", unsafe_allow_html=True)
@@ -1259,6 +1261,9 @@ with col_hero:
         st.markdown("""
         <div class="hero-banner">
             <div class="hero-title">🌿 BioMonitor Montería</div>
+            <div style="font-size:0.85rem;color:#5F5E5A">
+                Plataforma de monitoreo ambiental · Córdoba, Colombia
+            </div>
         </div>""", unsafe_allow_html=True)
 
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
@@ -1642,16 +1647,32 @@ with tab_mapa:
     col_mapa, col_pred = st.columns([1.35, 1], gap="small")
     
     with col_mapa:
-        tipo = st.radio(
-            "Capa del mapa",
-            ["🗺️ Estándar", "🛰️ Satelital", "🌑 Oscuro"],
-            horizontal=True,
-            label_visibility="collapsed"
-        )
-        if tipo == "🛰️ Satelital":
+        # Selector de capa — botones siempre visibles (el radio de Streamlit no muestra texto bien)
+        if "mapa_tipo" not in st.session_state:
+            st.session_state.mapa_tipo = "Estándar"
+
+        btn1, btn2, btn3, _ = st.columns([1.1, 1.1, 1, 3], gap="small")
+        with btn1:
+            if st.button("🗺️ Estándar",  use_container_width=True,
+                         type="primary" if st.session_state.mapa_tipo=="Estándar" else "secondary"):
+                st.session_state.mapa_tipo = "Estándar"
+                st.rerun()
+        with btn2:
+            if st.button("🛰️ Satelital", use_container_width=True,
+                         type="primary" if st.session_state.mapa_tipo=="Satelital" else "secondary"):
+                st.session_state.mapa_tipo = "Satelital"
+                st.rerun()
+        with btn3:
+            if st.button("🌑 Oscuro",    use_container_width=True,
+                         type="primary" if st.session_state.mapa_tipo=="Oscuro" else "secondary"):
+                st.session_state.mapa_tipo = "Oscuro"
+                st.rerun()
+
+        tipo = st.session_state.mapa_tipo
+        if tipo == "Satelital":
             tiles = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
             attr  = "Tiles © Esri"
-        elif tipo == "🌑 Oscuro":
+        elif tipo == "Oscuro":
             tiles, attr = "CartoDB dark_matter", "© CartoDB"
         else:
             tiles, attr = "OpenStreetMap", "© OpenStreetMap contributors"
