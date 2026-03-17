@@ -1073,36 +1073,67 @@ with col_mapa:
 
     st_folium(m, width=None, height=450, returned_objects=[])
 
-    # ── Botón expandir mapa ────────────────────────────────
-    if st.button("🔲 Expandir mapa completo", use_container_width=True):
-        st.session_state.mapa_expandido = not st.session_state.get("mapa_expandido", False)
-        st.rerun()
+with col_pred:
+    st.markdown('<div class="section-header">🌊 Predicción 7 días · LSTM</div>', unsafe_allow_html=True)
 
-# ── Mapa expandido (superpuesto) ───────────────────────────
-if st.session_state.get("mapa_expandido", False):
-    st.markdown("""
-    <div style="position:fixed;top:0;left:0;width:100vw;height:100vh;
-                background:#060d1a;z-index:99999;padding:10px">
-    """, unsafe_allow_html=True)
-    col_close, _ = st.columns([1, 5])
-    with col_close:
-        if st.button("✖ Cerrar mapa", key="cerrar_mapa"):
-            st.session_state.mapa_expandido = False
-            st.rerun()
-    # Renderizar mapa grande
-    m2 = folium.Map(location=[8.7560, -75.8814], zoom_start=13,
-                    tiles="OpenStreetMap", attr="© OpenStreetMap contributors")
-    _cauce2 = obtener_cauce_sinu() or CAUCE_SINU_FALLBACK
-    folium.PolyLine(_cauce2, color="#4FC3F7", weight=5, opacity=0.9,
-                    tooltip="Río Sinú").add_to(m2)
-    for lat, lon, nombre, direccion, info in UNIVERSIDADES_GLOBAL:
-        folium.Marker([lat, lon],
-            popup=folium.Popup(f"<b>{nombre}</b><br>📍 {direccion}<br>ℹ️ {info}", max_width=240),
-            tooltip=nombre,
-            icon=folium.Icon(color="orange", icon="graduation-cap", prefix="fa")
-        ).add_to(m2)
-    st_folium(m2, width=None, height=700, returned_objects=[])
-    st.markdown("</div>", unsafe_allow_html=True)
+    fig, ax = plt.subplots(figsize=(5.5, 3.8))
+    fig.patch.set_facecolor("#0d1b2e")
+    ax.set_facecolor("#0d1b2e")
+    bar_colors = [
+        "#00E5C3" if n < 4.0 else
+        "#FFD600" if n < 5.5 else
+        "#FF9800" if n < 7.0 else "#FF5252"
+        for n in niveles
+    ]
+    bars = ax.bar(dias, niveles, color=bar_colors, alpha=0.88,
+                  width=0.55, edgecolor="#1a2a3e", linewidth=0.6)
+    ax.fill_between(range(len(niveles)), niveles, alpha=0.07, color="#00E5C3")
+    ax.plot(range(len(niveles)), niveles, color="#00E5C3", linewidth=1.2,
+            alpha=0.5, linestyle="--", marker="o", markersize=3)
+    ax.axhline(y=4.0, color="#FFD600", linestyle="--", linewidth=1.2, alpha=0.6, label="Amarilla (4m)")
+    ax.axhline(y=5.5, color="#FF9800", linestyle="--", linewidth=1.2, alpha=0.6, label="Naranja (5.5m)")
+    ax.axhline(y=7.0, color="#FF5252", linestyle="--", linewidth=1.2, alpha=0.6, label="Roja (7m)")
+    ax.set_ylabel("Nivel (m)", color="#5a7a9a", fontsize=9)
+    ax.set_ylim(0, 9)
+    ax.tick_params(colors="#5a7a9a", labelsize=8)
+    for spine in ax.spines.values(): spine.set_color("#1a2a3e")
+    ax.set_xticks(range(len(dias)))
+    ax.set_xticklabels(dias, fontsize=7.5, color="#5a7a9a", rotation=15)
+    ax.grid(axis="y", color="#1a2a3e", linewidth=0.6, linestyle=":")
+    ax.legend(fontsize=7.5, facecolor="#0d1b2e", labelcolor="#5a7a9a",
+              framealpha=0.85, loc="upper right")
+    for bar, val in zip(bars, niveles):
+        ax.text(bar.get_x() + bar.get_width()/2, val + 0.13,
+                f"{val}m", ha="center", va="bottom",
+                color="white", fontsize=7.5, fontweight="bold")
+    plt.tight_layout(pad=0.6)
+    st.pyplot(fig)
+    plt.close()
+
+    if "Normal" in rio_txt:     st.success(f"🟢 {rio_txt} — Nivel en rango seguro")
+    elif "Amarilla" in rio_txt: st.warning(f"🟡 {rio_txt} — Monitorear de cerca")
+    elif "Naranja" in rio_txt:  st.warning(f"🟠 {rio_txt} — Precaución zonas bajas")
+    else:                       st.error(f"🔴 {rio_txt} — ¡Alerta máxima!")
+
+    prob_hoy_pred = clima.get("prob_lluvia", [0])[0] if clima.get("prob_lluvia") else 0
+    st.markdown(f"""
+    <div class="stat-row">
+        🌧️ Lluvia hoy: <b style="color:#e8f4ff">{clima['lluvia_hoy']} mm</b> &nbsp;·&nbsp;
+        🌂 Prob.: <b style="color:#4FC3F7">{prob_hoy_pred}%</b> &nbsp;·&nbsp;
+        💨 Viento: <b style="color:#e8f4ff">{clima['viento']} km/h</b> &nbsp;·&nbsp;
+        🌡️ Máx: <b style="color:#e8f4ff">{clima['temp_max'][0]}°C</b><br>
+        <small style="color:#3a5a7a">{fuente_rio}</small>
+    </div>""", unsafe_allow_html=True)
+
+    st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
+    df_niveles = pd.DataFrame({
+        "Día":    dias,
+        "Nivel":  [f"{n} m" for n in niveles],
+        "Estado": [alerta_rio(n)[0] for n in niveles]
+    })
+    st.dataframe(df_niveles, use_container_width=True, hide_index=True, height=210)
+
+st.markdown("<hr style='border:1px solid rgba(0,229,195,0.1);margin:14px 0'>", unsafe_allow_html=True)
 
 # ── Panel de alertas de inundación ────────────────────────
 nivel_actual = niveles[0]
