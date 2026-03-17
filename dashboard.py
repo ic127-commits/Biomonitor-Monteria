@@ -29,239 +29,233 @@ st.set_page_config(
 # ── CSS ───────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+/* ── Paleta base: gris cálido, verde natural, sin neón ── */
+/* Fondo:   #EDECEA (gris cálido)                         */
+/* Cards:   #FFFFFF                                        */
+/* Texto:   #2C2C2A (casi negro)                          */
+/* Muted:   #5F5E5A                                        */
+/* Verde:   #3B6D11 (color principal)                     */
+/* Azul:    #185FA5 (secundario informativo)               */
+/* Ámbar:   #854F0B (advertencia)                         */
+/* Rojo:    #A32D2D (peligro)                             */
 
 html, body, [data-testid="stAppViewContainer"] {
-    background-color: #060d1a !important;
+    background-color: #EDECEA !important;
+    font-family: 'Inter', sans-serif;
 }
-.main { background-color: #060d1a; }
+.main { background-color: #EDECEA; }
 .block-container {
-    padding-top:2rem !important;
+    padding-top:1.5rem !important;
     padding-left:2rem !important;
     padding-right:2rem !important;
-    max-width: 1400px;
+    max-width:1400px;
 }
 
-/* Hero */
-.hero-sub { color:#5a7a9a; font-size:1rem; line-height:1.6; margin:0; }
+/* ── Hero ────────────────────────────────────────────── */
+.hero-banner {
+    background:#FFFFFF;
+    border:0.5px solid #D3D1C7;
+    border-radius:14px;
+    padding:20px 24px;
+    margin-bottom:18px;
+    border-left:4px solid #3B6D11;
+    border-radius: 0 14px 14px 0;
+}
+.hero-title {
+    font-size:1.3rem;
+    font-weight:700;
+    color:#2C2C2A;
+    margin:0 0 4px 0;
+}
+.hero-sub {
+    font-size:0.88rem;
+    color:#5F5E5A;
+    line-height:1.55;
+    margin:0;
+}
 .hero-badge {
     display:inline-block;
-    background:rgba(0,229,195,0.1);
-    border:1px solid rgba(0,229,195,0.3);
-    color:#00E5C3;
-    padding:3px 12px;
+    background:#EAF3DE;
+    border:0.5px solid #97C459;
+    color:#3B6D11;
+    padding:3px 10px;
     border-radius:20px;
-    font-size:0.75rem;
+    font-size:0.72rem;
     font-weight:600;
-    letter-spacing:1px;
-    text-transform:uppercase;
+    letter-spacing:0.5px;
     margin-right:6px;
-    margin-top:4px;
+    margin-top:6px;
 }
 
-/* KPI Cards */
+/* ── Estado general (pill top) ───────────────────────── */
+.estado-ok   { background:#EAF3DE; color:#3B6D11; border:0.5px solid #97C459; }
+.estado-warn { background:#FAEEDA; color:#633806; border:0.5px solid #EF9F27; }
+.estado-alert{ background:#FCEBEB; color:#791F1F; border:0.5px solid #F09595; }
+
+/* ── KPI Cards ───────────────────────────────────────── */
 .kpi-card {
-    background:linear-gradient(135deg,#0d1b2e,#0a1628);
-    border:1px solid rgba(0,229,195,0.15);
-    border-radius:16px;
-    padding:18px 20px;
+    background:#FFFFFF;
+    border:0.5px solid #D3D1C7;
+    border-radius:12px;
+    padding:16px 18px;
     position:relative;
     overflow:hidden;
     margin-bottom:10px;
-    min-height: 120px;
+    min-height:110px;
 }
 .kpi-card::before {
     content:'';
     position:absolute;
     top:0; left:0;
     width:4px; height:100%;
-    background:linear-gradient(180deg,#00E5C3,#4FC3F7);
-    border-radius:4px 0 0 4px;
+    background:#3B6D11;
+    border-radius:2px 0 0 2px;
 }
-.kpi-card-red::before    { background:linear-gradient(180deg,#FF5252,#FF9800); }
-.kpi-card-blue::before   { background:linear-gradient(180deg,#4FC3F7,#7B61FF); }
-.kpi-card-green::before  { background:linear-gradient(180deg,#00E5C3,#69F0AE); }
-.kpi-card-purple::before { background:linear-gradient(180deg,#7B61FF,#E040FB); }
+.kpi-card-red::before    { background:#A32D2D; }
+.kpi-card-blue::before   { background:#185FA5; }
+.kpi-card-green::before  { background:#3B6D11; }
+.kpi-card-purple::before { background:#534AB7; }
+.kpi-card-warn::before   { background:#854F0B; }
 
 .kpi-label {
-    font-size:0.7rem;
-    color:#5a7a9a;
+    font-size:0.68rem;
+    color:#888780;
     text-transform:uppercase;
-    letter-spacing:1.5px;
+    letter-spacing:1px;
     font-weight:600;
-    margin-bottom:6px;
+    margin-bottom:5px;
 }
-.kpi-value    { font-size:2rem;  font-weight:800; color:#e8f4ff; line-height:1; margin-bottom:8px; }
-.kpi-value-sm { font-size:1.4rem; font-weight:700; color:#e8f4ff; line-height:1; margin-bottom:8px; }
+.kpi-value    { font-size:1.85rem; font-weight:700; color:#2C2C2A; line-height:1; margin-bottom:7px; }
+.kpi-value-sm { font-size:1.35rem; font-weight:600; color:#2C2C2A; line-height:1; margin-bottom:7px; }
 
-/* Badges */
-.badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:600; }
-.badge-green  { background:rgba(0,229,195,0.15);  color:#00E5C3; border:1px solid rgba(0,229,195,0.3); }
-.badge-yellow { background:rgba(255,214,0,0.15);  color:#FFD600; border:1px solid rgba(255,214,0,0.3); }
-.badge-red    { background:rgba(255,82,82,0.15);  color:#FF5252; border:1px solid rgba(255,82,82,0.3); }
-.badge-blue   { background:rgba(79,195,247,0.15); color:#4FC3F7; border:1px solid rgba(79,195,247,0.3); }
-.badge-purple { background:rgba(123,97,255,0.15); color:#7B61FF; border:1px solid rgba(123,97,255,0.3); }
+/* ── Badges ──────────────────────────────────────────── */
+.badge { display:inline-block; padding:3px 9px; border-radius:20px; font-size:0.72rem; font-weight:600; }
+.badge-green  { background:#EAF3DE; color:#27500A; border:0.5px solid #97C459; }
+.badge-yellow { background:#FAEEDA; color:#633806; border:0.5px solid #EF9F27; }
+.badge-red    { background:#FCEBEB; color:#791F1F; border:0.5px solid #F09595; }
+.badge-blue   { background:#E6F1FB; color:#0C447C; border:0.5px solid #85B7EB; }
+.badge-purple { background:#EEEDFE; color:#3C3489; border:0.5px solid #AFA9EC; }
 
+/* ── Section headers ─────────────────────────────────── */
 .section-header {
-    font-size:1.05rem;
+    font-size:0.95rem;
     font-weight:700;
-    color:#4FC3F7;
-    letter-spacing:0.5px;
-    margin-bottom:14px;
+    color:#2C2C2A;
+    margin-bottom:12px;
     display:flex;
     align-items:center;
     gap:8px;
-}
-.section-header::after {
-    content:'';
-    flex:1;
-    height:1px;
-    background:linear-gradient(90deg,rgba(79,195,247,0.3),transparent);
+    padding-bottom:8px;
+    border-bottom:1.5px solid #EAF3DE;
 }
 
-.fuente-tag { font-size:0.68rem; color:#3a5a7a; margin-top:4px; }
+/* ── Cards genéricas ─────────────────────────────────── */
+.info-card {
+    background:#FFFFFF;
+    border:0.5px solid #D3D1C7;
+    border-radius:12px;
+    padding:14px 18px;
+    margin-bottom:10px;
+    font-size:0.82rem;
+    color:#444441;
+    line-height:1.55;
+}
+.info-card b { color:#2C2C2A; }
+
+/* ── Stat row ────────────────────────────────────────── */
 .stat-row {
-    background:rgba(0,229,195,0.05);
-    border:1px solid rgba(0,229,195,0.1);
+    background:#F1EFE8;
+    border:0.5px solid #D3D1C7;
     border-radius:10px;
     padding:10px 14px;
     margin-top:8px;
-    font-size:0.82rem;
-    color:#5a7a9a;
+    font-size:0.81rem;
+    color:#5F5E5A;
 }
 
-/* Copyright fijo */
+/* ── Fuente tag ──────────────────────────────────────── */
+.fuente-tag { font-size:0.67rem; color:#888780; margin-top:4px; }
+
+/* ── Copyright ───────────────────────────────────────── */
 .copyright {
     position:fixed;
-    bottom:10px;
-    right:16px;
-    color:#2a4a6a;
-    font-size:0.72rem;
+    bottom:10px; right:16px;
+    color:#B4B2A9;
+    font-size:0.7rem;
     z-index:9999;
 }
 
-/* Botones */
+/* ── Botones ─────────────────────────────────────────── */
 .stButton > button {
-    background:linear-gradient(135deg,#00E5C3,#4FC3F7) !important;
-    color:#060d1a !important;
-    font-weight:700 !important;
+    background:#3B6D11 !important;
+    color:#FFFFFF !important;
+    font-weight:600 !important;
     border:none !important;
-    border-radius:10px !important;
-    transition: opacity 0.2s;
+    border-radius:9px !important;
+    transition:background 0.2s;
 }
-.stButton > button:hover { opacity: 0.88; }
+.stButton > button:hover { background:#27500A !important; }
 
-/* Ocultar footer y menú */
+/* ── Ocultar footer ──────────────────────────────────── */
 footer { visibility:hidden; }
 #MainMenu { visibility:hidden; }
 
-/* Dataframe */
-.stDataFrame { border-radius: 12px; overflow: hidden; }
+/* ── Dataframe ───────────────────────────────────────── */
+.stDataFrame { border-radius:10px; overflow:hidden; }
 
-/* Expander */
+/* ── Expander ────────────────────────────────────────── */
 .streamlit-expanderHeader {
-    background: rgba(0,229,195,0.05) !important;
-    border: 1px solid rgba(0,229,195,0.15) !important;
-    border-radius: 10px !important;
-    color: #4FC3F7 !important;
-    font-weight: 600 !important;
+    background:#F1EFE8 !important;
+    border:0.5px solid #D3D1C7 !important;
+    border-radius:10px !important;
+    color:#2C2C2A !important;
+    font-weight:600 !important;
 }
 
-/* Radio */
-.stRadio > div { gap: 8px !important; }
-.stRadio label { color: #5a7a9a !important; font-size: 0.85rem !important; }
+/* ── Radio / selectbox ───────────────────────────────── */
+.stRadio > div { gap:8px !important; }
+.stRadio label { color:#444441 !important; font-size:0.85rem !important; }
 
-/* ══ RESPONSIVE MÓVIL ══════════════════════════════════ */
+/* ── Matplotlib fondo ────────────────────────────────── */
+/* Los gráficos matplotlib se adaptan al nuevo tema */
 
-/* Tablet (≤900px) */
+/* ── Responsive ──────────────────────────────────────── */
 @media (max-width:900px) {
     .block-container { padding-left:1rem !important; padding-right:1rem !important; }
-    .kpi-value { font-size:1.6rem !important; }
-    .hero-sub  { font-size:0.88rem !important; }
+    .kpi-value { font-size:1.5rem !important; }
 }
-
-/* Móvil (≤768px) — breakpoint principal */
 @media (max-width:768px) {
-
-    /* Padding mínimo */
     .block-container {
-        padding-top:1rem !important;
+        padding-top:0.8rem !important;
         padding-left:0.6rem !important;
         padding-right:0.6rem !important;
     }
-
-    /* KPI cards: 2 columnas en móvil */
-    .kpi-value    { font-size:1.35rem !important; }
-    .kpi-value-sm { font-size:1.1rem  !important; }
-    .kpi-label    { font-size:0.62rem !important; letter-spacing:1px !important; }
-    .kpi-card     { min-height:auto !important; padding:12px 14px !important; margin-bottom:8px !important; }
-
-    /* Forzar columnas Streamlit a apilarse */
+    .kpi-value    { font-size:1.25rem !important; }
+    .kpi-value-sm { font-size:1.05rem !important; }
+    .kpi-label    { font-size:0.6rem  !important; }
+    .kpi-card     { min-height:auto   !important; padding:11px 13px !important; }
     [data-testid="column"] { min-width:100% !important; }
-
-    /* Hero badges: wrap */
-    .hero-badge { font-size:0.65rem !important; padding:2px 8px !important; margin-bottom:4px !important; }
-    .hero-sub   { font-size:0.82rem !important; }
-
-    /* Section headers más compactos */
-    .section-header { font-size:0.9rem !important; }
-
-    /* Stat row */
-    .stat-row { font-size:0.76rem !important; }
-
-    /* Copyright oculto en móvil (ocupa espacio) */
-    .copyright { display:none !important; }
-
-    /* Botones más grandes para touch */
-    .stButton > button {
-        min-height:44px !important;
-        font-size:0.9rem !important;
-    }
-
-    /* Badges más pequeños */
-    .badge { font-size:0.68rem !important; padding:2px 7px !important; }
-
-    /* Radio horizontal → apilado */
+    .hero-title   { font-size:1.1rem  !important; }
+    .hero-sub     { font-size:0.8rem  !important; }
+    .section-header { font-size:0.85rem !important; }
+    .stat-row     { font-size:0.74rem !important; }
+    .copyright    { display:none !important; }
+    .stButton > button { min-height:44px !important; }
+    .badge        { font-size:0.66rem !important; }
     .stRadio > div { flex-direction:column !important; gap:4px !important; }
-
-    /* Expander header */
-    .streamlit-expanderHeader { font-size:0.85rem !important; }
-
-    /* Galería: 2 cols en móvil */
-    .galeria-grid { grid-template-columns: repeat(2, 1fr) !important; }
-
-    /* Dataframe scroll horizontal */
-    .stDataFrame { overflow-x:auto !important; }
-
-    /* Fuente tag */
-    .fuente-tag { font-size:0.62rem !important; }
+    .galeria-grid { grid-template-columns:repeat(2,1fr) !important; }
+    .stDataFrame  { overflow-x:auto !important; }
 }
-
-/* Móvil pequeño (≤480px) */
 @media (max-width:480px) {
-    .block-container {
-        padding-left:0.3rem !important;
-        padding-right:0.3rem !important;
-    }
-    .kpi-value    { font-size:1.1rem !important; }
-    .kpi-label    { font-size:0.58rem !important; }
-    .section-header { font-size:0.82rem !important; }
-    .hero-sub { font-size:0.75rem !important; }
-    .stButton > button { font-size:0.82rem !important; }
-    /* Mapa y predicción apilados en móvil pequeño */
+    .block-container { padding-left:0.3rem !important; padding-right:0.3rem !important; }
+    .kpi-value    { font-size:1.05rem !important; }
+    .kpi-label    { font-size:0.56rem !important; }
+    .section-header { font-size:0.8rem !important; }
     [data-testid="column"] { min-width:100% !important; }
 }
-
-/* Folium mapa: asegurar 100% ancho */
 .folium-map { width:100% !important; }
 iframe { max-width:100% !important; }
-
-/* LayerControl folium: no salirse de pantalla en móvil */
-.leaflet-control-layers {
-    max-height: 200px;
-    overflow-y: auto;
-    font-size: 11px !important;
-}
+.leaflet-control-layers { max-height:200px; overflow-y:auto; font-size:11px !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -514,10 +508,10 @@ def cat_aqi(aqi):
 _loading = st.empty()
 _loading.markdown("""
 <div style="text-align:center;padding:40px 0;">
-    <div style="color:#00E5C3;font-size:1.1rem;font-weight:700;margin-bottom:8px">
+    <div style="color:#3B6D11;font-size:1.1rem;font-weight:700;margin-bottom:8px">
         🌿 Cargando BioMonitor Montería…
     </div>
-    <div style="color:#5a7a9a;font-size:0.85rem">
+    <div style="color:#5F5E5A;font-size:0.85rem">
         Conectando con Open-Meteo · IDEAM · GBIF
     </div>
 </div>
@@ -560,80 +554,47 @@ aqi_txt, aqi_badge = cat_aqi(aire["aqi"])
 # ── HEADER ────────────────────────────────────────────────
 # ══════════════════════════════════════════════════════════
 
-col_logo, col_info, col_btns = st.columns([0.7, 2.5, 1], gap="small")
+col_hero, col_estado = st.columns([3, 1], gap="small")
 
-with col_logo:
-    try:
-        logo = Image.open("Biomotorlogo.png")
-        st.image(logo, use_container_width=True)
-    except Exception:
-        st.markdown('<h2 style="color:#00E5C3;margin:0">🌿 BioMonitor</h2>', unsafe_allow_html=True)
-        st.markdown('<p style="color:#5a7a9a;font-size:0.8rem;margin:0">Montería · Córdoba</p>', unsafe_allow_html=True)
-
-with col_info:
-    fuente_estado = "🟢 En vivo" if clima["ok"] else "🟡 Respaldo"
+with col_hero:
     st.markdown(f"""
-    <div style="display:flex;flex-direction:column;justify-content:center;height:100%;padding:8px 0">
-        <h3 style="color:#e8f4ff;margin:0 0 4px 0;font-size:1.35rem;font-weight:800;letter-spacing:-0.5px">
-            BioMonitor <span style="color:#00E5C3">Montería</span>
-        </h3>
-        <p class="hero-sub">Plataforma inteligente de monitoreo ambiental ·
-        Río Sinú · Calidad del aire · Biodiversidad · Córdoba, Colombia</p>
-        <div style="margin-top:10px">
-            <span class="hero-badge">🌿 Ambiental</span>
-            <span class="hero-badge">📡 Tiempo real</span>
-            <span class="hero-badge">🧬 Biodiversidad</span>
-            <span class="hero-badge">🌊 Río Sinú</span>
-            <span class="hero-badge" style="color:#FFD600;border-color:rgba(255,214,0,0.3);background:rgba(255,214,0,0.08)">
-                {fuente_estado}
-            </span>
+    <div class="hero-banner">
+        <div class="hero-title">🌿 BioMonitor Montería</div>
+        <div class="hero-sub">
+            Plataforma de monitoreo ambiental en tiempo real para Montería, Córdoba, Colombia.
+            Datos de calidad del aire, nivel del río Sinú y biodiversidad actualizados cada 15 minutos.
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+        <div style="margin-top:8px">
+            <span class="hero-badge">🌡️ Clima</span>
+            <span class="hero-badge">💨 Calidad del aire</span>
+            <span class="hero-badge">🌊 Río Sinú</span>
+            <span class="hero-badge">🦜 Biodiversidad</span>
+        </div>
+    </div>""", unsafe_allow_html=True)
 
-with col_btns:
-    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+with col_estado:
+    # Estado general basado en datos actuales
+    nivel_actual_hero = niveles[0] if niveles else 0
+    pm_actual_hero    = aire.get("pm25", 0)
+    if nivel_actual_hero >= 5.5 or pm_actual_hero >= 25:
+        estado_cls, estado_ico, estado_txt = "estado-alert", "🔴", "Atención requerida"
+    elif nivel_actual_hero >= 4.0 or pm_actual_hero >= 15:
+        estado_cls, estado_ico, estado_txt = "estado-warn",  "🟡", "Monitorear de cerca"
+    else:
+        estado_cls, estado_ico, estado_txt = "estado-ok",    "🟢", "Todo en orden"
+    hora_actual = datetime.now(TZ_COL).strftime("%H:%M")
+    st.markdown(f"""
+    <div class="kpi-card" style="text-align:center;padding:20px 14px;min-height:130px">
+        <div class="kpi-label">Estado general</div>
+        <div style="font-size:2.2rem;margin:6px 0">{estado_ico}</div>
+        <div style="font-size:0.9rem;font-weight:700;color:#2C2C2A">{estado_txt}</div>
+        <div style="font-size:0.7rem;color:#888780;margin-top:6px">Actualizado {hora_actual} COT</div>
+    </div>""", unsafe_allow_html=True)
+
     if st.button("🔄 Actualizar datos", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
 
-    st.markdown(f"""
-    <div style='text-align:center;font-size:0.73rem;color:#3a5a7a;
-                margin:6px 0;padding:5px 0;
-                border-top:1px solid rgba(0,229,195,0.08);
-                border-bottom:1px solid rgba(0,229,195,0.08)'>
-        Última actualización: <b style="color:#4FC3F7">{datetime.now(TZ_COL).strftime('%H:%M')}</b>
-        &nbsp;·&nbsp; {datetime.now(TZ_COL).strftime('%d/%m/%Y')}
-    </div>""", unsafe_allow_html=True)
-
-    # Toggle info
-    btn_label = "🔼 Ocultar info" if st.session_state.show_info else "ℹ️ ¿Qué es BioMonitor?"
-    if st.button(btn_label, use_container_width=True):
-        st.session_state.show_info = not st.session_state.show_info
-        st.rerun()
-
-# Panel informativo desplegable
-if st.session_state.show_info:
-    st.markdown("""
-    <div style="background:linear-gradient(135deg,#0d1b2e,#0a1628);
-                border:1px solid rgba(0,229,195,0.2);border-radius:16px;
-                padding:20px 28px;margin:10px 0 4px 0">
-        <h4 style="color:#00E5C3;margin:0 0 12px 0;font-size:1rem">🌿 Sobre BioMonitor Montería</h4>
-        <p style="color:#8892a4;font-size:0.9rem;line-height:1.8;margin:0">
-        <b style="color:#e8f4ff">BioMonitor Montería</b> es una plataforma de inteligencia ambiental
-        para el monitoreo en tiempo real de <b style="color:#e8f4ff">Montería, Córdoba, Colombia</b>.<br><br>
-        Integra tres módulos principales:
-        <b style="color:#4FC3F7">predicción de inundaciones</b> del río Sinú con modelos LSTM,
-        <b style="color:#00E5C3">calidad del aire</b> con indicadores PM2.5, PM10, NO₂ y AQI europeo,
-        y <b style="color:#7B61FF">biodiversidad</b> con registros verificados por CNN (MobileNetV2).<br><br>
-        Fuentes de datos: <b style="color:#e8f4ff">Open-Meteo</b> (clima y aire) ·
-        <b style="color:#e8f4ff">IDEAM / datos.gov.co</b> (hidrología) ·
-        <b style="color:#e8f4ff">GBIF</b> (biodiversidad) — actualizados automáticamente cada hora.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-st.markdown("<hr style='border:1px solid rgba(0,229,195,0.1);margin:14px 0'>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════
 # ── KPIs PRINCIPALES ─────────────────────────────────────
@@ -1129,30 +1090,30 @@ with col_pred:
     st.markdown('<div class="section-header">🌊 Predicción 7 días · LSTM</div>', unsafe_allow_html=True)
 
     fig, ax = plt.subplots(figsize=(5.5, 3.8))
-    fig.patch.set_facecolor("#0d1b2e")
-    ax.set_facecolor("#0d1b2e")
+    fig.patch.set_facecolor("#FFFFFF")
+    ax.set_facecolor("#FFFFFF")
     bar_colors = [
-        "#00E5C3" if n < 4.0 else
-        "#FFD600" if n < 5.5 else
-        "#FF9800" if n < 7.0 else "#FF5252"
+        "#3B6D11" if n < 4.0 else
+        "#BA7517" if n < 5.5 else
+        "#E24B4A" if n < 7.0 else "#A32D2D"
         for n in niveles
     ]
     bars = ax.bar(dias, niveles, color=bar_colors, alpha=0.88,
-                  width=0.55, edgecolor="#1a2a3e", linewidth=0.6)
+                  width=0.55, edgecolor="#E8E6E0", linewidth=0.6)
     ax.fill_between(range(len(niveles)), niveles, alpha=0.07, color="#00E5C3")
     ax.plot(range(len(niveles)), niveles, color="#00E5C3", linewidth=1.2,
             alpha=0.5, linestyle="--", marker="o", markersize=3)
     ax.axhline(y=4.0, color="#FFD600", linestyle="--", linewidth=1.2, alpha=0.6, label="Amarilla (4m)")
     ax.axhline(y=5.5, color="#FF9800", linestyle="--", linewidth=1.2, alpha=0.6, label="Naranja (5.5m)")
     ax.axhline(y=7.0, color="#FF5252", linestyle="--", linewidth=1.2, alpha=0.6, label="Roja (7m)")
-    ax.set_ylabel("Nivel (m)", color="#5a7a9a", fontsize=9)
+    ax.set_ylabel("Nivel (m)", color="#5F5E5A", fontsize=9)
     ax.set_ylim(0, 9)
     ax.tick_params(colors="#5a7a9a", labelsize=8)
-    for spine in ax.spines.values(): spine.set_color("#1a2a3e")
+    for spine in ax.spines.values(): spine.set_color("#D3D1C7")
     ax.set_xticks(range(len(dias)))
-    ax.set_xticklabels(dias, fontsize=7.5, color="#5a7a9a", rotation=15)
-    ax.grid(axis="y", color="#1a2a3e", linewidth=0.6, linestyle=":")
-    ax.legend(fontsize=7.5, facecolor="#0d1b2e", labelcolor="#5a7a9a",
+    ax.set_xticklabels(dias, fontsize=7.5, color="#5F5E5A", rotation=15)
+    ax.grid(axis="y", color="#E8E6E0", linewidth=0.6, linestyle=":")
+    ax.legend(fontsize=7.5, facecolor="#FFFFFF", labelcolor="#5F5E5A",
               framealpha=0.85, loc="upper right")
     for bar, val in zip(bars, niveles):
         ax.text(bar.get_x() + bar.get_width()/2, val + 0.13,
@@ -1170,11 +1131,11 @@ with col_pred:
     prob_hoy_pred = clima.get("prob_lluvia", [0])[0] if clima.get("prob_lluvia") else 0
     st.markdown(f"""
     <div class="stat-row">
-        🌧️ Lluvia hoy: <b style="color:#e8f4ff">{clima['lluvia_hoy']} mm</b> &nbsp;·&nbsp;
-        🌂 Prob.: <b style="color:#4FC3F7">{prob_hoy_pred}%</b> &nbsp;·&nbsp;
-        💨 Viento: <b style="color:#e8f4ff">{clima['viento']} km/h</b> &nbsp;·&nbsp;
-        🌡️ Máx: <b style="color:#e8f4ff">{clima['temp_max'][0]}°C</b><br>
-        <small style="color:#3a5a7a">{fuente_rio}</small>
+        🌧️ Lluvia hoy: <b style="color:#2C2C2A">{clima['lluvia_hoy']} mm</b> &nbsp;·&nbsp;
+        🌂 Prob.: <b style="color:#185FA5">{prob_hoy_pred}%</b> &nbsp;·&nbsp;
+        💨 Viento: <b style="color:#2C2C2A">{clima['viento']} km/h</b> &nbsp;·&nbsp;
+        🌡️ Máx: <b style="color:#2C2C2A">{clima['temp_max'][0]}°C</b><br>
+        <small style="color:#888780">{fuente_rio}</small>
     </div>""", unsafe_allow_html=True)
 
     st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
@@ -1185,7 +1146,7 @@ with col_pred:
     })
     st.dataframe(df_niveles, use_container_width=True, hide_index=True, height=210)
 
-st.markdown("<hr style='border:1px solid rgba(0,229,195,0.1);margin:14px 0'>", unsafe_allow_html=True)
+st.markdown("<hr style='border:none;border-top:0.5px solid #D3D1C7;margin:16px 0'>", unsafe_allow_html=True)
 
 # ── Panel de alertas de inundación ────────────────────────
 nivel_actual = niveles[0]
@@ -1224,16 +1185,16 @@ with st.expander(f"🌊 Zonas afectadas por nivel del río — Estado actual: {a
             estado_txt  = f"✅ Normal — nivel {nivel_actual}m · cota alerta: {cota}m"
 
         st.markdown(f"""
-        <div style="background:rgba(0,229,195,0.04);border:1px solid rgba(0,229,195,0.1);
+        <div style="background:#F1EFE8;border:0.5px solid #D3D1C7;
                     border-radius:10px;padding:12px 16px;margin-bottom:10px">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
                 <span class="badge {badge_color}">{zona}</span>
-                <span style="color:#e8f4ff;font-weight:600">{barrios}</span>
+                <span style="color:#2C2C2A;font-weight:600">{barrios}</span>
             </div>
-            <div style="color:#5a7a9a;font-size:0.82rem;margin-bottom:4px">
+            <div style="color:#5F5E5A;font-size:0.82rem;margin-bottom:4px">
                 📍 {ubicacion} · Cota alerta: {cota}m
             </div>
-            <div style="color:#4FC3F7;font-size:0.82rem;margin-bottom:4px">
+            <div style="color:#185FA5;font-size:0.82rem;margin-bottom:4px">
                 📊 {estado_txt}
             </div>
             <div style="color:#8892a4;font-size:0.78rem">
@@ -1243,12 +1204,12 @@ with st.expander(f"🌊 Zonas afectadas por nivel del río — Estado actual: {a
 
     st.markdown(f"""
     <div style="background:rgba(79,195,247,0.05);border:1px solid rgba(79,195,247,0.2);
-                border-radius:10px;padding:10px 14px;font-size:0.78rem;color:#5a7a9a">
-        📞 <b style="color:#e8f4ff">Emergencias:</b> Defensa Civil 144 · Bomberos 119 · Cruz Roja 132<br>
-        📡 <b style="color:#e8f4ff">Datos en tiempo real:</b> IDEAM · {fuente_rio}
+                border-radius:10px;padding:10px 14px;font-size:0.78rem;color:#5F5E5A">
+        📞 <b style="color:#2C2C2A">Emergencias:</b> Defensa Civil 144 · Bomberos 119 · Cruz Roja 132<br>
+        📡 <b style="color:#2C2C2A">Datos en tiempo real:</b> IDEAM · {fuente_rio}
     </div>""", unsafe_allow_html=True)
 
-st.markdown("<hr style='border:1px solid rgba(0,229,195,0.1);margin:14px 0'>", unsafe_allow_html=True)
+st.markdown("<hr style='border:none;border-top:0.5px solid #D3D1C7;margin:16px 0'>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════
 # ── CALIDAD DEL AIRE ──────────────────────────────────────
@@ -1289,7 +1250,7 @@ with _a4:
         <div class="fuente-tag">Open-Meteo · tiempo real</div>
     </div>""", unsafe_allow_html=True)
 
-st.markdown("<hr style='border:1px solid rgba(0,229,195,0.1);margin:14px 0'>", unsafe_allow_html=True)
+st.markdown("<hr style='border:none;border-top:0.5px solid #D3D1C7;margin:16px 0'>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════
 # ── ÍNDICE DE CALOR APARENTE ──────────────────────────────
@@ -1333,17 +1294,17 @@ with hi_c4:
 
 # Tabla de referencia heat index
 st.markdown("""
-<div style="background:rgba(0,229,195,0.04);border:1px solid rgba(0,229,195,0.1);
+<div style="background:#F1EFE8;border:0.5px solid #D3D1C7;
             border-radius:10px;padding:12px 16px;margin-top:8px;font-size:0.8rem">
-    <b style="color:#00E5C3">Escala de riesgo por calor · OMS / NWS:</b><br>
-    <span style="color:#00E5C3">✅ &lt;27°C</span> Confortable &nbsp;·&nbsp;
-    <span style="color:#FFD600">🟡 27-32°C</span> Precaución — fatiga posible &nbsp;·&nbsp;
-    <span style="color:#FF9800">🟠 32-41°C</span> Precaución extrema — golpe de calor posible &nbsp;·&nbsp;
-    <span style="color:#FF5252">🔴 41-54°C</span> Peligro — golpe de calor probable &nbsp;·&nbsp;
+    <b style="color:#3B6D11">Escala de riesgo por calor · OMS / NWS:</b><br>
+    <span style="color:#3B6D11">✅ &lt;27°C</span> Confortable &nbsp;·&nbsp;
+    <span style="color:#854F0B">🟡 27-32°C</span> Precaución — fatiga posible &nbsp;·&nbsp;
+    <span style="color:#854F0B">🟠 32-41°C</span> Precaución extrema — golpe de calor posible &nbsp;·&nbsp;
+    <span style="color:#A32D2D">🔴 41-54°C</span> Peligro — golpe de calor probable &nbsp;·&nbsp;
     <span style="color:#FF0000">☠️ &gt;54°C</span> Peligro extremo
 </div>""", unsafe_allow_html=True)
 
-st.markdown("<hr style='border:1px solid rgba(0,229,195,0.1);margin:14px 0'>", unsafe_allow_html=True)
+st.markdown("<hr style='border:none;border-top:0.5px solid #D3D1C7;margin:16px 0'>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════
 # ── CORRELACIÓN LLUVIA vs NIVEL DEL RÍO ──────────────────
@@ -1353,11 +1314,11 @@ st.markdown('<div class="section-header">💧 Correlación lluvia vs nivel del r
 
 lluvia_7d = clima.get("lluvia_7d", [0]*7)
 fig_corr, axes = plt.subplots(1, 2, figsize=(11, 3.5))
-fig_corr.patch.set_facecolor("#0d1b2e")
+fig_corr.patch.set_facecolor("#FFFFFF")
 
 # Gráfico 1 — Dual axis lluvia + nivel
 ax1 = axes[0]
-ax1.set_facecolor("#0d1b2e")
+ax1.set_facecolor("#F9F8F6")
 ax2 = ax1.twinx()
 dias_cortos = [d.replace(" ","") for d in dias]
 bars_ll = ax1.bar(dias_cortos, lluvia_7d, color="#4FC3F7", alpha=0.6,
@@ -1368,26 +1329,26 @@ ax1.set_ylabel("Lluvia (mm)", color="#4FC3F7", fontsize=8)
 ax2.set_ylabel("Nivel río (m)", color="#FFD600", fontsize=8)
 ax1.tick_params(colors="#5a7a9a", labelsize=7)
 ax2.tick_params(colors="#FFD600", labelsize=7)
-for spine in ax1.spines.values(): spine.set_color("#1a2a3e")
-for spine in ax2.spines.values(): spine.set_color("#1a2a3e")
-ax1.set_title("Lluvia acumulada vs nivel del río", color="#e8f4ff",
+for spine in ax1.spines.values(): spine.set_color("#D3D1C7")
+for spine in ax2.spines.values(): spine.set_color("#D3D1C7")
+ax1.set_title("Lluvia acumulada vs nivel del río", color="#2C2C2A",
               fontsize=9, pad=6)
 ax1.tick_params(axis='x', rotation=15)
-ax1.grid(axis="y", color="#1a2a3e", linewidth=0.5)
+ax1.grid(axis="y", color="#E8E6E0", linewidth=0.5)
 lines1, labels1 = ax1.get_legend_handles_labels()
 lines2, labels2 = ax2.get_legend_handles_labels()
 ax1.legend(lines1+lines2, labels1+labels2, fontsize=7,
-           facecolor="#0d1b2e", labelcolor="#8892a4", loc="upper left")
+           facecolor="#FFFFFF", labelcolor="#5F5E5A", loc="upper left")
 
 # Gráfico 2 — Scatter correlación
 ax3 = axes[1]
-ax3.set_facecolor("#0d1b2e")
+ax3.set_facecolor("#F9F8F6")
 colores_scatter = ["#00E5C3" if n < 4.0 else "#FFD600" if n < 5.5 else "#FF9800"
                    for n in niveles]
 ax3.scatter(lluvia_7d, niveles, c=colores_scatter, s=80, zorder=5, alpha=0.9)
 for i, (x, y) in enumerate(zip(lluvia_7d, niveles)):
     ax3.annotate(dias_cortos[i], (x, y), textcoords="offset points",
-                 xytext=(4, 4), fontsize=6.5, color="#5a7a9a")
+                 xytext=(4, 4), fontsize=6.5, color="#5F5E5A")
 # Línea de tendencia
 if len(lluvia_7d) > 1:
     z = np.polyfit(lluvia_7d, niveles, 1)
@@ -1399,14 +1360,14 @@ if len(lluvia_7d) > 1:
     corr = np.corrcoef(lluvia_7d, niveles)[0, 1]
     ax3.text(0.05, 0.92, f"r = {corr:.2f}", transform=ax3.transAxes,
              color="#00E5C3", fontsize=8, fontweight="bold")
-ax3.set_xlabel("Lluvia acumulada (mm)", color="#5a7a9a", fontsize=8)
-ax3.set_ylabel("Nivel del río (m)", color="#5a7a9a", fontsize=8)
-ax3.set_title("Correlación lluvia → nivel", color="#e8f4ff",
+ax3.set_xlabel("Lluvia acumulada (mm)", color="#5F5E5A", fontsize=8)
+ax3.set_ylabel("Nivel del río (m)", color="#5F5E5A", fontsize=8)
+ax3.set_title("Correlación lluvia → nivel", color="#2C2C2A",
               fontsize=9, pad=6)
 ax3.tick_params(colors="#5a7a9a", labelsize=7)
-for spine in ax3.spines.values(): spine.set_color("#1a2a3e")
-ax3.grid(color="#1a2a3e", linewidth=0.5)
-ax3.legend(fontsize=7, facecolor="#0d1b2e", labelcolor="#8892a4")
+for spine in ax3.spines.values(): spine.set_color("#D3D1C7")
+ax3.grid(color="#E8E6E0", linewidth=0.5)
+ax3.legend(fontsize=7, facecolor="#FFFFFF", labelcolor="#5F5E5A")
 
 plt.tight_layout(pad=0.8)
 st.pyplot(fig_corr)
@@ -1417,13 +1378,13 @@ interp = ("correlación muy fuerte" if abs(corr_val) > 0.8
           else "correlación moderada" if abs(corr_val) > 0.5
           else "correlación débil")
 st.markdown(f"""
-<div style="background:rgba(79,195,247,0.05);border:1px solid rgba(79,195,247,0.15);
-            border-radius:10px;padding:10px 14px;font-size:0.82rem;color:#5a7a9a">
-    📊 <b style="color:#e8f4ff">Coeficiente de Pearson r = {corr_val:.2f}</b> — {interp} entre lluvia y nivel del río en los últimos 7 días.<br>
+<div style="background:#F1EFE8;border:0.5px solid #D3D1C7;
+            border-radius:10px;padding:10px 14px;font-size:0.82rem;color:#5F5E5A">
+    📊 <b style="color:#2C2C2A">Coeficiente de Pearson r = {corr_val:.2f}</b> — {interp} entre lluvia y nivel del río en los últimos 7 días.<br>
     ℹ️ El río Sinú responde a la lluvia con un rezago de 1-2 días por la cuenca hídrica del Alto Sinú.
 </div>""", unsafe_allow_html=True)
 
-st.markdown("<hr style='border:1px solid rgba(0,229,195,0.1);margin:14px 0'>", unsafe_allow_html=True)
+st.markdown("<hr style='border:none;border-top:0.5px solid #D3D1C7;margin:16px 0'>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════
 # ── HISTÓRICAS 30 DÍAS ────────────────────────────────────
@@ -1440,11 +1401,11 @@ if hist_clima["ok"] and hist_clima["fechas"]:
     xticks_idx = list(range(0, len(fechas_hist), paso))
 
     fig_hist, axs = plt.subplots(3, 1, figsize=(11, 8), sharex=False)
-    fig_hist.patch.set_facecolor("#0d1b2e")
+    fig_hist.patch.set_facecolor("#FFFFFF")
 
     # — Panel 1: Temperatura
     ax = axs[0]
-    ax.set_facecolor("#0d1b2e")
+    ax.set_facecolor("#F9F8F6")
     ax.fill_between(range(len(fechas_hist)),
                     hist_clima["temp_min"], hist_clima["temp_max"],
                     alpha=0.25, color="#FF9800", label="Rango Tmin-Tmax")
@@ -1452,31 +1413,31 @@ if hist_clima["ok"] and hist_clima["fechas"]:
             color="#FF9800", linewidth=1.5, label="Tmax")
     ax.plot(range(len(fechas_hist)), hist_clima["temp_min"],
             color="#4FC3F7", linewidth=1.5, label="Tmin")
-    ax.set_ylabel("°C", color="#5a7a9a", fontsize=8)
-    ax.set_title("Temperatura máx/mín diaria", color="#e8f4ff", fontsize=9, pad=4)
+    ax.set_ylabel("°C", color="#5F5E5A", fontsize=8)
+    ax.set_title("Temperatura máx/mín diaria", color="#2C2C2A", fontsize=9, pad=4)
     ax.tick_params(colors="#5a7a9a", labelsize=7)
     ax.set_xticks(xticks_idx)
     ax.set_xticklabels([fechas_hist[i] for i in xticks_idx], rotation=15)
-    for spine in ax.spines.values(): spine.set_color("#1a2a3e")
-    ax.grid(color="#1a2a3e", linewidth=0.5)
-    ax.legend(fontsize=7, facecolor="#0d1b2e", labelcolor="#8892a4", loc="upper right")
+    for spine in ax.spines.values(): spine.set_color("#D3D1C7")
+    ax.grid(color="#E8E6E0", linewidth=0.5)
+    ax.legend(fontsize=7, facecolor="#FFFFFF", labelcolor="#5F5E5A", loc="upper right")
 
     # — Panel 2: Lluvia
     ax2h = axs[1]
-    ax2h.set_facecolor("#0d1b2e")
+    ax2h.set_facecolor("#F9F8F6")
     ax2h.bar(range(len(fechas_hist)), hist_clima["lluvia"],
              color="#4FC3F7", alpha=0.75, width=0.7)
-    ax2h.set_ylabel("mm", color="#5a7a9a", fontsize=8)
-    ax2h.set_title("Precipitación diaria acumulada", color="#e8f4ff", fontsize=9, pad=4)
+    ax2h.set_ylabel("mm", color="#5F5E5A", fontsize=8)
+    ax2h.set_title("Precipitación diaria acumulada", color="#2C2C2A", fontsize=9, pad=4)
     ax2h.tick_params(colors="#5a7a9a", labelsize=7)
     ax2h.set_xticks(xticks_idx)
     ax2h.set_xticklabels([fechas_hist[i] for i in xticks_idx], rotation=15)
-    for spine in ax2h.spines.values(): spine.set_color("#1a2a3e")
-    ax2h.grid(axis="y", color="#1a2a3e", linewidth=0.5)
+    for spine in ax2h.spines.values(): spine.set_color("#D3D1C7")
+    ax2h.grid(axis="y", color="#E8E6E0", linewidth=0.5)
 
     # — Panel 3: PM2.5
     ax3h = axs[2]
-    ax3h.set_facecolor("#0d1b2e")
+    ax3h.set_facecolor("#F9F8F6")
     if hist_aire["ok"] and hist_aire["fechas"]:
         fechas_pm = [f[5:] for f in hist_aire["fechas"]]
         colores_pm = ["#00E5C3" if v < 10 else "#FFD600" if v < 15
@@ -1490,12 +1451,12 @@ if hist_clima["ok"] and hist_clima["fechas"]:
         ax3h.set_xticks(range(0, len(fechas_pm), paso_pm))
         ax3h.set_xticklabels([fechas_pm[i] for i in range(0, len(fechas_pm), paso_pm)],
                               rotation=15, fontsize=7)
-        ax3h.legend(fontsize=7, facecolor="#0d1b2e", labelcolor="#8892a4")
-    ax3h.set_ylabel("µg/m³", color="#5a7a9a", fontsize=8)
-    ax3h.set_title("PM2.5 promedio diario", color="#e8f4ff", fontsize=9, pad=4)
+        ax3h.legend(fontsize=7, facecolor="#FFFFFF", labelcolor="#5F5E5A")
+    ax3h.set_ylabel("µg/m³", color="#5F5E5A", fontsize=8)
+    ax3h.set_title("PM2.5 promedio diario", color="#2C2C2A", fontsize=9, pad=4)
     ax3h.tick_params(colors="#5a7a9a", labelsize=7)
-    for spine in ax3h.spines.values(): spine.set_color("#1a2a3e")
-    ax3h.grid(axis="y", color="#1a2a3e", linewidth=0.5)
+    for spine in ax3h.spines.values(): spine.set_color("#D3D1C7")
+    ax3h.grid(axis="y", color="#E8E6E0", linewidth=0.5)
 
     plt.tight_layout(pad=1.2)
     st.pyplot(fig_hist)
@@ -1508,18 +1469,18 @@ if hist_clima["ok"] and hist_clima["fechas"]:
     pm_prom  = round(sum(hist_aire["pm25"])/len(hist_aire["pm25"]), 1) if hist_aire["ok"] and hist_aire["pm25"] else "—"
 
     st.markdown(f"""
-    <div style="background:rgba(0,229,195,0.04);border:1px solid rgba(0,229,195,0.1);
+    <div style="background:#F1EFE8;border:0.5px solid #D3D1C7;
                 border-radius:10px;padding:12px 16px;font-size:0.82rem">
-        <b style="color:#00E5C3">Resumen últimos 30 días:</b> &nbsp;
-        🌡️ Tmax promedio: <b style="color:#e8f4ff">{t_prom}°C</b> &nbsp;·&nbsp;
-        🌧️ Lluvia total: <b style="color:#4FC3F7">{ll_total} mm</b> &nbsp;·&nbsp;
-        ☔ Día más lluvioso: <b style="color:#4FC3F7">{ll_max} mm</b> &nbsp;·&nbsp;
-        💨 PM2.5 prom.: <b style="color:#e8f4ff">{pm_prom} µg/m³</b>
+        <b style="color:#3B6D11">Resumen últimos 30 días:</b> &nbsp;
+        🌡️ Tmax promedio: <b style="color:#2C2C2A">{t_prom}°C</b> &nbsp;·&nbsp;
+        🌧️ Lluvia total: <b style="color:#185FA5">{ll_total} mm</b> &nbsp;·&nbsp;
+        ☔ Día más lluvioso: <b style="color:#185FA5">{ll_max} mm</b> &nbsp;·&nbsp;
+        💨 PM2.5 prom.: <b style="color:#2C2C2A">{pm_prom} µg/m³</b>
     </div>""", unsafe_allow_html=True)
 else:
     st.info("Cargando datos históricos...")
 
-st.markdown("<hr style='border:1px solid rgba(0,229,195,0.1);margin:14px 0'>", unsafe_allow_html=True)
+st.markdown("<hr style='border:none;border-top:0.5px solid #D3D1C7;margin:16px 0'>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════
 # ── EXPORTAR DATOS CSV ────────────────────────────────────
@@ -1585,7 +1546,7 @@ with ex3:
     st.dataframe(df_export[["Fecha","Nivel_rio_m","Lluvia_mm","PM25_ug_m3","Heat_index_C"]],
                  use_container_width=True, hide_index=True, height=180)
 
-st.markdown("<hr style='border:1px solid rgba(0,229,195,0.1);margin:14px 0'>", unsafe_allow_html=True)
+st.markdown("<hr style='border:none;border-top:0.5px solid #D3D1C7;margin:16px 0'>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════
 # ── BIODIVERSIDAD · GBIF ──────────────────────────────────
@@ -1642,7 +1603,7 @@ df_mostrar = df_fauna_live[cols_disponibles].head(12).copy()
 df_mostrar.columns = [c.replace("_"," ").capitalize() for c in df_mostrar.columns]
 st.dataframe(df_mostrar, use_container_width=True, hide_index=True, height=320)
 
-st.markdown("<hr style='border:1px solid rgba(0,229,195,0.1);margin:14px 0'>", unsafe_allow_html=True)
+st.markdown("<hr style='border:none;border-top:0.5px solid #D3D1C7;margin:16px 0'>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════
 # ── GALERÍA DE FAUNA ─────────────────────────────────────
@@ -1674,7 +1635,7 @@ archivos_local = [
 def _render_img(col_obj, url_or_path, nombre, es_url=True):
     """Renderiza imagen con fallback — usable en galería GBIF y local."""
     placeholder = f"""<div style="background:#0d1b2e;border:1px solid rgba(123,97,255,0.2);
-        border-radius:10px;padding:16px;text-align:center;font-size:0.75rem;color:#5a7a9a">
+        border-radius:10px;padding:16px;text-align:center;font-size:0.75rem;color:#5F5E5A">
         🦜<br><i>{nombre}</i></div>"""
     try:
         if es_url:
@@ -1689,11 +1650,11 @@ def _render_img(col_obj, url_or_path, nombre, es_url=True):
 if len(imagenes_gbif) >= 3:
     fuente_label = imagenes_gbif
     es_url_flag  = True
-    label_tag    = f"<small style='color:#00E5C3'>📷 {len(imagenes_gbif)} imágenes · GBIF · Córdoba, Colombia</small>"
+    label_tag    = f"<small style='color:#3B6D11'>📷 {len(imagenes_gbif)} imágenes · GBIF · Córdoba, Colombia</small>"
 else:
     fuente_label = [(a, n) for a, n in archivos_local]
     es_url_flag  = False
-    label_tag    = "<small style='color:#3a5a7a'>📷 Imágenes locales · Banco fotográfico BioMonitor</small>"
+    label_tag    = "<small style='color:#888780'>📷 Imágenes locales · Banco fotográfico BioMonitor</small>"
 
 # Render en filas de 3 (responsive — en móvil quedan 2 por fila vía CSS)
 items = fuente_label[:6]
@@ -1714,9 +1675,9 @@ st.markdown(f"""
             padding:18px 0 28px 0;
             border-top:1px solid rgba(0,229,195,0.08);
             margin-top:14px;line-height:2'>
-    <b style='color:#00E5C3;font-size:0.9rem'>BioMonitor Montería</b>
+    <b style='color:#3B6D11;font-size:0.9rem'>BioMonitor Montería</b>
     &nbsp;·&nbsp; {datetime.now(TZ_COL).strftime('%d/%m/%Y %H:%M')}
     &nbsp;·&nbsp; Open-Meteo · IDEAM · GBIF
     &nbsp;·&nbsp; LSTM + MobileNetV2
-    &nbsp;·&nbsp; <b style='color:#00E5C3'>© Ivan Contreras</b>
+    &nbsp;·&nbsp; <b style='color:#3B6D11'>© Ivan Contreras</b>
 </div>""", unsafe_allow_html=True)
