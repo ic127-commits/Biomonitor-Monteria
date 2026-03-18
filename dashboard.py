@@ -423,26 +423,8 @@ iframe { max-width:100% !important;border-radius:12px !important; }
   .greeting-card div:last-child  { display:none !important; }
   .load-card { width:95% !important;padding:16px 18px !important; }
   .load-steps { gap:8px !important;font-size:0.68rem !important; }
+  .nav-hint { font-size:0.72rem !important;padding:6px 10px !important; }
 }
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-<style>
-@media (max-width:480px) {
-  .block-container { padding-left:0.4rem !important;padding-right:0.4rem !important;padding-top:1rem !important; }
-  .kpi-value    { font-size:1.15rem !important; }
-  .kpi-label    { font-size:0.57rem !important; }
-  .section-header { font-size:0.82rem !important; }
-  .hero-badge   { font-size:0.64rem !important;padding:3px 7px !important; }
-  [data-testid="column"] { min-width:100% !important; }
-  .stTabs [data-baseweb="tab"] { padding:6px 9px !important;font-size:0.73rem !important; }
-  .hero-card-inner img { width:90px !important;height:90px !important; }
-  .biomonitor-title { font-size:1.15rem !important; }
-  .stat-row { font-size:0.72rem !important; }
-  .info-card { padding:12px 14px !important;font-size:0.8rem !important; }
-}
-</style>
 </style>
 """, unsafe_allow_html=True)
 
