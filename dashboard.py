@@ -1307,16 +1307,80 @@ with tab_mapa:
                     fill_opacity=op_r*peso, weight=0, tooltip=f"🌧️ Prob. lluvia: {prob_h}%"
                 ).add_to(g_lluvia)
 
+        # ── Datos ambientales en tiempo real para los popups ──
+        _temp    = clima.get('temp','—')
+        _hum     = clima.get('humedad','—')
+        _lluvia  = clima.get('lluvia_hoy','—')
+        _viento  = clima.get('viento','—')
+        _pm25    = aire.get('pm25','—')
+        _aqi     = aire.get('aqi','—')
+        _prob    = clima.get("prob_lluvia",[0])[0] if clima.get("prob_lluvia") else 0
+        _rio_lbl, _, _ = alerta_rio(niveles[0])
+        _aire_lbl = "Buena" if isinstance(_pm25,(int,float)) and _pm25 < 15 else "Regular"
+        _pm25_color = "#27500A" if isinstance(_pm25,(int,float)) and _pm25 < 15 else "#854F0B"
+        _rio_color  = "#27500A" if _rio_lbl == "Normal" else "#854F0B" if "Amarilla" in _rio_lbl else "#A32D2D"
+
+        def _popup_ambiental(nombre, direccion, info, tipo_ico):
+            return f"""
+            <div style="font-family:sans-serif;font-size:12px;min-width:240px">
+              <div style="font-weight:700;font-size:13px;margin-bottom:6px;
+                          border-bottom:2px solid #3B6D11;padding-bottom:4px">
+                {nombre}
+              </div>
+              <div style="color:#555;margin-bottom:8px">
+                📍 {direccion}<br>
+                ℹ️ <i>{info}</i>
+              </div>
+              <div style="background:#F4F9EE;border-radius:8px;padding:8px 10px;
+                          border-left:3px solid #3B6D11">
+                <div style="font-weight:700;color:#3B6D11;margin-bottom:5px;font-size:11px;
+                            text-transform:uppercase;letter-spacing:0.5px">
+                  🌿 Estado ambiental ahora
+                </div>
+                <table style="width:100%;border-collapse:collapse;font-size:11.5px">
+                  <tr>
+                    <td style="padding:2px 4px">🌡️ Temperatura</td>
+                    <td style="padding:2px 4px;font-weight:700">{_temp}°C · {_hum}% hum.</td>
+                  </tr>
+                  <tr style="background:rgba(255,255,255,0.5)">
+                    <td style="padding:2px 4px">💨 Calidad aire</td>
+                    <td style="padding:2px 4px;font-weight:700;color:{_pm25_color}">
+                      PM2.5: {_pm25} µg/m³ · {_aire_lbl}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:2px 4px">🌧️ Lluvia hoy</td>
+                    <td style="padding:2px 4px;font-weight:700">{_lluvia} mm · ☔ {_prob}%</td>
+                  </tr>
+                  <tr style="background:rgba(255,255,255,0.5)">
+                    <td style="padding:2px 4px">🌬️ Viento</td>
+                    <td style="padding:2px 4px;font-weight:700">{_viento} km/h</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:2px 4px">🌊 Río Sinú</td>
+                    <td style="padding:2px 4px;font-weight:700;color:{_rio_color}">
+                      {niveles[0]}m · Alerta {_rio_lbl}
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              <div style="font-size:10px;color:#888;margin-top:5px;text-align:right">
+                📡 Open-Meteo · IDEAM · tiempo real
+              </div>
+            </div>"""
+
         for lat,lon,nombre,direccion,info in UNIVERSIDADES_GLOBAL:
             folium.Marker([lat,lon],
-                popup=folium.Popup(f"<b>{nombre}</b><br>📍 {direccion}<br>ℹ️ {info}", max_width=250),
-                tooltip=nombre, icon=folium.Icon(color="orange",icon="graduation-cap",prefix="fa")
+                popup=folium.Popup(_popup_ambiental(nombre, direccion, info, "🎓"), max_width=280),
+                tooltip=nombre,
+                icon=folium.Icon(color="orange",icon="graduation-cap",prefix="fa")
             ).add_to(g_univ)
 
         for lat,lon,nombre,direccion,info in CC_GLOBAL:
             folium.Marker([lat,lon],
-                popup=folium.Popup(f"<b>{nombre}</b><br>📍 {direccion}<br>ℹ️ {info}", max_width=250),
-                tooltip=nombre, icon=folium.Icon(color="red",icon="shopping-cart",prefix="fa")
+                popup=folium.Popup(_popup_ambiental(nombre, direccion, info, "🛍️"), max_width=280),
+                tooltip=nombre,
+                icon=folium.Icon(color="red",icon="shopping-cart",prefix="fa")
             ).add_to(g_cc)
 
         for lat,lon,nombre,txt in [
