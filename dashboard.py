@@ -1047,10 +1047,22 @@ tab_inicio, tab_mapa, tab_analisis, tab_bio, tab_alertas = st.tabs([
     "🏠 Inicio", "🗺️ Mapa", "📈 Análisis", "🦜 Biodiversidad", "🔔 Alertas"
 ])
 
-# ══════════════════════════════════════════════════════════
-# TAB 1 — INICIO
-# ══════════════════════════════════════════════════════════
+# ── Hint de navegación — solo en tab inicio ───────────────
 with tab_inicio:
+    st.markdown("""
+    <div style="display:flex;align-items:center;gap:8px;
+                padding:8px 14px;margin-bottom:4px;
+                background:#F4F2EE;border-radius:8px;
+                border-left:3px solid #97C459;font-size:0.78rem;
+                color:#5F5E5A;font-weight:500">
+      <span style="font-size:1rem">👆</span>
+      Selecciona una pestaña para explorar el
+      <b style="color:#3B6D11">Mapa</b>,
+      <b style="color:#3B6D11">Análisis</b> histórico,
+      <b style="color:#3B6D11">Biodiversidad</b> y
+      <b style="color:#3B6D11">Alertas</b> activas.
+    </div>
+    """, unsafe_allow_html=True)
     def _kpi_card(cls, label, val, badge_txt, badge_cls, fuente):
         st.markdown(f"""
         <div class="{cls}">
