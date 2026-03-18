@@ -1875,9 +1875,33 @@ with tab_bio:
             </div>""", unsafe_allow_html=True)
 
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-    cols_mostrar     = ["especie","nombre_com","clase","orden","familia","estado","fecha"]
+
+    # Función para convertir fecha a texto relativo
+    def _fecha_relativa(fecha_str):
+        try:
+            if fecha_str == "—" or not fecha_str:
+                return "Sin fecha"
+            f = datetime.strptime(fecha_str[:10], "%Y-%m-%d")
+            hoy = datetime.now(TZ_COL).replace(tzinfo=None)
+            dias = (hoy - f).days
+            if dias < 30:
+                return "🟢 Reciente"
+            elif dias < 90:
+                return f"hace {dias//30} mes{'es' if dias//30>1 else ''}"
+            elif dias < 365:
+                return f"hace {dias//30} meses"
+            elif dias < 730:
+                return "hace 1 año"
+            else:
+                return f"hace {dias//365} años"
+        except Exception:
+            return fecha_str
+
+    cols_mostrar     = ["especie","nombre_com","clase","familia","estado","fecha"]
     cols_disponibles = [c for c in cols_mostrar if c in df_fauna_live.columns]
     df_mostrar = df_fauna_live[cols_disponibles].head(12).copy()
+    if "fecha" in df_mostrar.columns:
+        df_mostrar["fecha"] = df_mostrar["fecha"].apply(_fecha_relativa)
     df_mostrar.columns = [c.replace("_"," ").capitalize() for c in df_mostrar.columns]
     st.dataframe(df_mostrar, use_container_width=True, hide_index=True, height=320)
 
