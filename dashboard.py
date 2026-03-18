@@ -380,50 +380,63 @@ iframe { max-width:100% !important;border-radius:12px !important; }
   .hero-left img  { width:140px !important; }
 }
 @media (max-width:768px) {
-  .block-container { padding-top:1.2rem !important;padding-left:0.75rem !important;padding-right:0.75rem !important; }
+  .block-container { padding-top:1rem !important;padding-left:0.6rem !important;padding-right:0.6rem !important; }
   .kpi-value    { font-size:1.3rem !important; }
   .kpi-value-sm { font-size:1.05rem !important; }
   .kpi-label    { font-size:0.6rem !important; }
   .kpi-card     { min-height:auto !important;padding:12px 14px !important; }
   [data-testid="column"] { min-width:100% !important; }
-  .header-wrapper { flex-direction:column !important; }
-  .hero-left { flex-direction:column !important;align-items:flex-start !important;padding:14px 16px !important;gap:12px !important; }
-  .hero-left img  { width:100px !important; }
+  /* hero apilado en móvil — logo centrado y más grande */
+  .header-wrapper { flex-direction:column !important;gap:8px !important; }
+  .hero-left {
+    flex-direction:row !important;align-items:center !important;
+    padding:14px 16px !important;gap:14px !important;
+  }
+  .hero-left img { width:80px !important;height:80px !important;flex-shrink:0 !important; }
   .hero-right { min-width:100% !important;max-width:100% !important; }
-  .greeting-bar { flex-direction:column !important;align-items:flex-start !important;gap:8px !important; }
-  .greeting-card { text-align:left !important; }
-  .section-header { font-size:0.88rem !important; }
-  .stat-row       { font-size:0.76rem !important;line-height:1.8 !important; }
+  /* saludo oculto en móvil para ahorrar espacio */
+  .greeting-card { display:none !important; }
+  .greeting-bar  { padding-bottom:4px !important; }
+  .section-header { font-size:0.85rem !important; }
+  .stat-row       { font-size:0.74rem !important;line-height:1.7 !important; }
   .copyright      { display:none !important; }
   .stButton > button { min-height:46px !important;font-size:0.84rem !important; }
-  .badge          { font-size:0.67rem !important; }
+  .badge          { font-size:0.65rem !important; }
   .stRadio > div  { flex-direction:column !important;gap:6px !important; }
   .stDataFrame    { overflow-x:auto !important; }
-  .stTabs [data-baseweb="tab-list"] { overflow-x:auto !important;flex-wrap:nowrap !important;padding:4px !important;-webkit-overflow-scrolling:touch !important; }
-  .stTabs [data-baseweb="tab"] { padding:8px 11px !important;font-size:0.78rem !important;white-space:nowrap !important; }
-  .biomonitor-title { font-size:1.25rem !important; }
-  .biomonitor-sub   { font-size:0.66rem !important; }
-  .hero-badge { font-size:0.66rem !important;padding:3px 8px !important; }
-  .load-card { min-width:unset !important;width:90% !important;padding:20px 24px !important; }
+  .stTabs [data-baseweb="tab-list"] {
+    overflow-x:auto !important;flex-wrap:nowrap !important;
+    padding:4px !important;-webkit-overflow-scrolling:touch !important;
+  }
+  .stTabs [data-baseweb="tab"] { padding:8px 10px !important;font-size:0.76rem !important;white-space:nowrap !important; }
+  .biomonitor-title { font-size:1.2rem !important; }
+  .biomonitor-sub   { font-size:0.64rem !important; }
+  .hero-badge { font-size:0.64rem !important;padding:3px 7px !important; }
+  .load-card { min-width:unset !important;width:92% !important;padding:18px 20px !important; }
   .load-title { font-size:1rem !important; }
+  /* fix textos que sobresalen */
+  .info-card { overflow-wrap:break-word !important;word-break:break-word !important; }
+  iframe { border-radius:8px !important; }
+  /* nav hint más compacto */
+  .nav-hint { font-size:0.73rem !important;padding:6px 10px !important; }
 }
 @media (max-width:480px) {
-  .block-container { padding-left:0.4rem !important;padding-right:0.4rem !important;padding-top:1rem !important; }
-  .kpi-value    { font-size:1.15rem !important; }
-  .kpi-label    { font-size:0.57rem !important; }
-  .section-header { font-size:0.82rem !important; }
-  .hero-badge   { font-size:0.62rem !important;padding:3px 6px !important; }
+  .block-container { padding-left:0.35rem !important;padding-right:0.35rem !important;padding-top:0.8rem !important; }
+  .kpi-value    { font-size:1.1rem !important; }
+  .kpi-label    { font-size:0.56rem !important; }
+  .section-header { font-size:0.8rem !important; }
+  .hero-badge   { font-size:0.6rem !important;padding:2px 6px !important; }
   [data-testid="column"] { min-width:100% !important; }
-  .stTabs [data-baseweb="tab"] { padding:6px 9px !important;font-size:0.72rem !important; }
-  .hero-left img  { width:80px !important; }
-  .biomonitor-title { font-size:1.05rem !important; }
-  .info-card { padding:12px 14px !important;font-size:0.8rem !important; }
-  .stat-row  { font-size:0.72rem !important; }
-  .greeting-card div:first-child { font-size:0.88rem !important; }
-  .greeting-card div:last-child  { display:none !important; }
-  .load-card { width:95% !important;padding:16px 18px !important; }
-  .load-steps { gap:8px !important;font-size:0.68rem !important; }
-  .nav-hint { font-size:0.72rem !important;padding:6px 10px !important; }
+  .stTabs [data-baseweb="tab"] { padding:6px 8px !important;font-size:0.7rem !important; }
+  .hero-left img  { width:70px !important;height:70px !important; }
+  .biomonitor-title { font-size:1rem !important; }
+  .info-card { padding:10px 12px !important;font-size:0.78rem !important;overflow-wrap:break-word !important; }
+  .stat-row  { font-size:0.7rem !important; }
+  .load-card { width:96% !important;padding:14px 16px !important; }
+  .load-steps { gap:6px !important;font-size:0.66rem !important; }
+  .nav-hint { font-size:0.7rem !important;padding:5px 8px !important; }
+  /* ocultar columna predicción en móvil muy pequeño para que no se apile mal */
+  .hero-sub { font-size:0.78rem !important; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -1208,6 +1221,8 @@ def obtener_cauce_sinu():
 # ══════════════════════════════════════════════════════════
 with tab_mapa:
     st.markdown('<div class="section-header">🗺️ Mapa ambiental interactivo · Montería</div>', unsafe_allow_html=True)
+    # En móvil el mapa ocupa todo el ancho
+    _es_movil = st.session_state.get("es_movil", False)
     col_mapa, col_pred = st.columns([1.35, 1], gap="small")
 
     with col_mapa:
@@ -1491,8 +1506,8 @@ with tab_mapa:
             g_heatmap.add_to(m)
         except Exception:
             pass
-        folium.LayerControl(collapsed=False, position="topright").add_to(m)
-        st_folium(m, width=None, height=460, use_container_width=True, returned_objects=[], key="mapa_principal")
+        folium.LayerControl(collapsed=True, position="topright").add_to(m)
+        st_folium(m, width=None, height=400, use_container_width=True, returned_objects=[], key="mapa_principal")
 
     with col_pred:
         st.markdown('<div class="section-header">🌊 Predicción 7 días · LSTM</div>', unsafe_allow_html=True)
