@@ -348,6 +348,26 @@ iframe { max-width:100% !important;border-radius:12px !important; }
   50%     { box-shadow:0 0 0 8px rgba(59,109,17,0); }
 }
 
+/* ══ ANIMACIÓN KPI CARDS AL CAMBIAR TAB ══ */
+@keyframes kpiEntrada {
+  from { opacity:0; transform:translateY(20px) scale(0.97); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+.kpi-card {
+  animation: kpiEntrada 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.kpi-card:nth-child(1) { animation-delay:0.05s; }
+.kpi-card:nth-child(2) { animation-delay:0.10s; }
+.kpi-card:nth-child(3) { animation-delay:0.15s; }
+.kpi-card:nth-child(4) { animation-delay:0.20s; }
+.kpi-card:nth-child(5) { animation-delay:0.25s; }
+.kpi-card:nth-child(6) { animation-delay:0.30s; }
+
+/* Forzar re-animación al hacer visible el tab */
+[data-baseweb="tab-panel"] .kpi-card {
+  animation: kpiEntrada 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
 /* ══ RESPONSIVE COMPLETO ══ */
 @media (max-width:1100px) {
   .block-container { padding-left:1.5rem !important;padding-right:1.5rem !important; }
@@ -366,17 +386,10 @@ iframe { max-width:100% !important;border-radius:12px !important; }
   .kpi-label    { font-size:0.6rem !important; }
   .kpi-card     { min-height:auto !important;padding:12px 14px !important; }
   [data-testid="column"] { min-width:100% !important; }
-  /* header wrapper apilado en móvil */
   .header-wrapper { flex-direction:column !important; }
-  /* hero card: logo + texto en columna */
-  .hero-left {
-    flex-direction:column !important;align-items:flex-start !important;
-    padding:14px 16px !important;gap:12px !important;
-  }
+  .hero-left { flex-direction:column !important;align-items:flex-start !important;padding:14px 16px !important;gap:12px !important; }
   .hero-left img  { width:100px !important; }
-  /* card derecho full width */
   .hero-right { min-width:100% !important;max-width:100% !important; }
-  /* saludo: apilado */
   .greeting-bar { flex-direction:column !important;align-items:flex-start !important;gap:8px !important; }
   .greeting-card { text-align:left !important; }
   .section-header { font-size:0.88rem !important; }
@@ -386,15 +399,11 @@ iframe { max-width:100% !important;border-radius:12px !important; }
   .badge          { font-size:0.67rem !important; }
   .stRadio > div  { flex-direction:column !important;gap:6px !important; }
   .stDataFrame    { overflow-x:auto !important; }
-  .stTabs [data-baseweb="tab-list"] {
-    overflow-x:auto !important;flex-wrap:nowrap !important;padding:4px !important;
-    -webkit-overflow-scrolling:touch !important;
-  }
+  .stTabs [data-baseweb="tab-list"] { overflow-x:auto !important;flex-wrap:nowrap !important;padding:4px !important;-webkit-overflow-scrolling:touch !important; }
   .stTabs [data-baseweb="tab"] { padding:8px 11px !important;font-size:0.78rem !important;white-space:nowrap !important; }
   .biomonitor-title { font-size:1.25rem !important; }
   .biomonitor-sub   { font-size:0.66rem !important; }
   .hero-badge { font-size:0.66rem !important;padding:3px 8px !important; }
-  /* loading card */
   .load-card { min-width:unset !important;width:90% !important;padding:20px 24px !important; }
   .load-title { font-size:1rem !important; }
 }
@@ -410,13 +419,16 @@ iframe { max-width:100% !important;border-radius:12px !important; }
   .biomonitor-title { font-size:1.05rem !important; }
   .info-card { padding:12px 14px !important;font-size:0.8rem !important; }
   .stat-row  { font-size:0.72rem !important; }
-  /* saludo compacto */
   .greeting-card div:first-child { font-size:0.88rem !important; }
   .greeting-card div:last-child  { display:none !important; }
-  /* loading */
   .load-card { width:95% !important;padding:16px 18px !important; }
   .load-steps { gap:8px !important;font-size:0.68rem !important; }
-}}
+}
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<style>
 @media (max-width:480px) {
   .block-container { padding-left:0.4rem !important;padding-right:0.4rem !important;padding-top:1rem !important; }
   .kpi-value    { font-size:1.15rem !important; }
@@ -427,11 +439,10 @@ iframe { max-width:100% !important;border-radius:12px !important; }
   .stTabs [data-baseweb="tab"] { padding:6px 9px !important;font-size:0.73rem !important; }
   .hero-card-inner img { width:90px !important;height:90px !important; }
   .biomonitor-title { font-size:1.15rem !important; }
-  /* stat row en columna */
   .stat-row { font-size:0.72rem !important; }
-  /* info card */
   .info-card { padding:12px 14px !important;font-size:0.8rem !important; }
 }
+</style>
 </style>
 """, unsafe_allow_html=True)
 
@@ -1005,7 +1016,7 @@ st.markdown(f"""
                   border-top:1px solid #E8E6DF;padding-top:7px;font-weight:500">
         <span style="display:inline-block;width:6px;height:6px;background:{borde_color};
                      border-radius:50%;margin-right:4px;vertical-align:middle"></span>
-        Actualizado {hora_actual} hora Colombia
+        Actualizado {hora_actual} · <span id="bio-counter" style="color:{borde_color};font-weight:700">0s</span>
       </div>
     </div>
     <div style="background:linear-gradient(135deg,#F4F2EE,#EEECEA);
@@ -1028,6 +1039,29 @@ if st.query_params.get("refresh") == "1":
     st.query_params.clear()
     st.cache_data.clear()
     st.rerun()
+
+# ── Contador de tiempo desde última actualización ─────────
+st.markdown("""
+<script>
+(function() {
+  var secs = 0;
+  var el = document.getElementById('bio-counter');
+  function tick() {
+    secs++;
+    if (!el) el = document.getElementById('bio-counter');
+    if (!el) return;
+    if (secs < 60) {
+      el.textContent = 'hace ' + secs + 's';
+    } else if (secs < 3600) {
+      el.textContent = 'hace ' + Math.floor(secs/60) + 'min';
+    } else {
+      el.textContent = 'hace ' + Math.floor(secs/3600) + 'h';
+    }
+  }
+  setInterval(tick, 1000);
+})();
+</script>
+""", unsafe_allow_html=True)
 
 st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
@@ -1396,6 +1430,45 @@ with tab_mapa:
             ).add_to(g_aire)
 
         avistamientos_reales = obtener_avistamientos_mapa()
+
+        # ── Heatmap de fauna ──────────────────────────────────
+        from folium.plugins import HeatMap
+        g_heatmap = folium.FeatureGroup(name="🔥 Heatmap fauna", show=True)
+
+        # Coordenadas base GBIF + fallback si no hay datos reales
+        COORDS_FALLBACK = [
+            [8.757573799506615,-75.88747047195153],
+            [8.7560,-75.8870],[8.7580,-75.8860],
+            [8.761909556839255,-75.88462084128709],
+            [8.7720,-75.8680],[8.7700,-75.8690],
+            [8.7678248873423,-75.88483868572298],
+            [8.7650,-75.8840],[8.7640,-75.8830],
+            [8.71165087231113,-75.82840985065003],
+            [8.7120,-75.8280],[8.7130,-75.8290],
+            [8.7750,-75.8700],[8.7740,-75.8710],
+            [8.7800,-75.8750],[8.7820,-75.8760],
+        ]
+        if avistamientos_reales:
+            heat_coords = [[av["lat"], av["lon"]] for av in avistamientos_reales]
+            # Añadir peso por estado de conservación
+            heat_data = [[av["lat"], av["lon"], 1.5 if av["estado"]=="Vulnerable" else 1.0]
+                        for av in avistamientos_reales]
+        else:
+            heat_data = [[c[0], c[1], 1.0] for c in COORDS_FALLBACK]
+
+        HeatMap(
+            heat_data,
+            radius=28,
+            blur=18,
+            max_zoom=14,
+            gradient={
+                0.2: '#3B6D11',
+                0.5: '#EF9F27',
+                0.8: '#E85D24',
+                1.0: '#A32D2D'
+            }
+        ).add_to(g_heatmap)
+
         if avistamientos_reales:
             from collections import defaultdict
             por_especie = defaultdict(list)
@@ -1426,7 +1499,7 @@ with tab_mapa:
                     icon=folium.Icon(color="red" if est=="Vulnerable" else "purple", icon="paw", prefix="fa")
                 ).add_to(g_fauna)
 
-        for g in [g_inundacion,g_lluvia,g_contam,g_rio,g_aire,g_univ,g_cc,g_fauna]:
+        for g in [g_inundacion,g_lluvia,g_contam,g_rio,g_aire,g_univ,g_cc,g_heatmap,g_fauna]:
             g.add_to(m)
         folium.LayerControl(collapsed=False, position="topright").add_to(m)
         st_folium(m, width=None, height=460, use_container_width=True, returned_objects=[], key="mapa_principal")
