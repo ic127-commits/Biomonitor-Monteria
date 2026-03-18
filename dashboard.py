@@ -693,16 +693,63 @@ CC_GLOBAL = [
 # ══════════════════════════════════════════════════════════
 _loading = st.empty()
 _loading.markdown("""
-<div style="text-align:center;padding:50px 0;">
-  <div style="display:inline-block;background:#FFFFFF;border:1px solid #E8E6DF;
-              border-left:4px solid #3B6D11;border-radius:0 14px 14px 0;
-              padding:24px 40px;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
-    <div style="font-family:'Outfit',sans-serif;color:#3B6D11;font-size:1.2rem;
-                font-weight:800;margin-bottom:8px;letter-spacing:-0.3px">
-      🌿 Cargando BioMonitor Montería…
+<style>
+@keyframes progressAnim {
+  0%   { width: 0%; }
+  20%  { width: 25%; }
+  50%  { width: 60%; }
+  80%  { width: 85%; }
+  100% { width: 95%; }
+}
+@keyframes fadeInLoad {
+  from { opacity:0; transform:translateY(10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.load-card {
+  display:inline-block;
+  background:#FFFFFF;
+  border:1px solid #E8E6DF;
+  border-left:4px solid #3B6D11;
+  border-radius:0 16px 16px 0;
+  padding:28px 44px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.10);
+  min-width:320px;
+  animation:fadeInLoad 0.4s ease both;
+}
+.load-title {
+  font-family:Outfit,sans-serif;
+  color:#3B6D11;font-size:1.25rem;
+  font-weight:800;margin-bottom:6px;letter-spacing:-0.3px;
+}
+.load-sub {
+  color:#888780;font-size:0.82rem;font-weight:500;margin-bottom:18px;
+}
+.progress-track {
+  background:#EAF3DE;border-radius:20px;
+  height:8px;width:100%;overflow:hidden;
+}
+.progress-bar {
+  height:100%;background:linear-gradient(90deg,#3B6D11,#97C459);
+  border-radius:20px;
+  animation:progressAnim 3s cubic-bezier(0.4,0,0.2,1) forwards;
+}
+.load-steps {
+  margin-top:12px;font-size:0.75rem;color:#97C459;
+  font-family:Outfit,sans-serif;font-weight:600;
+  display:flex;gap:16px;justify-content:center;
+}
+</style>
+<div style="text-align:center;padding:80px 0 60px 0">
+  <div class="load-card">
+    <div class="load-title">🌿 BioMonitor Montería</div>
+    <div class="load-sub">Conectando con fuentes de datos en tiempo real…</div>
+    <div class="progress-track">
+      <div class="progress-bar"></div>
     </div>
-    <div style="color:#5F5E5A;font-size:0.85rem;font-weight:500">
-      Conectando con Open-Meteo · IDEAM · GBIF
+    <div class="load-steps">
+      <span>☁️ Open-Meteo</span>
+      <span>🌊 IDEAM</span>
+      <span>🦜 GBIF</span>
     </div>
   </div>
 </div>
@@ -711,7 +758,7 @@ _loading.markdown("""
 try:
     clima, aire, ideam = cargar_datos()
 except Exception as _e:
-    _loading.error(f"⚠️ Error al cargar datos: {_e}\n\nIntenta recargar la página o pulsa **🔄 Actualizar**.")
+    _loading.error(f"⚠️ Error al cargar datos: {_e}\n\nIntenta recargar la página.")
     st.stop()
 
 _loading.empty()
@@ -739,28 +786,62 @@ aqi_txt, aqi_badge = cat_aqi(aire["aqi"])
 # ══════════════════════════════════════════════════════════
 # ── HEADER ────────────────────────────────────────────────
 # ══════════════════════════════════════════════════════════
-st.markdown("""
+
+# Mensaje de bienvenida según hora
+_hora_actual = datetime.now(TZ_COL).hour
+if 5 <= _hora_actual < 12:
+    _saludo     = "Buenos días"
+    _saludo_ico = "☀️"
+    _saludo_sub = "Empieza el día informado sobre tu ciudad"
+elif 12 <= _hora_actual < 17:
+    _saludo     = "Buenas tardes"
+    _saludo_ico = "🌤️"
+    _saludo_sub = "Así está Montería en este momento"
+elif 17 <= _hora_actual < 19:
+    _saludo     = "Buenas tardes"
+    _saludo_ico = "🌅"
+    _saludo_sub = "Revisa el estado ambiental al caer la tarde"
+else:
+    _saludo     = "Buenas noches"
+    _saludo_ico = "🌙"
+    _saludo_sub = "Resumen nocturno del estado ambiental"
+
+st.markdown(f"""
 <style>
-@keyframes ledPulse {
-  0%,100% { box-shadow: 0 0 0 0 rgba(59,179,17,0.7), 0 0 6px 2px rgba(59,179,17,0.4); }
-  50%      { box-shadow: 0 0 0 5px rgba(59,179,17,0), 0 0 10px 4px rgba(59,179,17,0.2); }
-}
-.led-dot {
+@keyframes ledPulse {{
+  0%,100% {{ box-shadow: 0 0 0 0 rgba(59,179,17,0.7), 0 0 6px 2px rgba(59,179,17,0.4); }}
+  50%      {{ box-shadow: 0 0 0 5px rgba(59,179,17,0), 0 0 10px 4px rgba(59,179,17,0.2); }}
+}}
+.led-dot {{
   display:inline-block;width:9px;height:9px;background:#3BD411;
   border-radius:50%;margin-right:7px;vertical-align:middle;
   animation:ledPulse 1.8s ease-in-out infinite;position:relative;top:-1px;
-}
+}}
 </style>
-<div style="padding:62px 0 14px 0;animation:fadeInUp 0.3s ease both">
-  <div class="biomonitor-title" style="font-family:'Outfit',sans-serif;font-size:1.65rem;
-              font-weight:900;color:#3B6D11;letter-spacing:-0.5px;line-height:1;margin-bottom:5px">
-    🌿 BioMonitor Montería
-  </div>
-  <div class="biomonitor-sub" style="font-size:0.75rem;color:#888780;font-weight:600;
-              letter-spacing:1.2px;text-transform:uppercase;
-              display:flex;align-items:center">
-    <span class="led-dot"></span>
-    Monitoreo Ambiental en Tiempo Real &nbsp;·&nbsp; Córdoba, Colombia
+<div style="padding:62px 0 10px 0;animation:fadeInUp 0.3s ease both">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:8px">
+    <div>
+      <div class="biomonitor-title" style="font-family:Outfit,sans-serif;font-size:1.65rem;
+                  font-weight:900;color:#3B6D11;letter-spacing:-0.5px;line-height:1;margin-bottom:5px">
+        🌿 BioMonitor Montería
+      </div>
+      <div class="biomonitor-sub" style="font-size:0.75rem;color:#888780;font-weight:600;
+                  letter-spacing:1.2px;text-transform:uppercase;display:flex;align-items:center">
+        <span class="led-dot"></span>
+        Monitoreo Ambiental en Tiempo Real &nbsp;·&nbsp; Córdoba, Colombia
+      </div>
+    </div>
+    <div style="background:#FFFFFF;border:1px solid #E8E6DF;border-radius:12px;
+                padding:10px 18px;box-shadow:0 2px 8px rgba(0,0,0,0.05);
+                animation:fadeInUp 0.4s ease 0.1s both;text-align:right">
+      <div style="font-family:Outfit,sans-serif;font-size:1.05rem;font-weight:800;
+                  color:#1E1E1C;line-height:1">
+        {_saludo_ico} {_saludo}, Montería
+      </div>
+      <div style="font-size:0.73rem;color:#888780;font-weight:500;margin-top:3px">
+        {_saludo_sub}
+      </div>
+    </div>
   </div>
 </div>
 """, unsafe_allow_html=True)
