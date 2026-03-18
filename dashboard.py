@@ -1481,7 +1481,6 @@ with tab_mapa:
 
         for g in [g_inundacion,g_lluvia,g_contam,g_rio,g_aire,g_univ,g_cc,g_fauna]:
             g.add_to(m)
-        # Heatmap al final — si falla no rompe el mapa
         try:
             g_heatmap.add_to(m)
         except Exception:
