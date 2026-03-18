@@ -349,13 +349,6 @@ iframe { max-width:100% !important;border-radius:12px !important; }
 }
 
 /* ══ RESPONSIVE COMPLETO ══ */
-
-/* Hero card responsive */
-.hero-card-inner {
-  display:flex;
-  align-items:center;
-  gap:24px;
-}
 @media (max-width:1100px) {
   .block-container { padding-left:1.5rem !important;padding-right:1.5rem !important; }
 }
@@ -363,7 +356,8 @@ iframe { max-width:100% !important;border-radius:12px !important; }
   .block-container { padding-left:1rem !important;padding-right:1rem !important;padding-top:2rem !important; }
   .kpi-value    { font-size:1.5rem !important; }
   .kpi-value-sm { font-size:1.2rem !important; }
-  .hero-card-inner { gap:16px !important; }
+  .header-wrapper { gap:10px !important; }
+  .hero-left img  { width:140px !important; }
 }
 @media (max-width:768px) {
   .block-container { padding-top:1.2rem !important;padding-left:0.75rem !important;padding-right:0.75rem !important; }
@@ -371,11 +365,20 @@ iframe { max-width:100% !important;border-radius:12px !important; }
   .kpi-value-sm { font-size:1.05rem !important; }
   .kpi-label    { font-size:0.6rem !important; }
   .kpi-card     { min-height:auto !important;padding:12px 14px !important; }
-  /* columnas Streamlit se apilan */
   [data-testid="column"] { min-width:100% !important; }
-  /* hero card: logo arriba, texto abajo en móvil */
-  .hero-card-inner { flex-direction:column !important;align-items:flex-start !important;gap:12px !important; }
-  .hero-card-inner img { width:110px !important;height:110px !important; }
+  /* header wrapper apilado en móvil */
+  .header-wrapper { flex-direction:column !important; }
+  /* hero card: logo + texto en columna */
+  .hero-left {
+    flex-direction:column !important;align-items:flex-start !important;
+    padding:14px 16px !important;gap:12px !important;
+  }
+  .hero-left img  { width:100px !important; }
+  /* card derecho full width */
+  .hero-right { min-width:100% !important;max-width:100% !important; }
+  /* saludo: apilado */
+  .greeting-bar { flex-direction:column !important;align-items:flex-start !important;gap:8px !important; }
+  .greeting-card { text-align:left !important; }
   .section-header { font-size:0.88rem !important; }
   .stat-row       { font-size:0.76rem !important;line-height:1.8 !important; }
   .copyright      { display:none !important; }
@@ -388,12 +391,32 @@ iframe { max-width:100% !important;border-radius:12px !important; }
     -webkit-overflow-scrolling:touch !important;
   }
   .stTabs [data-baseweb="tab"] { padding:8px 11px !important;font-size:0.78rem !important;white-space:nowrap !important; }
-  /* título hero más pequeño en móvil */
-  .biomonitor-title { font-size:1.3rem !important; }
-  .biomonitor-sub   { font-size:0.68rem !important; }
-  /* hero badge más compacto */
-  .hero-badge { font-size:0.67rem !important;padding:3px 8px !important; }
+  .biomonitor-title { font-size:1.25rem !important; }
+  .biomonitor-sub   { font-size:0.66rem !important; }
+  .hero-badge { font-size:0.66rem !important;padding:3px 8px !important; }
+  /* loading card */
+  .load-card { min-width:unset !important;width:90% !important;padding:20px 24px !important; }
+  .load-title { font-size:1rem !important; }
 }
+@media (max-width:480px) {
+  .block-container { padding-left:0.4rem !important;padding-right:0.4rem !important;padding-top:1rem !important; }
+  .kpi-value    { font-size:1.15rem !important; }
+  .kpi-label    { font-size:0.57rem !important; }
+  .section-header { font-size:0.82rem !important; }
+  .hero-badge   { font-size:0.62rem !important;padding:3px 6px !important; }
+  [data-testid="column"] { min-width:100% !important; }
+  .stTabs [data-baseweb="tab"] { padding:6px 9px !important;font-size:0.72rem !important; }
+  .hero-left img  { width:80px !important; }
+  .biomonitor-title { font-size:1.05rem !important; }
+  .info-card { padding:12px 14px !important;font-size:0.8rem !important; }
+  .stat-row  { font-size:0.72rem !important; }
+  /* saludo compacto */
+  .greeting-card div:first-child { font-size:0.88rem !important; }
+  .greeting-card div:last-child  { display:none !important; }
+  /* loading */
+  .load-card { width:95% !important;padding:16px 18px !important; }
+  .load-steps { gap:8px !important;font-size:0.68rem !important; }
+}}
 @media (max-width:480px) {
   .block-container { padding-left:0.4rem !important;padding-right:0.4rem !important;padding-top:1rem !important; }
   .kpi-value    { font-size:1.15rem !important; }
@@ -819,7 +842,7 @@ st.markdown(f"""
 }}
 </style>
 <div style="padding:62px 0 10px 0;animation:fadeInUp 0.3s ease both">
-  <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:8px">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:8px" class="greeting-bar">
     <div>
       <div class="biomonitor-title" style="font-family:Outfit,sans-serif;font-size:1.65rem;
                   font-weight:900;color:#3B6D11;letter-spacing:-0.5px;line-height:1;margin-bottom:5px">
@@ -831,7 +854,7 @@ st.markdown(f"""
         Monitoreo Ambiental en Tiempo Real &nbsp;·&nbsp; Córdoba, Colombia
       </div>
     </div>
-    <div style="background:#FFFFFF;border:1px solid #E8E6DF;border-radius:12px;
+    <div class="greeting-card" style="background:#FFFFFF;border:1px solid #E8E6DF;border-radius:12px;
                 padding:10px 18px;box-shadow:0 2px 8px rgba(0,0,0,0.05);
                 animation:fadeInUp 0.4s ease 0.1s both;text-align:right">
       <div style="font-family:Outfit,sans-serif;font-size:1.05rem;font-weight:800;
