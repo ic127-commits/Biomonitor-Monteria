@@ -1068,7 +1068,13 @@ with tab_inicio:
     k4, k5, k6 = st.columns(3, gap="small")
     with k4: _kpi_card("kpi-card kpi-card-green", "💨 PM2.5", f"{aire.get('pm25','—')} µg/m³", "✅ OMS < 15", "badge-green", "Open-Meteo · ahora")
     with k5: _kpi_card("kpi-card", "🌬️ AQI Europeo", str(aire.get('aqi','—')), aqi_txt, aqi_badge, "Índice europeo")
-    with k6: _kpi_card("kpi-card kpi-card-purple", "🦜 Especies GBIF", "≥12", "Córdoba 2026", "badge-purple", "GBIF · Córdoba, CO")
+    with k6:
+        # Conteo dinámico desde GBIF
+        _df_esp, _fauna_ok = obtener_fauna_gbif()
+        _n_esp = len(_df_esp) if _fauna_ok and _df_esp is not None else "—"
+        _esp_badge = f"Córdoba · {datetime.now(TZ_COL).strftime('%d/%m/%Y')}"
+        _kpi_card("kpi-card kpi-card-purple", "🦜 Especies GBIF",
+                  str(_n_esp), _esp_badge, "badge-purple", "GBIF · tiempo real · 24h")
 
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
     st.markdown('<div class="section-header">📋 Resumen del estado actual</div>', unsafe_allow_html=True)
