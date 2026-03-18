@@ -1016,7 +1016,7 @@ st.markdown(f"""
                   border-top:1px solid #E8E6DF;padding-top:7px;font-weight:500">
         <span style="display:inline-block;width:6px;height:6px;background:{borde_color};
                      border-radius:50%;margin-right:4px;vertical-align:middle"></span>
-        Actualizado {hora_actual} · <span id="bio-counter" style="color:{borde_color};font-weight:700">0s</span>
+        Actualizado {hora_actual} · Colombia
       </div>
     </div>
     <div style="background:linear-gradient(135deg,#F4F2EE,#EEECEA);
@@ -1039,29 +1039,6 @@ if st.query_params.get("refresh") == "1":
     st.query_params.clear()
     st.cache_data.clear()
     st.rerun()
-
-# ── Contador de tiempo desde última actualización ─────────
-st.markdown("""
-<script>
-(function() {
-  var secs = 0;
-  var el = document.getElementById('bio-counter');
-  function tick() {
-    secs++;
-    if (!el) el = document.getElementById('bio-counter');
-    if (!el) return;
-    if (secs < 60) {
-      el.textContent = 'hace ' + secs + 's';
-    } else if (secs < 3600) {
-      el.textContent = 'hace ' + Math.floor(secs/60) + 'min';
-    } else {
-      el.textContent = 'hace ' + Math.floor(secs/3600) + 'h';
-    }
-  }
-  setInterval(tick, 1000);
-})();
-</script>
-""", unsafe_allow_html=True)
 
 st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
