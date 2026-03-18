@@ -1221,8 +1221,6 @@ def obtener_cauce_sinu():
 # ══════════════════════════════════════════════════════════
 with tab_mapa:
     st.markdown('<div class="section-header">🗺️ Mapa ambiental interactivo · Montería</div>', unsafe_allow_html=True)
-    # En móvil el mapa ocupa todo el ancho
-    _es_movil = st.session_state.get("es_movil", False)
     col_mapa, col_pred = st.columns([1.35, 1], gap="small")
 
     with col_mapa:
@@ -1232,282 +1230,233 @@ with tab_mapa:
         with btn1:
             if st.button("🗺️ Estándar", use_container_width=True,
                          type="primary" if st.session_state.mapa_tipo=="Estándar" else "secondary"):
-                st.session_state.mapa_tipo = "Estándar"; st.rerun()
+                st.session_state.mapa_tipo = "Estándar"
+                st.session_state.pop("mapa_cache", None)
+                st.rerun()
         with btn2:
             if st.button("🛰️ Satelital", use_container_width=True,
                          type="primary" if st.session_state.mapa_tipo=="Satelital" else "secondary"):
-                st.session_state.mapa_tipo = "Satelital"; st.rerun()
+                st.session_state.mapa_tipo = "Satelital"
+                st.session_state.pop("mapa_cache", None)
+                st.rerun()
         with btn3:
             if st.button("🌑 Oscuro", use_container_width=True,
                          type="primary" if st.session_state.mapa_tipo=="Oscuro" else "secondary"):
-                st.session_state.mapa_tipo = "Oscuro"; st.rerun()
+                st.session_state.mapa_tipo = "Oscuro"
+                st.session_state.pop("mapa_cache", None)
+                st.rerun()
 
-        tipo = st.session_state.mapa_tipo
-        if tipo == "Satelital":
-            m = folium.Map(location=[8.7700,-75.8750], zoom_start=13, tiles=None, prefer_canvas=True)
-            folium.TileLayer(
-                tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-                attr="Tiles © Esri", name="Satelital", overlay=False, control=True
-            ).add_to(m)
-        elif tipo == "Oscuro":
-            m = folium.Map(location=[8.7700,-75.8750], zoom_start=13,
-                           tiles="CartoDB dark_matter", attr="© CartoDB", prefer_canvas=True)
-        else:
-            m = folium.Map(location=[8.7700,-75.8750], zoom_start=13,
-                           tiles="OpenStreetMap", attr="© OpenStreetMap contributors", prefer_canvas=True)
+        # ── Caché del mapa en session_state ──────────────────
+        # Solo reconstruye si cambió el tipo o se limpió el caché
+        _cache_key = f"mapa_cache_{st.session_state.mapa_tipo}"
+        if _cache_key not in st.session_state:
 
-        g_rio=folium.FeatureGroup(name="🌊 Río y estaciones",show=True)
-        g_contam=folium.FeatureGroup(name="💨 Contaminación",show=True)
-        g_inundacion=folium.FeatureGroup(name="🌊 Zonas inundación",show=True)
-        g_lluvia=folium.FeatureGroup(name="🌧️ Lluvia",show=True)
-        g_univ=folium.FeatureGroup(name="🎓 Universidades",show=True)
-        g_cc=folium.FeatureGroup(name="🛍️ C. Comerciales",show=True)
-        g_aire=folium.FeatureGroup(name="💨 Estaciones aire",show=True)
-        g_fauna=folium.FeatureGroup(name="🦜 Fauna",show=True)
+            tipo = st.session_state.mapa_tipo
+            if tipo == "Satelital":
+                m = folium.Map(location=[8.7700,-75.8750], zoom_start=13, tiles=None)
+                folium.TileLayer(
+                    tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+                    attr="Tiles © Esri", name="Satelital", overlay=False, control=True
+                ).add_to(m)
+            elif tipo == "Oscuro":
+                m = folium.Map(location=[8.7700,-75.8750], zoom_start=13,
+                               tiles="CartoDB dark_matter", attr="© CartoDB")
+            else:
+                m = folium.Map(location=[8.7700,-75.8750], zoom_start=13,
+                               tiles="OpenStreetMap", attr="© OpenStreetMap contributors")
 
-        _cauce = obtener_cauce_sinu() or CAUCE_SINU_FALLBACK
-        folium.PolyLine(locations=_cauce, color="#4FC3F7", weight=5, opacity=0.9, tooltip="Río Sinú").add_to(g_rio)
-        folium.Circle([8.7560,-75.8850], radius=6000, color="#00E5C3", fill=True, fill_opacity=0.02, weight=1, dash_array="6").add_to(g_rio)
+            g_rio=folium.FeatureGroup(name="🌊 Río y estaciones",show=True)
+            g_contam=folium.FeatureGroup(name="💨 Contaminación",show=False)  # oculto por defecto
+            g_inundacion=folium.FeatureGroup(name="🌊 Zonas inundación",show=True)
+            g_lluvia=folium.FeatureGroup(name="🌧️ Lluvia",show=False)  # oculto por defecto
+            g_univ=folium.FeatureGroup(name="🎓 Universidades",show=False)  # oculto por defecto
+            g_cc=folium.FeatureGroup(name="🛍️ C. Comerciales",show=False)  # oculto por defecto
+            g_aire=folium.FeatureGroup(name="💨 Estaciones aire",show=True)
+            g_fauna=folium.FeatureGroup(name="🦜 Fauna",show=True)
 
-        for lat,lon,nombre,idx in [
-            (8.757573799506615,-75.88747047195153,"Ronda del Sinú — Av. Primera",0),
-            (8.7650,-75.8845,"Puente Segundo Centenario",1),
-            (8.761909556839255,-75.88462084128709,"Muelle Turístico del Sinú",2),
-        ]:
-            alerta_lbl,_,_ = alerta_rio(niveles[idx])
-            folium.Marker([lat,lon],
-                popup=folium.Popup(f"<b>🌊 {nombre}</b><br>📊 Nivel actual: <b>{niveles[idx]}m</b><br>🔔 Estado: <b>{alerta_lbl}</b><br>📡 Fuente: {fuente_rio}", max_width=260),
-                tooltip=folium.Tooltip(f"🌊 {nombre} · {niveles[idx]}m · {alerta_lbl}", sticky=True),
-                icon=folium.Icon(color="blue",icon="tint",prefix="fa")
-            ).add_to(g_rio)
+            _cauce = obtener_cauce_sinu() or CAUCE_SINU_FALLBACK
+            folium.PolyLine(locations=_cauce, color="#4FC3F7", weight=5, opacity=0.9, tooltip="Río Sinú").add_to(g_rio)
 
-        pm25 = aire["pm25"]
-        def color_contam(f):
-            v = pm25*f
-            if v<10: return "#00E5C3","🟢 Buena"
-            elif v<15: return "#FFD600","🟡 Moderada"
-            elif v<25: return "#FF9800","🟠 Regular"
-            else: return "#FF5252","🔴 Mala"
+            for lat,lon,nombre,idx in [
+                (8.757573799506615,-75.88747047195153,"Ronda del Sinú — Av. Primera",0),
+                (8.7650,-75.8845,"Puente Segundo Centenario",1),
+                (8.761909556839255,-75.88462084128709,"Muelle Turístico del Sinú",2),
+            ]:
+                alerta_lbl,_,_ = alerta_rio(niveles[idx])
+                folium.Marker([lat,lon],
+                    popup=folium.Popup(f"<b>🌊 {nombre}</b><br>📊 Nivel: <b>{niveles[idx]}m</b><br>🔔 {alerta_lbl}", max_width=220),
+                    tooltip=f"🌊 {nombre} · {niveles[idx]}m",
+                    icon=folium.Icon(color="blue",icon="tint",prefix="fa")
+                ).add_to(g_rio)
 
-        ZONAS_CONTAM = [
-            (8.7420,-75.8650,280,"🚌 Terminal de Transportes","Cl. 44 · buses y camiones · emisiones altas",2.1),
-            (8.7512,-75.8795,260,"🏪 Mercado Central","Cra. 6 centro · tráfico pesado + vendedores",1.8),
-            (8.7600,-75.8600,240,"🚗 Avenida Circunvalar","Corredor vial principal E-O de Montería",1.6),
-            (8.75594055923935,-75.88700684261966,200,"🏛️ Parque Simón Bolívar","Centro histórico · zona más concurrida de Montería",1.3),
-            (8.779113660375875,-75.86157613345505,200,"🛍️ Zona C.C. Buenavista","Cra. 6 #68-72 · flujo comercial intenso",1.4),
-            (8.71165087231113,-75.82840985065003,200,"⚽ Estadio Jaraguay","Estadio Municipal de Montería · zona sur",1.2),
-            (8.757573799506615,-75.88747047195153,320,"🌿 Ronda del Sinú","Parque lineal más grande de Latinoamérica · pulmón verde urbano",0.6),
-            (8.761909556839255,-75.88462084128709,180,"⚓ Muelle Turístico","Orilla del río Sinú · brisa natural",0.7),
-            (8.8233,-75.8258,180,"✈️ Aeropuerto Los Garzones","Zona norte periférica · baja densidad urbana",0.8),
-        ]
-        for lat,lon,radio,nombre,desc,factor in ZONAS_CONTAM:
-            c,estado = color_contam(factor)
-            folium.Circle(location=[lat,lon], radius=radio, color=c, fill=True, fill_color=c, fill_opacity=0.40, weight=3,
-                popup=folium.Popup(f"<b>{nombre}</b><br>📍 {desc}<br>💨 PM2.5 est.: <b>{round(pm25*factor,1)} µg/m³</b><br>Factor: {factor}x · Estado: {estado}", max_width=260),
-                tooltip=f"{nombre} — {estado}"
-            ).add_to(g_contam)
+            # Contaminación — solo 5 zonas más importantes, weight=1
+            pm25 = aire["pm25"]
+            def color_contam(f):
+                v = pm25*f
+                if v<10: return "#00E5C3","🟢 Buena"
+                elif v<15: return "#FFD600","🟡 Moderada"
+                elif v<25: return "#FF9800","🟠 Regular"
+                else: return "#FF5252","🔴 Mala"
 
-        nivel_actual = niveles[0]
-        ZONAS_INUND = [
-            (8.7480,-75.8960,300,"La Granja · La Ribera",4.0,"Zona baja occidental"),
-            (8.7430,-75.8880,260,"Barrio Colón · Chuchurubi",4.0,"Inundación histórica"),
-            (8.7650,-75.8930,240,"Ronda Sinú norte",5.5,"Afectada cota 5.5m"),
-            (8.7800,-75.8900,200,"El Recreo · ribera norte",5.5,"Afectada cota 5.5m"),
-            (8.7280,-75.9000,200,"Mocarí · zona sur",4.0,"Zona baja sur"),
-        ]
-        for lat,lon,radio,barrios,cota,nota in ZONAS_INUND:
-            if nivel_actual>=cota+1.5: cz,fo,az="#FF5252",0.38,"⚠️ INUNDACIÓN"
-            elif nivel_actual>=cota:   cz,fo,az="#FF9800",0.24,"⚠️ Alerta"
-            elif nivel_actual>=cota-0.5: cz,fo,az="#FFD600",0.14,"⚡ Precaución"
-            else:                      cz,fo,az="#4FC3F7",0.07,"✅ Normal"
-            folium.Circle(location=[lat,lon], radius=radio, color=cz, fill=True, fill_color=cz, fill_opacity=fo, weight=3, dash_array="6",
-                popup=folium.Popup(f"<b>🌊 Zona inundación</b><br>Barrios: {barrios}<br>Nivel actual: <b>{nivel_actual}m</b><br>Cota alerta: {cota}m · Estado: <b>{az}</b><br>{nota}", max_width=270),
-                tooltip=f"🌊 {barrios} — {az}"
-            ).add_to(g_inundacion)
+            ZONAS_CONTAM = [
+                (8.7420,-75.8650,220,"🚌 Terminal","emisiones altas",2.1),
+                (8.7512,-75.8795,200,"🏪 Mercado Central","tráfico pesado",1.8),
+                (8.7600,-75.8600,180,"🚗 Av. Circunvalar","corredor vial",1.6),
+                (8.75594,-75.88700,160,"🏛️ Parque Simón Bolívar","centro histórico",1.3),
+                (8.757573,-75.88747,240,"🌿 Ronda del Sinú","pulmón verde",0.6),
+            ]
+            for lat,lon,radio,nombre,desc,factor in ZONAS_CONTAM:
+                c,estado = color_contam(factor)
+                folium.Circle(location=[lat,lon], radius=radio, color=c, fill=True,
+                    fill_color=c, fill_opacity=0.30, weight=1,
+                    tooltip=f"{nombre} — {estado}"
+                ).add_to(g_contam)
 
-        prob_h = clima.get("prob_lluvia",[0])[0] if clima.get("prob_lluvia") else 0
-        if prob_h>=20 or clima.get("lluvia_hoy",0)>0:
-            cl_r,op_r = ("#0066FF",0.22) if prob_h>=60 else ("#00AAFF",0.13) if prob_h>=30 else ("#00CCFF",0.07)
-            for lat_z,lon_z,peso in [(8.7550,-75.8914,1.0),(8.7480,-75.9000,0.9),(8.7750,-75.8870,0.8)]:
-                folium.Circle([lat_z,lon_z], radius=int(2000*peso), color=cl_r, fill=True, fill_color=cl_r,
-                    fill_opacity=op_r*peso, weight=0, tooltip=f"🌧️ Prob. lluvia: {prob_h}%"
+            # Inundación
+            nivel_actual = niveles[0]
+            ZONAS_INUND = [
+                (8.7480,-75.8960,280,"La Granja · La Ribera",4.0),
+                (8.7430,-75.8880,240,"Barrio Colón · Chuchurubi",4.0),
+                (8.7650,-75.8930,220,"Ronda Sinú norte",5.5),
+                (8.7800,-75.8900,180,"El Recreo",5.5),
+                (8.7280,-75.9000,180,"Mocarí",4.0),
+            ]
+            for lat,lon,radio,barrios,cota in ZONAS_INUND:
+                if nivel_actual>=cota+1.5: cz,fo,az="#FF5252",0.35,"⚠️ INUNDACIÓN"
+                elif nivel_actual>=cota:   cz,fo,az="#FF9800",0.22,"⚠️ Alerta"
+                elif nivel_actual>=cota-0.5: cz,fo,az="#FFD600",0.12,"⚡ Precaución"
+                else:                      cz,fo,az="#4FC3F7",0.06,"✅ Normal"
+                folium.Circle(location=[lat,lon], radius=radio, color=cz, fill=True,
+                    fill_color=cz, fill_opacity=fo, weight=1, dash_array="6",
+                    tooltip=f"🌊 {barrios} — {az}"
+                ).add_to(g_inundacion)
+
+            # Lluvia
+            prob_h = clima.get("prob_lluvia",[0])[0] if clima.get("prob_lluvia") else 0
+            if prob_h>=30 or clima.get("lluvia_hoy",0)>1:
+                cl_r = "#0066FF" if prob_h>=60 else "#00AAFF"
+                folium.Circle([8.7550,-75.8914], radius=2500, color=cl_r,
+                    fill=True, fill_color=cl_r, fill_opacity=0.12, weight=0,
+                    tooltip=f"🌧️ Prob. lluvia: {prob_h}%"
                 ).add_to(g_lluvia)
 
-        # ── Datos ambientales en tiempo real para los popups ──
-        _temp    = clima.get('temp','—')
-        _hum     = clima.get('humedad','—')
-        _lluvia  = clima.get('lluvia_hoy','—')
-        _viento  = clima.get('viento','—')
-        _pm25    = aire.get('pm25','—')
-        _aqi     = aire.get('aqi','—')
-        _prob    = clima.get("prob_lluvia",[0])[0] if clima.get("prob_lluvia") else 0
-        _rio_lbl, _, _ = alerta_rio(niveles[0])
-        _aire_lbl = "Buena" if isinstance(_pm25,(int,float)) and _pm25 < 15 else "Regular"
-        _pm25_color = "#27500A" if isinstance(_pm25,(int,float)) and _pm25 < 15 else "#854F0B"
-        _rio_color  = "#27500A" if _rio_lbl == "Normal" else "#854F0B" if "Amarilla" in _rio_lbl else "#A32D2D"
+            # Estaciones aire — solo 2 marcadores
+            for lat,lon,nombre,txt in [
+                (8.7550,-75.8750,"💨 Calidad del aire · Centro",
+                 f"PM2.5: {aire.get('pm25','—')} µg/m³ · AQI: {aire.get('aqi','—')}"),
+                (8.7350,-75.8650,"💨 Calidad del aire · Sur",
+                 f"PM10: {aire.get('pm10','—')} µg/m³ · Viento: {clima.get('viento','—')} km/h"),
+            ]:
+                folium.Marker([lat,lon],
+                    popup=folium.Popup(f"<b>{nombre}</b><br>{txt}<br>📡 Open-Meteo · tiempo real", max_width=210),
+                    tooltip=nombre,
+                    icon=folium.Icon(color="green",icon="cloud",prefix="fa")
+                ).add_to(g_aire)
 
-        def _popup_ambiental(nombre, direccion, info, tipo_ico):
-            return f"""
-            <div style="font-family:sans-serif;font-size:12px;min-width:240px">
-              <div style="font-weight:700;font-size:13px;margin-bottom:6px;
-                          border-bottom:2px solid #3B6D11;padding-bottom:4px">
-                {nombre}
-              </div>
-              <div style="color:#555;margin-bottom:8px">
-                📍 {direccion}<br>
-                ℹ️ <i>{info}</i>
-              </div>
-              <div style="background:#F4F9EE;border-radius:8px;padding:8px 10px;
-                          border-left:3px solid #3B6D11">
-                <div style="font-weight:700;color:#3B6D11;margin-bottom:5px;font-size:11px;
-                            text-transform:uppercase;letter-spacing:0.5px">
-                  🌿 Estado ambiental ahora
-                </div>
-                <table style="width:100%;border-collapse:collapse;font-size:11.5px">
-                  <tr>
-                    <td style="padding:2px 4px">🌡️ Temperatura</td>
-                    <td style="padding:2px 4px;font-weight:700">{_temp}°C · {_hum}% hum.</td>
-                  </tr>
-                  <tr style="background:rgba(255,255,255,0.5)">
-                    <td style="padding:2px 4px">💨 Calidad aire</td>
-                    <td style="padding:2px 4px;font-weight:700;color:{_pm25_color}">
-                      PM2.5: {_pm25} µg/m³ · {_aire_lbl}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding:2px 4px">🌧️ Lluvia hoy</td>
-                    <td style="padding:2px 4px;font-weight:700">{_lluvia} mm · ☔ {_prob}%</td>
-                  </tr>
-                  <tr style="background:rgba(255,255,255,0.5)">
-                    <td style="padding:2px 4px">🌬️ Viento</td>
-                    <td style="padding:2px 4px;font-weight:700">{_viento} km/h</td>
-                  </tr>
-                  <tr>
-                    <td style="padding:2px 4px">🌊 Río Sinú</td>
-                    <td style="padding:2px 4px;font-weight:700;color:{_rio_color}">
-                      {niveles[0]}m · Alerta {_rio_lbl}
-                    </td>
-                  </tr>
-                </table>
-              </div>
-              <div style="font-size:10px;color:#888;margin-top:5px;text-align:right">
-                📡 Open-Meteo · IDEAM · tiempo real
-              </div>
-            </div>"""
+            # Universidades y CC con datos ambientales
+            _temp=clima.get('temp','—'); _hum=clima.get('humedad','—')
+            _lluvia=clima.get('lluvia_hoy','—'); _viento=clima.get('viento','—')
+            _pm25=aire.get('pm25','—'); _aqi=aire.get('aqi','—')
+            _prob=clima.get("prob_lluvia",[0])[0] if clima.get("prob_lluvia") else 0
+            _rio_lbl,_,_ = alerta_rio(niveles[0])
+            _aire_lbl = "Buena" if isinstance(_pm25,(int,float)) and _pm25<15 else "Regular"
+            _pm25_color = "#27500A" if isinstance(_pm25,(int,float)) and _pm25<15 else "#854F0B"
+            _rio_color = "#27500A" if _rio_lbl=="Normal" else "#854F0B" if "Amarilla" in _rio_lbl else "#A32D2D"
 
-        for lat,lon,nombre,direccion,info in UNIVERSIDADES_GLOBAL:
-            folium.Marker([lat,lon],
-                popup=folium.Popup(_popup_ambiental(nombre, direccion, info, "🎓"), max_width=280),
-                tooltip=nombre,
-                icon=folium.Icon(color="orange",icon="graduation-cap",prefix="fa")
-            ).add_to(g_univ)
+            def _popup_ambiental(nombre, direccion, info, tipo_ico):
+                return f"""<div style="font-family:sans-serif;font-size:12px;min-width:220px">
+                  <b style="font-size:13px;border-bottom:2px solid #3B6D11;display:block;padding-bottom:4px;margin-bottom:6px">{nombre}</b>
+                  <div style="color:#555;margin-bottom:8px">📍 {direccion}</div>
+                  <div style="background:#F4F9EE;border-radius:6px;padding:7px 9px;border-left:3px solid #3B6D11">
+                    <b style="color:#3B6D11;font-size:11px">🌿 Estado ambiental ahora</b><br>
+                    🌡️ {_temp}°C · {_hum}% hum.<br>
+                    💨 PM2.5: {_pm25} µg/m³ · {_aire_lbl}<br>
+                    🌧️ {_lluvia}mm · {_prob}%<br>
+                    🌊 Río: {niveles[0]}m · {_rio_lbl}
+                  </div>
+                </div>"""
 
-        for lat,lon,nombre,direccion,info in CC_GLOBAL:
-            folium.Marker([lat,lon],
-                popup=folium.Popup(_popup_ambiental(nombre, direccion, info, "🛍️"), max_width=280),
-                tooltip=nombre,
-                icon=folium.Icon(color="red",icon="shopping-cart",prefix="fa")
-            ).add_to(g_cc)
+            for lat,lon,nombre,direccion,info in UNIVERSIDADES_GLOBAL:
+                folium.Marker([lat,lon],
+                    popup=folium.Popup(_popup_ambiental(nombre,direccion,info,"🎓"), max_width=260),
+                    tooltip=nombre,
+                    icon=folium.Icon(color="orange",icon="graduation-cap",prefix="fa")
+                ).add_to(g_univ)
 
-        for lat,lon,nombre,txt in [
-            (8.7550,-75.8750,"💨 Estación Centro",
-             "PM2.5: "+str(aire.get("pm25","—"))+" µg/m³<br>AQI: "+str(aire.get("aqi","—"))+"<br>NO₂: "+str(aire.get("no2","—"))+" µg/m³"),
-            (8.7350,-75.8650,"💨 Estación Sur",
-             "PM10: "+str(aire.get("pm10","—"))+" µg/m³<br>PM2.5: "+str(aire.get("pm25","—"))+" µg/m³<br>Viento: "+str(clima.get("viento","—"))+" km/h"),
-        ]:
-            folium.Marker([lat,lon],
-                popup=folium.Popup(f"<b>{nombre}</b><br>{txt}<br>📡 Open-Meteo · tiempo real", max_width=230),
-                tooltip=folium.Tooltip(nombre, sticky=True),
-                icon=folium.Icon(color="green",icon="cloud",prefix="fa")
-            ).add_to(g_aire)
+            for lat,lon,nombre,direccion,info in CC_GLOBAL:
+                folium.Marker([lat,lon],
+                    popup=folium.Popup(_popup_ambiental(nombre,direccion,info,"🛍️"), max_width=260),
+                    tooltip=nombre,
+                    icon=folium.Icon(color="red",icon="shopping-cart",prefix="fa")
+                ).add_to(g_cc)
 
-        avistamientos_reales = obtener_avistamientos_mapa()
+            # Fauna
+            g_heatmap = folium.FeatureGroup(name="🔥 Heatmap fauna", show=True)
+            avistamientos_reales = obtener_avistamientos_mapa()
+            COORDS_FALLBACK = [
+                [8.757573,-75.887471],[8.7560,-75.8870],[8.761909,-75.884620],
+                [8.7720,-75.8680],[8.767824,-75.884838],[8.7650,-75.8840],
+                [8.711650,-75.828409],[8.7750,-75.8700],[8.7800,-75.8750],
+            ]
+            if avistamientos_reales:
+                heat_data = [[av["lat"],av["lon"],1.5 if av["estado"]=="Vulnerable" else 1.0]
+                            for av in avistamientos_reales]
+            else:
+                heat_data = [[c[0],c[1],1.0] for c in COORDS_FALLBACK]
 
-        # ── Heatmap de fauna ──────────────────────────────────
-        try:
-            from folium.plugins import HeatMap
-            heatmap_disponible = True
-        except ImportError:
-            heatmap_disponible = False
-
-        g_heatmap = folium.FeatureGroup(name="🔥 Heatmap fauna", show=True)
-
-        # Coordenadas base GBIF + fallback si no hay datos reales
-        COORDS_FALLBACK = [
-            [8.757573799506615,-75.88747047195153],
-            [8.7560,-75.8870],[8.7580,-75.8860],
-            [8.761909556839255,-75.88462084128709],
-            [8.7720,-75.8680],[8.7700,-75.8690],
-            [8.7678248873423,-75.88483868572298],
-            [8.7650,-75.8840],[8.7640,-75.8830],
-            [8.71165087231113,-75.82840985065003],
-            [8.7120,-75.8280],[8.7130,-75.8290],
-            [8.7750,-75.8700],[8.7740,-75.8710],
-            [8.7800,-75.8750],[8.7820,-75.8760],
-        ]
-        if avistamientos_reales:
-            heat_coords = [[av["lat"], av["lon"]] for av in avistamientos_reales]
-            # Añadir peso por estado de conservación
-            heat_data = [[av["lat"], av["lon"], 1.5 if av["estado"]=="Vulnerable" else 1.0]
-                        for av in avistamientos_reales]
-        else:
-            heat_data = [[c[0], c[1], 1.0] for c in COORDS_FALLBACK]
-
-        if heatmap_disponible:
             try:
-                HeatMap(
-                    heat_data,
-                    radius=28,
-                    blur=18,
-                    max_zoom=14,
-                    gradient={
-                        0.2: '#3B6D11',
-                        0.5: '#EF9F27',
-                        0.8: '#E85D24',
-                        1.0: '#A32D2D'
-                    }
+                from folium.plugins import HeatMap
+                HeatMap(heat_data, radius=25, blur=15, max_zoom=14,
+                        gradient={0.2:'#3B6D11',0.5:'#EF9F27',0.8:'#E85D24',1.0:'#A32D2D'}
                 ).add_to(g_heatmap)
             except Exception:
                 pass
 
-        if avistamientos_reales:
-            from collections import defaultdict
-            por_especie = defaultdict(list)
-            for av in avistamientos_reales:
-                por_especie[av["especie"]].append(av)
-            for especie, registros in por_especie.items():
-                for av in registros:
-                    color_m = "red" if av["estado"]=="Vulnerable" else "purple"
-                    folium.Marker([av["lat"],av["lon"]],
-                        popup=folium.Popup(
-                            f"<b>{av['emoji']} {av['especie']}</b><br>🏷️ <b>{av['nombre']}</b><br>"
-                            f"📍 {av['localidad']}<br>📅 {av['fecha']}<br>"
-                            f"🔴 Estado IUCN: {av['estado']}<br>📡 Fuente: GBIF · coordenadas reales", max_width=260),
-                        tooltip=folium.Tooltip(f"{av['emoji']} {av['especie']}<br>{av['nombre']} · {av['fecha']}", sticky=True),
-                        icon=folium.Icon(color=color_m, icon="paw", prefix="fa")
+            if avistamientos_reales:
+                from collections import defaultdict
+                por_especie = defaultdict(list)
+                for av in avistamientos_reales:
+                    por_especie[av["especie"]].append(av)
+                for especie, registros in por_especie.items():
+                    for av in registros:
+                        folium.Marker([av["lat"],av["lon"]],
+                            popup=folium.Popup(
+                                f"<b>{av['emoji']} {av['especie']}</b><br>"
+                                f"🏷️ {av['nombre']}<br>📅 {av['fecha']}<br>"
+                                f"🔴 {av['estado']}", max_width=220),
+                            tooltip=f"{av['emoji']} {av['nombre']}",
+                            icon=folium.Icon(color="red" if av["estado"]=="Vulnerable" else "purple",
+                                            icon="paw",prefix="fa")
+                        ).add_to(g_fauna)
+            else:
+                for lat,lon,esp,nom,zona,est in [
+                    (8.757573,-75.887471,"🦎 Iguana iguana","Iguana verde","Ronda del Sinú","No evaluado"),
+                    (8.7720,-75.8680,"🐦 Paloma guarumera","Paloma guarumera","Norte","LC"),
+                    (8.761909,-75.884620,"🦆 Pato real","Pato real","Muelle","LC"),
+                    (8.767824,-75.884838,"🌺 Heliconia","Heliconia de loro","Zonas verdes","No evaluado"),
+                    (8.711650,-75.828409,"🐢 Morrocoy","Morrocoy","Zona sur","Vulnerable"),
+                ]:
+                    folium.Marker([lat,lon],
+                        popup=folium.Popup(f"<b>{esp}</b><br>🏷️ {nom}<br>🔴 {est}", max_width=200),
+                        tooltip=f"{esp} · {nom}",
+                        icon=folium.Icon(color="red" if est=="Vulnerable" else "purple",icon="paw",prefix="fa")
                     ).add_to(g_fauna)
-        else:
-            for lat,lon,esp,nom,zona,est in [
-                (8.757573799506615,-75.88747047195153,"🦎 Iguana iguana","Iguana verde","Ronda del Sinú","No evaluado"),
-                (8.7720,-75.8680,"🐦 Leptotila verreauxi","Paloma guarumera","Norte urbano","LC"),
-                (8.761909556839255,-75.88462084128709,"🦆 Cairina moschata","Pato real","Muelle Turístico","LC"),
-                (8.7678248873423,-75.88483868572298,"🌺 Heliconia psittacorum","Heliconia de loro","Zonas verdes","No evaluado"),
-                (8.71165087231113,-75.82840985065003,"🐢 Chelonoidis carbonarius","Morrocoy","Zona sur","Vulnerable"),
-            ]:
-                folium.Marker([lat,lon],
-                    popup=folium.Popup(f"<b>{esp}</b><br>🏷️ {nom}<br>📍 {zona}<br>🔴 Estado IUCN: {est}<br>⚠️ Respaldo · GBIF no disponible", max_width=250),
-                    tooltip=folium.Tooltip(f"{esp} · {nom}", sticky=True),
-                    icon=folium.Icon(color="red" if est=="Vulnerable" else "purple", icon="paw", prefix="fa")
-                ).add_to(g_fauna)
 
-        for g in [g_inundacion,g_lluvia,g_contam,g_rio,g_aire,g_univ,g_cc,g_fauna]:
-            g.add_to(m)
-        try:
-            g_heatmap.add_to(m)
-        except Exception:
-            pass
-        folium.LayerControl(collapsed=True, position="topright").add_to(m)
-        st_folium(m, width=None, height=400, use_container_width=True, returned_objects=[], key="mapa_principal")
+            for g in [g_inundacion,g_lluvia,g_contam,g_rio,g_aire,g_univ,g_cc,g_fauna]:
+                g.add_to(m)
+            try:
+                g_heatmap.add_to(m)
+            except Exception:
+                pass
+            folium.LayerControl(collapsed=True, position="topright").add_to(m)
+
+            # Guardar en caché
+            st.session_state[_cache_key] = m
+
+        # Usar mapa desde caché
+        m = st.session_state[_cache_key]
+        st_folium(m, width=None, height=400, use_container_width=True,
+                  returned_objects=[], key="mapa_principal")
 
     with col_pred:
         st.markdown('<div class="section-header">🌊 Predicción 7 días · LSTM</div>', unsafe_allow_html=True)
