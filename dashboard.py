@@ -1252,31 +1252,22 @@ with tab_mapa:
         # ── Caché del mapa en session_state ──────────────────
         _cache_key = f"mapa_cache_{st.session_state.mapa_tipo}"
         if _cache_key not in st.session_state:
-            _map_placeholder = st.empty()
-            _map_placeholder.markdown("""
+            st.markdown("""
             <div style="background:#FFFFFF;border:1px solid #E8E6DF;border-left:4px solid #3B6D11;
                         border-radius:0 12px 12px 0;padding:20px 24px;text-align:center;
                         box-shadow:0 2px 8px rgba(0,0,0,0.06);margin:8px 0">
               <div style="font-family:Outfit,sans-serif;color:#3B6D11;font-size:1rem;
-                          font-weight:800;margin-bottom:8px">
-                🗺️ Cargando mapa…
-              </div>
-              <div style="background:#EAF3DE;border-radius:20px;height:8px;
-                          width:100%;overflow:hidden;margin-bottom:10px">
-                <div style="height:100%;background:linear-gradient(90deg,#3B6D11,#97C459);
-                            border-radius:20px;width:80%;
-                            animation:progressAnim 2s ease forwards"></div>
-              </div>
-              <div style="color:#888780;font-size:0.78rem;font-weight:500">
-                Construyendo capas · Río · Fauna · Inundación…
-              </div>
-              <div style="color:#5F5E5A;font-size:0.72rem;margin-top:6px">
-                Si no carga, pulsa <b style="color:#3B6D11">Actualizar datos</b>
+                          font-weight:800;margin-bottom:6px">🗺️ Mapa no cargado aún</div>
+              <div style="color:#5F5E5A;font-size:0.82rem;margin-bottom:4px">
+                Pulsa <b style="color:#3B6D11">Actualizar datos</b> para cargar el mapa.
               </div>
             </div>
             """, unsafe_allow_html=True)
-            import time as _time
-            _t0 = _time.time()
+            if st.button("🗺️ Cargar mapa ahora", use_container_width=True):
+                st.session_state[_cache_key] = True
+                st.rerun()
+        
+        if _cache_key in st.session_state:
 
             tipo = st.session_state.mapa_tipo
             if tipo == "Satelital":
@@ -1479,14 +1470,12 @@ with tab_mapa:
 
             # Guardar en caché
             st.session_state[_cache_key] = m
-            _map_placeholder.empty()
-            _tiempo = round(_time.time() - _t0, 1)
-            st.toast(f"✅ Mapa listo en {_tiempo}s", icon="🗺️")
 
         # Usar mapa desde caché
-        m = st.session_state[_cache_key]
-        st_folium(m, width=None, height=400, use_container_width=True,
-                  returned_objects=[], key="mapa_principal")
+        if _cache_key in st.session_state and st.session_state[_cache_key] is not True:
+            m = st.session_state[_cache_key]
+            st_folium(m, width=None, height=400, use_container_width=True,
+                      returned_objects=[], key="mapa_principal")
 
     with col_pred:
         st.markdown('<div class="section-header">🌊 Predicción 7 días · LSTM</div>', unsafe_allow_html=True)
