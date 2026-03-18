@@ -1432,7 +1432,12 @@ with tab_mapa:
         avistamientos_reales = obtener_avistamientos_mapa()
 
         # ── Heatmap de fauna ──────────────────────────────────
-        from folium.plugins import HeatMap
+        try:
+            from folium.plugins import HeatMap
+            heatmap_disponible = True
+        except ImportError:
+            heatmap_disponible = False
+
         g_heatmap = folium.FeatureGroup(name="🔥 Heatmap fauna", show=True)
 
         # Coordenadas base GBIF + fallback si no hay datos reales
@@ -1456,18 +1461,22 @@ with tab_mapa:
         else:
             heat_data = [[c[0], c[1], 1.0] for c in COORDS_FALLBACK]
 
-        HeatMap(
-            heat_data,
-            radius=28,
-            blur=18,
-            max_zoom=14,
-            gradient={
-                0.2: '#3B6D11',
-                0.5: '#EF9F27',
-                0.8: '#E85D24',
-                1.0: '#A32D2D'
-            }
-        ).add_to(g_heatmap)
+        if heatmap_disponible:
+            try:
+                HeatMap(
+                    heat_data,
+                    radius=28,
+                    blur=18,
+                    max_zoom=14,
+                    gradient={
+                        0.2: '#3B6D11',
+                        0.5: '#EF9F27',
+                        0.8: '#E85D24',
+                        1.0: '#A32D2D'
+                    }
+                ).add_to(g_heatmap)
+            except Exception:
+                pass
 
         if avistamientos_reales:
             from collections import defaultdict

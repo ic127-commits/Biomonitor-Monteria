@@ -1,7 +1,7 @@
 streamlit
 pandas
 numpy
-folium
+folium[plugins]
 streamlit-folium
 matplotlib
 Pillow
